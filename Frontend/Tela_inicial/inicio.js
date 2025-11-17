@@ -3,8 +3,11 @@ console.log('🔧 scripts.js está carregando...');
 
 class ApiConfig {
     static getBaseUrl() {
-        if (window.location.hostname.includes('railway') || 
-            window.location.hostname !== 'localhost') {
+        if (window.location.hostname.includes('netlify')) {
+            // Usar proxy do Netlify
+            return '/api';
+        } else if (window.location.hostname.includes('railway') || 
+                  window.location.hostname !== 'localhost') {
             return 'https://arandua1-production.up.railway.app';
         } else {
             return 'http://localhost:3000';
@@ -13,13 +16,24 @@ class ApiConfig {
     
     static async fetch(endpoint, options = {}) {
         const baseUrl = this.getBaseUrl();
-        return await fetch(`${baseUrl}${endpoint}`, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        }).then(response => response.json());
+        const url = `${baseUrl}${endpoint}`;
+        
+        console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+        
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            
+            return response;
+        } catch (error) {
+            console.error('❌ Erro de fetch:', error);
+            throw error;
+        }
     }
 }
 

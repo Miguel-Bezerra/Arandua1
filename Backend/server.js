@@ -15,6 +15,17 @@ console.log(`🔗 API URL: ${API_URL}`);
 
 const app = express();
 
+const cors = require('cors');
+
+// Permitir específicamente seu domínio do Netlify
+app.use(cors({
+    origin: ['https://arandua1.netlify.app', 'http://localhost:3000'],
+    credentials: true
+}));
+
+// Ou permitir todos os domínios (apenas para desenvolvimento)
+app.use(cors());
+
 app.use(express.json()); // ← PARA JSON
 app.use(express.urlencoded({ extended: true }));
 

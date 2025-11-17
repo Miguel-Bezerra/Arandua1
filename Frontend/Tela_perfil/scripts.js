@@ -426,6 +426,10 @@ async function updateUserProfile(user) {
     const data = await response.json();
     console.log('✅ Resposta da API (sucesso):', data);
 
+    setTimeout(() => {
+            window.location.href = '../Tela_inicial/inicio.html';
+        }, 1500);
+
     // Sucesso - continuar com o código atual...
 
 } catch (error) {
