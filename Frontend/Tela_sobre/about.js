@@ -98,19 +98,43 @@ function setupDropdownActions() {
     dropdownLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const action = this.getAttribute('data-action');
-            console.log('Ação do dropdown:', action);
+            
+            // Obter ação do data-action ou do href
+            let action = this.getAttribute('data-action');
+            const href = this.getAttribute('href');
+            
+            console.log('Ação do dropdown:', { action, href });
+            
+            // Se não tem data-action, determinar pela URL
+            if (!action) {
+                if (href.includes('perfil.html')) {
+                    action = 'edit-profile';
+                } else if (href.includes('sobre.html')) {
+                    action = 'about';
+                } else if (href === '#' || href.includes('logout')) {
+                    action = 'logout';
+                }
+            }
             
             // Fechar dropdown
             document.getElementById('userDropdown').classList.add('hidden');
             
+            // Executar ação baseada no tipo
             if (action === 'edit-profile') {
+                console.log('🔄 Indo para editar perfil...');
                 window.location.href = '../Tela_perfil/perfil.html';
             } else if (action === 'about') {
+                console.log('ℹ️ Já na página sobre');
                 // Já estamos na página sobre, não fazer nada
-                console.log('Já na página sobre');
             } else if (action === 'logout') {
+                console.log('🚪 Fazendo logout...');
                 logoutUser();
+            } else {
+                // Fallback: seguir o link normalmente
+                console.log('🔗 Seguindo link normalmente:', href);
+                if (href && href !== '#') {
+                    window.location.href = href;
+                }
             }
         });
     });
