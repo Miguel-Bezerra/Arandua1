@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arandua - Cadastro</title>
+<link rel="stylesheet" href="../styles/styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+
+  <div class="container">
+
+    <!-- LOGO E TÍTULO -->
+    <div class="header">
+        <div class="container-logo">
+          <div class="logo">LOGO</div>
+          <h1 class="title">Arandua</h1>
+        </div>
+    </div>
+
+    <!-- CAIXA DE CADASTRO -->
+    <div class="cadast-box">
+      <h2>Cadastro</h2>
+
+      <label for="usuario">Usuário:</label>
+      <input type="text" id="usuario" name="usuario" required>
+
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
+
+      <div class="form-group">
+        <label>Senha:<span class="stf-color-asterisco">*</span></label>
+        <div class="submit-line">
+          <input type="password" id="senha" required>
+          <button type="button" class="submit-eye" onclick="togglePassword('senha', 'ueEyePass')">
+            <i id="ueEyePass" class="fa fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Confirmar sua senha:<span class="stf-color-asterisco">*</span></label>
+        <div class="submit-line">
+          <input type="password" id="confsenha" required>
+          <button type="button" class="submit-eye" onclick="togglePassword('confsenha', 'olhinho')">
+            <i id="olhinho" class="fa fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" id="cadastro_bt" href="../Tela_Login/tela_login.html">Cadastrar</button>
+      
+      <div class="links">
+        <a href="../Tela_Login/tela_login.html">Já tem uma conta? Faça login</a>
+      </div>
+    </div>
+
+  </div>
+  <script src="./scripts.js"></script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arandua - Login</title>
+<link rel="stylesheet" href="../styles/styles.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+  <div class="bg-layer"></div>
+
+  <div class="container">
+
+    <!-- LOGO E TÍTULO -->
+    <div class="header">
+        <div class="container-logo">
+          <div class="logo">LOGO</div>
+          <h1 class="title">ARANDUA</h1>
+        </div>
+    </div>
+
+    <!-- CAIXA DE LOGIN -->
+    <div class="login-box">
+      <h2>Login</h2>
+
+      <div class="form-group">
+        <label for="usuario">Usuário:</label>
+        <input type="text" id="usuario" name="usuario">
+      </div>
+
+      <div class="form-group">
+        <label for="senha">Senha:</label>
+        <div class="password-container">
+          <input type="password" id="senha" name="senha">
+          <button type="button" class="password-toggle" id="togglePassword">
+            <i class="fa fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="links">
+        <a href="../Tela_recuperar_senha/recuperar.html">Esqueci minha senha.</a>
+        <a href="../Tela_cadastro/tela_cadastro.html">Não tem uma conta? Cadastre-se agora.</a>
+      </div>
+
+      <button type="button" id="loginButton">ENTRAR</button>
+    </div>
+  </div>
+
+  <script src="./scripts.js"></script>
+</body>
+</html>

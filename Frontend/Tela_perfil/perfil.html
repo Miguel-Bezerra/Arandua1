@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Editar Perfil</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/styles.css">
+</head>
+<body>
+  
+  <div class="bg-layer"></div>
+
+  <div id="app-wrapper">
+    <nav class="sidebar">
+      <div class="logo-area">
+        <div class="logo-circle"></div>
+        <span class="app-title">Arandua</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../Tela_inicial/inicio.html" class="nav-link">Home</a></li>
+      </ul>
+    </nav>
+
+    <div class="main-content-area">
+      <header class="topbar">
+        
+        <div class="user-area">
+          <button id="userButton" class="user-btn primary"></button>
+          <div id="userDropdown" class="dropdown-menu hidden">
+            <ul>
+              <li><a href="#" data-action="edit-profile">Editar perfil</a></li>
+              <li><a href="../Tela_sobre/sobre.html" data-action="about">Sobre</a></li>
+              <li><a href="#" data-action="logout">Sair da conta</a></li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <main class="content">
+        <form id="profileForm" class="profile-form">
+          <!-- Botão de voltar -->
+          <button type="button" id="backButton" class="back-button" title="Voltar para a tela principal">
+            ←
+          </button>
+          
+          <h2>Editar Perfil</h2>
+          
+          <!-- Seção de Informações Básicas -->
+          <label>
+            Nome:
+            <input type="text" id="profileName" required maxlength="50">
+          </label>
+
+          <label>
+            Email:
+            <input type="email" id="profileEmail" required>
+          </label>
+
+          <!-- Seção de Foto de Perfil -->
+          <div class="image-upload-section">
+            <label style="font-weight: 600; margin-bottom: 15px; display: block;">Foto de Perfil:</label>
+            
+            <label for="profileImageUpload" class="user-btn secondary" style="display: inline-block; margin-bottom: 15px; cursor: pointer;">
+              Escolher Imagem
+            </label>
+            <input type="file" id="profileImageUpload" accept="image/*" style="display: none;">
+            
+            <div id="imagePreviewContainer" class="image-preview-container hidden">
+              <img id="imagePreview" src="" alt="Preview da Foto de Perfil">
+              <button type="button" id="removeImageBtn" class="remove-image-btn" title="Remover Imagem">×</button>
+            </div>
+            
+            <div class="form-note">
+              Formatos suportados: JPG, PNG, GIF. Tamanho máximo: 5MB.
+            </div>
+            
+            <!-- Campo oculto para marcar remoção de imagem -->
+            <input type="hidden" id="removeProfileImage" value="false">
+          </div>
+
+          <!-- Seção de Senha -->
+          <div class="password-section">
+            <label style="font-weight: 600; margin-bottom: 15px; display: block;">Alterar Senha (opcional):</label>
+            
+            <label>
+              Nova Senha:
+              <input type="password" id="profilePassword" placeholder="Deixe em branco para manter a senha atual" minlength="6">
+            </label>
+
+            <label>
+              Confirmar Nova Senha:
+              <input type="password" id="profileConfirmPassword" placeholder="Confirme a nova senha">
+            </label>
+            
+            <div class="form-note">
+              A senha deve ter pelo menos 6 caracteres. Deixe os campos em branco se não quiser alterar a senha.
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" id="cancelProfileBtn" class="user-btn secondary">Cancelar</button>
+            <button type="submit" class="user-btn primary">Salvar Alterações</button>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <script src="./scripts.js"></script>
+</body>
+</html>

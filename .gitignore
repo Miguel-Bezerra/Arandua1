@@ -1,0 +1,12 @@
+# Backend
+backend/node_modules/
+backend/.env
+backend/*.log
+
+# Arquivos gerais
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tmp
+*.temp

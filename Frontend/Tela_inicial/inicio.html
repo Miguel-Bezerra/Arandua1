@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tela Principal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/styles.css">
+</head>
+<body>
+  <div class="bg-layer"></div>
+
+  <div id="app-wrapper">
+    
+    <!-- Sidebar/Navegação -->
+    <nav class="sidebar">
+      <div class="logo-area">
+        <div class="logo-circle"></div>
+        <span class="app-title">Arandua</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="./inicio.html" class="nav-link active">Início</a></li>
+      </ul>
+      
+    </nav>
+    
+    <!-- Área principal -->
+    <div class="main-content-area">
+      
+<header class="topbar">
+  <button class="sidebar-toggle" onclick="toggleSidebar()">
+      ☰
+  </button>
+  <div class="topbar-controls">
+
+   <!-- Barra de Pesquisa Melhorada -->
+    <div class="search-container">
+    <div class="search-box">
+        <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Buscar histórias, autores, categorias..."
+            class="search-input"
+        >
+        <button type="button" id="searchClearBtn" class="search-clear-btn hidden">
+            ✕
+        </button>
+        <button type="button" id="searchActionBtn" class="search-action-btn">
+            🔍
+        </button>
+    </div>
+</div>
+
+   <!-- Filtro de Categorias SIMPLIFICADO -->
+<div class="category-filter-container">
+    <div class="category-filter-dropdown">
+        <button type="button" class="category-filter-toggle" id="categoryFilterToggle">
+            <span class="filter-icon">🎛️</span>
+            <span class="filter-text">Filtrar</span>
+            <span class="dropdown-arrow">▼</span>
+        </button>
+        <div class="category-filter-options hidden" id="categoryFilterOptions">
+            <div class="categories-grid" id="categoryCheckboxes">
+                <!-- As categorias serão carregadas dinamicamente via JavaScript -->
+            </div>
+            <div class="category-filter-actions">
+                <button type="button" class="apply-categories-btn" onclick="applyCategoryFilters()">
+                    Aplicar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+    
+    <!-- Área do usuário CORRIGIDA -->
+<div class="user-area">
+  <button type="button" id="userButton" class="user-btn">
+    <span class="user-name" id="userName">Usuário</span>
+    <span class="user-dropdown-arrow">▼</span>
+  </button>
+
+  <!-- Dropdown do usuário CORRIGIDO -->
+  <div id="userDropdown" class="dropdown-menu hidden">
+    <ul>
+      <li>
+        <a href="../Tela_perfil/perfil.html" class="dropdown-link">
+          <span>Editar perfil</span>
+        </a>
+      </li>
+      <li>
+        <a href="../Tela_sobre/sobre.html" class="dropdown-link">
+          <span>Sobre</span>
+        </a>
+      </li>
+      <li>
+        <a href="#" class="dropdown-link" onclick="handleLogout()">
+          <span>Sair da conta</span>
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
+</header>
+
+      <main class="content">
+        <!-- As postagens serão carregadas dinamicamente via JavaScript -->
+      </main>
+      <button type="button" id="fabButton" class="fab-button">+</button>
+    </div>
+  </div>
+
+<!-- Modal de criação de história -->
+<div id="postCreationModal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>📖 Criar Nova História</h2>
+    <form id="postForm">
+      <!-- Título da história -->
+      <div class="form-group">
+        <label for="postTitle">Título da História</label>
+        <input type="text" id="postTitle" placeholder="Digite o título da sua história" required>
+      </div>
+      
+      <!-- Categoria -->
+      <div class="form-group">
+        <label for="postCategory">Categoria</label>
+        <select id="postCategory" required>
+          <option value="">Selecione uma categoria</option>
+          <option value="criaturas">📖 Criaturas</option>
+          <option value="festas">🎉 Festas</option>
+          <option value="conhecimentos">🧠 Conhecimentos</option>
+          <option value="costumes">👥 Costumes</option>
+          <option value="historia">🏛️ História</option>
+          <option value="arte">🎨 Arte</option>
+          <option value="culinaria">🍲 Culinária</option>
+          <option value="outros">📌 Outros</option>
+        </select>
+      </div>
+      
+      <!-- Imagem de capa -->
+      <div class="form-group">
+        <label for="postImage">Imagem de Capa (opcional)</label>
+        <div class="image-upload-area">
+          <label for="postImage" class="image-upload-btn">
+            <span class="upload-icon">📷</span>
+            <span class="upload-text">Escolher Imagem</span>
+          </label>
+          <input type="file" id="postImage" accept="image/*" style="display: none;">
+          <div id="imagePreview" class="image-preview" style="display: none;"></div>
+        </div>
+      </div>
+      
+      <!-- Conteúdo da história -->
+      <div class="form-group">
+        <label for="postContent">Sua História</label>
+        <textarea id="postContent" placeholder="Conte sua história aqui..." rows="8" required></textarea>
+        <div class="character-count">
+          <span id="charCount">0</span> caracteres
+        </div>
+      </div>
+      
+      <!-- Tags -->
+      <div class="form-group">
+        <label for="postTags">Tags (opcional)</label>
+        <input type="text" id="postTags" placeholder="Digite tags separadas por vírgula (ex: aventura, magia, mistério)">
+      </div>
+      
+      <div class="modal-actions">
+        <button type="button" id="cancelPostBtn" class="btn secondary">Cancelar</button>
+        <button type="submit" class="btn primary">📚 Publicar História</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+  <script src="./inicio.js"></script>
+</body>
+</html>

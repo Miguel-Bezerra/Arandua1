@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sobre - Arandua</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../styles/styles.css">
+</head>
+<body>
+  <div class="bg-layer"></div>
+
+  <div id="app-wrapper">
+    <nav class="sidebar">
+      <div class="logo-area">
+        <div class="logo-circle"></div>
+        <span class="app-title">Arandua</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="../Tela_inicial/inicio.html" class="nav-link">Home</a></li>
+      </ul>
+    </nav>
+
+    <div class="main-content-area">
+      <header class="topbar">
+        <!-- Área do usuário diretamente no topbar, sem container extra -->
+        <div class="user-area">
+          <button id="userButton" class="user-btn">
+            <span class="user-name" id="userName">Usuário</span>
+            <span class="user-dropdown-arrow">▼</span>
+          </button>
+          <div id="userDropdown" class="dropdown-menu hidden">
+            <ul>
+              <li>
+                <a href="../Tela_perfil/perfil.html" class="dropdown-link">
+                  <span>Editar perfil</span>
+                </a>
+              </li>
+              <li>
+                <a href="../Tela_sobre/sobre.html" class="dropdown-link">
+                  <span>Sobre</span>
+                </a>
+              </li>
+              <li>
+                <a href="#" class="dropdown-link" onclick="handleLogout()">
+                  <span>Sair da conta</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </header>
+
+      <main class="content about-page-content">
+        <div class="about-card">
+          <!-- Botão de voltar -->
+          <button type="button" id="backButton" class="back-button" title="Voltar para a tela principal">
+            ←
+          </button>
+          <div class="about-text-content">
+            <h2>Sobre o Arandua</h2>
+            <p>Arandua é uma plataforma de compartilhamento de pensamentos e ideias, inspirada na liberdade de expressão e na conexão entre pessoas.</p>
+            <p>O nome "Arandua" vem do Tupi-Guarani, significando "luz" ou "claridade", representando nossa missão de iluminar conversas e compartilhar conhecimento.</p>
+            <p>Esta aplicação foi desenvolvida para demonstrar funcionalidades modernas de interface web, incluindo postagens em tempo real, upload de imagens e uma experiência de usuário responsiva.</p>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="./about.js"></script>
+</body>
+</html>
