@@ -3,14 +3,14 @@ console.log('🔧 scripts.js está carregando...');
 
 class ApiConfig {
     static getBaseUrl() {
-        if (window.location.hostname.includes('netlify')) {
+        if (window.location.hostname.includes('netlify.app')) {
             // Usar proxy do Netlify
             return '/api';
-        } else if (window.location.hostname.includes('railway') || 
-                  window.location.hostname !== 'localhost') {
-            return 'https://arandua1-production.up.railway.app';
-        } else {
+        } else if (window.location.hostname === 'localhost' || 
+                  window.location.hostname === '127.0.0.1') {
             return 'http://localhost:3000';
+        } else {
+            return 'https://arandua1-production.up.railway.app';
         }
     }
     

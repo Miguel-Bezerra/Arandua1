@@ -15,17 +15,6 @@ console.log(`🔗 API URL: ${API_URL}`);
 
 const app = express();
 
-const cors = require('cors');
-
-// Permitir específicamente seu domínio do Netlify
-app.use(cors({
-    origin: ['https://arandua1.netlify.app', 'http://localhost:3000'],
-    credentials: true
-}));
-
-// Ou permitir todos os domínios (apenas para desenvolvimento)
-app.use(cors());
-
 app.use(express.json()); // ← PARA JSON
 app.use(express.urlencoded({ extended: true }));
 
@@ -44,11 +33,16 @@ app.use((req, res, next) => {
     next();
 });
 
+// Configurar CORS
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "User-Id"],
-    credentials: true
+    origin: [
+        'https://arandua1.netlify.app',
+        'http://localhost:3000',
+        'http://127.0.0.1:3000'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // 🔥 MIDDLEWARE DE LOG APÓS CORS
