@@ -2443,17 +2443,16 @@ img {
 }
 
 /* Remover qualquer conteúdo extra na topbar da tela sobre */
-body:has(.about-page-content) .topbar-controls,
-body:has(.about-page-content) .search-container,
-body:has(.about-page-content) .category-filter-container {
-    display: none !important;
+.about-page .topbar-controls,
+.about-page .search-container,
+.about-page .category-filter-container {
+    display: none;
 }
 
-/* Garantir que apenas o user-area fique visível */
-body:has(.about-page-content) .topbar > :not(.user-area) {
-    display: none !important;
+.about-page .user-area {
+    display: flex !important;
+    margin-left: auto;
 }
-
 /* Responsividade para tela sobre */
 @media (max-width: 1024px) {
     .about-page-content .topbar {
