@@ -29,14 +29,15 @@
     <div class="main-content-area">
       
 <header class="topbar">
-  <button class="sidebar-toggle" onclick="toggleSidebar()">
-      ☰
-  </button>
   <div class="topbar-controls">
-
-   <!-- Barra de Pesquisa Melhorada -->
+    <!-- Botão sidebar para mobile -->
+    <button class="sidebar-toggle" onclick="toggleSidebar()">
+        ☰
+    </button>
+    
+    <!-- Barra de Pesquisa Melhorada -->
     <div class="search-container">
-    <div class="search-box">
+      <div class="search-box">
         <input 
             type="text" 
             id="searchInput" 
@@ -49,58 +50,59 @@
         <button type="button" id="searchActionBtn" class="search-action-btn">
             🔍
         </button>
+      </div>
     </div>
-</div>
 
-   <!-- Filtro de Categorias SIMPLIFICADO -->
-<div class="category-filter-container">
-    <div class="category-filter-dropdown">
+    <!-- Filtro de Categorias -->
+    <div class="category-filter-container">
+      <div class="category-filter-dropdown">
         <button type="button" class="category-filter-toggle" id="categoryFilterToggle">
-            <span class="filter-icon">🎛️</span>
-            <span class="filter-text">Filtrar</span>
-            <span class="dropdown-arrow">▼</span>
+          <span class="filter-icon">🎛️</span>
+          <span class="filter-text">Filtrar</span>
+          <span class="dropdown-arrow">▼</span>
         </button>
         <div class="category-filter-options hidden" id="categoryFilterOptions">
-            <div class="categories-grid" id="categoryCheckboxes">
-                <!-- As categorias serão carregadas dinamicamente via JavaScript -->
-            </div>
-            <div class="category-filter-actions">
-                <button type="button" class="apply-categories-btn" onclick="applyCategoryFilters()">
-                    Aplicar
-                </button>
-            </div>
+          <div class="categories-grid" id="categoryCheckboxes">
+            <!-- Categorias carregadas dinamicamente -->
+          </div>
+          <div class="category-filter-actions">
+            <button type="button" class="apply-categories-btn" onclick="applyCategoryFilters()">
+              Aplicar
+            </button>
+          </div>
         </div>
+      </div>
     </div>
-</div>
     
-    <!-- Área do usuário CORRIGIDA -->
-<div class="user-area">
-  <button type="button" id="userButton" class="user-btn">
-    <span class="user-name" id="userName">Usuário</span>
-    <span class="user-dropdown-arrow">▼</span>
-  </button>
+    <!-- Área do usuário -->
+    <div class="user-area">
+      <button type="button" id="userButton" class="user-btn">
+        <span class="user-name" id="userName">Usuário</span>
+        <span class="user-dropdown-arrow">▼</span>
+      </button>
 
-  <!-- Dropdown do usuário CORRIGIDO -->
-  <div id="userDropdown" class="dropdown-menu hidden">
-    <ul>
-      <li>
-        <a href="../Tela_perfil/perfil.html" class="dropdown-link">
-          <span>Editar perfil</span>
-        </a>
-      </li>
-      <li>
-        <a href="../Tela_sobre/sobre.html" class="dropdown-link">
-          <span>Sobre</span>
-        </a>
-      </li>
-      <li>
-        <a href="#" class="dropdown-link" onclick="handleLogout()">
-          <span>Sair da conta</span>
-        </a>
-      </li>
-    </ul>
+      <!-- Dropdown do usuário -->
+      <div id="userDropdown" class="dropdown-menu hidden">
+        <ul>
+          <li>
+            <a href="../Tela_perfil/perfil.html" class="dropdown-link">
+              <span>Editar perfil</span>
+            </a>
+          </li>
+          <li>
+            <a href="../Tela_sobre/sobre.html" class="dropdown-link">
+              <span>Sobre</span>
+            </a>
+          </li>
+          <li>
+            <a href="#" class="dropdown-link" onclick="handleLogout()">
+              <span>Sair da conta</span>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
   </div>
-</div>
 </header>
 
       <main class="content">

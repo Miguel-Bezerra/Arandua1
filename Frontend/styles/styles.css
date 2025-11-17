@@ -180,12 +180,40 @@ html,body{
     flex-shrink: 0;
 }
 
-/* Área do usuário - CORRIGIDA */
+/* CORREÇÃO PARA O BOTÃO DO USUÁRIO - FORÇAR VISIBILIDADE */
 .user-area {
-    position: relative;
-    display: flex;
-    align-items: center;
-    flex-shrink: 0;
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.topbar .user-area {
+    display: flex !important;
+    margin-left: auto !important;
+}
+
+/* Garantir que o botão do usuário não seja afetado por regras da tela sobre */
+body:not(.about-page) .user-area {
+    display: flex !important;
+}
+
+/* Correção específica para a estrutura da topbar */
+.topbar-controls {
+    display: flex !important;
+    align-items: center !important;
+    gap: 15px !important;
+    width: 100% !important;
+}
+
+/* Sidebar toggle apenas visível em mobile */
+.sidebar-toggle {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .sidebar-toggle {
+        display: flex;
+    }
 }
 
 /* RESPONSIVIDADE */
