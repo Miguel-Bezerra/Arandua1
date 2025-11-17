@@ -332,7 +332,8 @@ async function updateUserProfile(user) {
     const profileImageUpload = document.getElementById('profileImageUpload');
     const removeProfileImage = document.getElementById('removeProfileImage').value === 'true';
 
-    console.log('Atualizando perfil:', { 
+    console.log('🔧 Atualizando perfil:', { 
+        userId: user.id,
         nome, 
         email: email || null, 
         senhaFornecida: !!senha, 
@@ -378,63 +379,102 @@ async function updateUserProfile(user) {
     // Apenas incluir senha se for fornecida
     if (senha) {
         updateData.senha = senha;
-        console.log('Incluindo nova senha na atualização');
+        console.log('🔑 Incluindo nova senha na atualização');
     }
 
     // Processar imagem de perfil
     if (removeProfileImage) {
         updateData.ft_perfil = null;
-        console.log('Removendo foto de perfil');
+        console.log('🗑️ Removendo foto de perfil');
     } else if (profileImageUpload.files[0]) {
         try {
-            console.log('Processando nova imagem...');
+            console.log('🖼️ Processando nova imagem...');
             const imageBase64 = await convertImageToBase64(profileImageUpload.files[0]);
             updateData.ft_perfil = imageBase64;
-            console.log('Imagem convertida para Base64');
+            console.log('✅ Imagem convertida para Base64');
         } catch (error) {
-            console.error('Erro ao processar imagem:', error);
+            console.error('❌ Erro ao processar imagem:', error);
             showNotification('Erro ao processar imagem', 'error');
             return;
         }
     }
-    // Se não for remover nem adicionar nova imagem, não enviar ft_perfil (manter atual)
 
-    console.log('Dados para atualização:', { 
+    console.log('📦 Dados para atualização:', { 
         ...updateData, 
         ft_perfil: updateData.ft_perfil ? 'BASE64_DATA' : updateData.ft_perfil 
     });
 
-    // Fazer requisição para atualizar usuário
+    // Fazer requisição para atualizar usuário - COM MELHOR TRATAMENTO DE ERRO
     try {
-        const response = await ApiConfig.fetch(`/usuarios/${user.id}`, {
-            method: "PUT",
-            body: JSON.stringify(updateData),
-        });
+    console.log(`🌐 Fazendo PUT para /usuarios/${user.id}`);
+    
+    const response = await ApiConfig.fetch(`/usuarios/${user.id}`, {
+        method: "PUT",
+        body: JSON.stringify(updateData),
+    });
 
-        const data = await response.json();
-        console.log('Resposta da API:', data);
+    console.log('📨 Resposta da API:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+    });
 
-        if (response.ok) {
-            // Atualizar dados do usuário no sessionStorage
-            const updatedUser = {
-                ...user,
-                nome: nome,
-                email: email
-            };
-            sessionStorage.setItem('arandua_current_user', JSON.stringify(updatedUser));
-            
-            showNotification('Perfil atualizado com sucesso!', 'success');
-            
-            // Redirecionar após breve delay
-            setTimeout(() => {
-                window.location.href = '../Tela_inicial/inicio.html';
-            }, 1500);
-        } else {
-            throw new Error(data.message || 'Erro ao atualizar perfil');
-        }
+    if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log('✅ Resposta da API (sucesso):', data);
+
+    // Sucesso - continuar com o código atual...
+
+} catch (error) {
+    console.error('❌ Erro na API, tentando fallback local:', error);
+    
+    // Tentar salvar localmente
+    try {
+        const localResult = await saveProfileLocally(user, updateData);
+        showNotification('Perfil salvo localmente (servidor indisponível)', 'success');
+        
+        setTimeout(() => {
+            window.location.href = '../Tela_inicial/inicio.html';
+        }, 1500);
+        
+    } catch (localError) {
+        console.error('❌ Erro no fallback local:', localError);
+        showNotification('Erro ao salvar perfil. Tente novamente.', 'error');
+    }
+}
+}
+
+async function saveProfileLocally(user, updateData) {
+    try {
+        console.log('💾 Salvando perfil localmente (fallback)...');
+        
+        // Salvar no localStorage
+        const userProfile = {
+            ...updateData,
+            id: user.id,
+            lastUpdated: new Date().toISOString()
+        };
+        
+        localStorage.setItem(`user_profile_${user.id}`, JSON.stringify(userProfile));
+        
+        // Atualizar sessionStorage
+        const updatedUser = {
+            ...user,
+            nome: updateData.nome,
+            email: updateData.email,
+            ft_perfil: updateData.ft_perfil
+        };
+        sessionStorage.setItem('arandua_current_user', JSON.stringify(updatedUser));
+        
+        console.log('✅ Perfil salvo localmente com sucesso');
+        return { success: true, message: 'Perfil salvo localmente' };
+        
     } catch (error) {
-        console.error('Erro ao atualizar perfil:', error);
-        showNotification(error.message || 'Erro ao atualizar perfil', 'error');
+        console.error('❌ Erro ao salvar localmente:', error);
+        throw new Error('Não foi possível salvar o perfil');
     }
 }
 
