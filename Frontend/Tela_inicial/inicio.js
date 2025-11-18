@@ -2305,7 +2305,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
         return;
     }
     
-    // ✅ OTIMIZAÇÃO: Atualização otimista da UI primeiro
+    // ✅ VERIFICAR ESTADO ATUAL ANTES DE QUALQUER AÇÃO
     const iconeCurtir = botaoCurtir.querySelector('.like-icon');
     const contadorCurtidas = botaoCurtir.querySelector('.like-count');
     let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
@@ -2313,7 +2313,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
     const estavaCurtido = iconeCurtir.textContent === '❤️';
     const novaContagem = estavaCurtido ? Math.max(0, contagemAtual - 1) : contagemAtual + 1;
     
-    // Atualizar UI imediatamente
+    // ✅ ATUALIZAÇÃO OTIMISTA CORRIGIDA
     iconeCurtir.textContent = estavaCurtido ? '🤍' : '❤️';
     contadorCurtidas.textContent = novaContagem;
     
@@ -2326,28 +2326,45 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
     try {
         const urlBase = ApiConfig.obterUrlBase();
         
-        // ✅ OTIMIZAÇÃO: Cache para verificação de estado
-        const cacheKey = `curtida_${idPost}_${usuarioAtual.id}`;
-        const estadoCache = ApiCache.get(cacheKey);
+        // ✅ VERIFICAR ESTADO REAL NO SERVIDOR ANTES DE TENTAR CURTIR
+        console.log('🔍 Verificando estado atual da curtida...');
+        const respostaVerificacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
         
-        let estadoReal;
-        if (estadoCache) {
-            estadoReal = estadoCache;
-        } else {
-            const respostaVerificacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
-            if (!respostaVerificacao.ok) throw new Error('Erro ao verificar curtida');
-            estadoReal = await respostaVerificacao.json();
-            ApiCache.set(cacheKey, estadoReal);
+        if (!respostaVerificacao.ok) {
+            throw new Error('Erro ao verificar curtida existente');
         }
         
-        // ✅ OTIMIZAÇÃO: Timeout para evitar requisições lentas
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+        const estadoReal = await respostaVerificacao.json();
+        console.log('✅ Estado real da curtida:', estadoReal);
         
-        const acao = estadoReal.curtiu ? 'DELETE' : 'POST';
+        // ✅ DETERMINAR A AÇÃO CORRETA BASEADA NO ESTADO REAL
+        let acao;
+        if (estavaCurtido && estadoReal.curtiu) {
+            // Usuário quer remover curtida (já está curtido)
+            acao = 'DELETE';
+        } else if (!estavaCurtido && !estadoReal.curtiu) {
+            // Usuário quer adicionar curtida (não está curtido)
+            acao = 'POST';
+        } else {
+            // ✅ ESTADO INCONSISTENTE - SINCRONIZAR COM SERVIDOR
+            console.warn('⚠️ Estado inconsistente, sincronizando com servidor...');
+            iconeCurtir.textContent = estadoReal.curtiu ? '❤️' : '🤍';
+            contadorCurtidas.textContent = estadoReal.curtiu ? contagemAtual + 1 : Math.max(0, contagemAtual - 1);
+            return;
+        }
+        
+        console.log(`🎯 Ação determinada: ${acao} para post ${idPost}`);
+        
+        // ✅ FAZER A REQUISIÇÃO
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
         const resposta = await fetch(`${urlBase}/curtidas`, {
             method: acao,
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
             body: JSON.stringify({ 
                 id_historia: parseInt(idPost), 
                 id_usuario: parseInt(usuarioAtual.id)
@@ -2358,25 +2375,72 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
         clearTimeout(timeoutId);
         
         if (!resposta.ok) {
-            throw new Error(`HTTP ${resposta.status}`);
+            const erroTexto = await resposta.text();
+            console.error(`❌ Erro ${resposta.status}:`, erroTexto);
+            
+            if (resposta.status === 400) {
+                // ✅ LIDAR ESPECIFICAMENTE COM ERRO 400 (já curtiu/não curtiu)
+                const respostaVerificacaoPosErro = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
+                if (respostaVerificacaoPosErro.ok) {
+                    const estadoPosErro = await respostaVerificacaoPosErro.json();
+                    console.log('🔄 Sincronizando estado após erro 400:', estadoPosErro);
+                    
+                    // Sincronizar UI com estado real do servidor
+                    iconeCurtir.textContent = estadoPosErro.curtiu ? '❤️' : '🤍';
+                    contadorCurtidas.textContent = estadoPosErro.curtiu ? novaContagem + 1 : Math.max(0, novaContagem - 1);
+                    
+                    if (estadoPosErro.curtiu) {
+                        botaoCurtir.classList.add('liked');
+                    } else {
+                        botaoCurtir.classList.remove('liked');
+                    }
+                }
+                return;
+            }
+            throw new Error(`HTTP ${resposta.status}: ${erroTexto}`);
         }
         
-        console.log('❤️ DEBUG: Curtida processada com sucesso');
+        console.log('✅ Curtida processada com sucesso');
         
     } catch (erro) {
         console.error('❌ Erro ao curtir:', erro);
         
-        // ✅ OTIMIZAÇÃO: Reverter UI em caso de erro
-        iconeCurtir.textContent = estavaCurtido ? '❤️' : '🤍';
-        contadorCurtidas.textContent = contagemAtual;
-        
-        if (estavaCurtido) {
-            botaoCurtir.classList.add('liked');
+        // ✅ REVERSÃO MAIS INTELIGENTE
+        if (erro.name === 'AbortError') {
+            mostrarNotificacao('⏰ Tempo esgotado ao curtir', 'error');
         } else {
-            botaoCurtir.classList.remove('liked');
+            mostrarNotificacao('❌ Erro ao curtir: ' + erro.message, 'error');
         }
         
-        mostrarNotificacao('❌ Erro ao curtir: ' + erro.message, 'error');
+        // ✅ SINCRONIZAR COM SERVIDOR APÓS ERRO
+        try {
+            const urlBase = ApiConfig.obterUrlBase();
+            const respostaSincronizacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
+            if (respostaSincronizacao.ok) {
+                const estadoAtual = await respostaSincronizacao.json();
+                console.log('🔄 Sincronizando estado após erro:', estadoAtual);
+                
+                iconeCurtir.textContent = estadoAtual.curtiu ? '❤️' : '🤍';
+                contadorCurtidas.textContent = estadoAtual.curtiu ? contagemAtual : Math.max(0, contagemAtual - 1);
+                
+                if (estadoAtual.curtiu) {
+                    botaoCurtir.classList.add('liked');
+                } else {
+                    botaoCurtir.classList.remove('liked');
+                }
+            }
+        } catch (erroSinc) {
+            console.error('❌ Erro na sincronização:', erroSinc);
+            // Reverter para estado anterior em caso de falha na sincronização
+            iconeCurtir.textContent = estavaCurtido ? '❤️' : '🤍';
+            contadorCurtidas.textContent = contagemAtual;
+            
+            if (estavaCurtido) {
+                botaoCurtir.classList.add('liked');
+            } else {
+                botaoCurtir.classList.remove('liked');
+            }
+        }
     }
 }
 
