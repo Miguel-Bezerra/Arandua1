@@ -1192,6 +1192,11 @@ function aplicarFiltrosCategoria() {
     
     if (categoriasSelecionadas.length === 0) {
         renderizarPostagens(todasPostagens);
+        const mensagemVazia = document.querySelector('.nenhuma-historia, .empty-feed-message, .estado-vazio');
+        if (mensagemVazia) {
+            console.log('🗑️ Removendo mensagem de feed vazio');
+            mensagemVazia.remove();
+        }
         mostrarNotificacao('📚 Mostrando todas as categorias', 'success');
     } else {
         filtrarPostsLocalmente();
@@ -1225,6 +1230,12 @@ function removerCategoria(categoria) {
     const caixa = document.querySelector(`input[value="${categoria}"]`);
     if (caixa) {
         caixa.checked = false;
+    }
+
+    const mensagemVazia = document.querySelector('.nenhuma-historia, .empty-feed-message, .estado-vazio');
+    if (mensagemVazia) {
+        console.log('🗑️ Removendo mensagem de feed vazio');
+        mensagemVazia.remove();
     }
     
     aplicarFiltrosCategoria();
