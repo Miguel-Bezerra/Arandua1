@@ -503,7 +503,7 @@ async function criarHistoria() {
             const novaHistoria = await resposta.json();
             console.log('✅ História criada com sucesso:', novaHistoria);
             mostrarNotificacao('✅ História publicada com sucesso!', 'success');
-            adicionarNovaHistoriaAoFeed(novaHistoria); // ← Esta linha deve chamar a função corrigida
+            adicionarNovaHistoriaAoFeed(novaHistoria);
             fecharModal();
         } else {
             const textoErro = await resposta;
@@ -1775,11 +1775,10 @@ function mostrarMensagemVazia() {
     const areaConteudo = document.querySelector('.content');
     if (!areaConteudo) return;
 
-    // Limpar completamente o conteúdo
     areaConteudo.innerHTML = '';
     
     const mensagemVazia = document.createElement('div');
-    mensagemVazia.className = 'nenhuma-historia empty-feed-message';
+    mensagemVazia.className = 'nenhuma-historia';
     mensagemVazia.innerHTML = `
         <div class="estado-vazio">
             <h3>Nenhuma história encontrada</h3>
@@ -2820,8 +2819,8 @@ async function manipularCurtirComentario(evento) {
 // ===== FUNÇÕES DE ATUALIZAÇÃO EM TEMPO REAL =====
 
 function adicionarNovaHistoriaAoFeed(novaHistoria) {
-    console.log('🚀 Adicionando nova história ao feed:', novaHistoria);
-    
+    console.log('🚀 SOLUÇÃO SIMPLES: Recarregar todo o feed');
+
     // 1. Remover a mensagem de feed vazio se existir
     const mensagemVazia = document.querySelector('.nenhuma-historia, .empty-feed-message, .estado-vazio');
     if (mensagemVazia) {
@@ -2829,44 +2828,12 @@ function adicionarNovaHistoriaAoFeed(novaHistoria) {
         mensagemVazia.remove();
     }
     
-    // 2. Garantir que o array todasPostagens esteja atualizado
-    if (!todasPostagens.some(post => post.id_historia === novaHistoria.id_historia)) {
-        todasPostagens.unshift(novaHistoria); // Adiciona no início
-    }
+    // 2. Recarregar todo o feed
+    carregarPostagens();
     
-    // 3. Encontrar o container de conteúdo
-    const areaConteudo = document.querySelector('.content');
-    if (!areaConteudo) {
-        console.error('❌ Área de conteúdo não encontrada');
-        return;
-    }
-    
-    // 4. Se não há posts visíveis, criar o primeiro elemento
-    const postsExistentes = areaConteudo.querySelectorAll('.post, .story-item');
-    
-    if (postsExistentes.length === 0) {
-        console.log('📝 Criando primeiro post no feed vazio');
-        const elementoHistoria = criarElementoHistoria(novaHistoria);
-        
-        // Limpar qualquer conteúdo residual de "vazio"
-        areaConteudo.innerHTML = '';
-        areaConteudo.appendChild(elementoHistoria);
-    } else {
-        console.log('📝 Adicionando nova história ao topo do feed existente');
-        const elementoHistoria = criarElementoHistoria(novaHistoria);
-        areaConteudo.insertBefore(elementoHistoria, areaConteudo.firstChild);
-    }
-    
-    // 5. Garantir que o FAB button está no lugar certo
-    garantirBotaoFab();
-    
-    // 6. Mostrar notificação de sucesso
     mostrarNotificacao('✅ História publicada com sucesso!', 'success');
     
-    // 7. Fechar o modal
     fecharModal();
-    
-    console.log('✅ Nova história adicionada ao feed com sucesso');
 }
 
 function adicionarNovoComentarioNaUI(idPost, comentario) {
