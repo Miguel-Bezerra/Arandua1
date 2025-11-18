@@ -3,12 +3,21 @@ console.log('🔧 inicio.js está carregando...');
 
 class ApiConfig {
     static obterUrlBase() {
-        if (window.location.hostname.includes('netlify.app')) {
+        const hostname = window.location.hostname;
+        
+        console.log('🔍 Hostname detectado:', hostname);
+        if (hostname.includes('netlify.app')) {
+            // Se estiver no arandua2.netlify.app, usar a API do Railway
             return 'https://arandua1-production.up.railway.app/api';
-        } else if (window.location.hostname === 'localhost' || 
-                  window.location.hostname === '127.0.0.1') {
-            return 'http://localhost:3000';
+        } 
+        //Verificar se estamos no domínio de produção
+        else if (hostname === 'arandua2.netlify.app' || hostname === 'arandua1.netlify.app') {
+            return 'https://arandua1-production.up.railway.app/api';
+        }
+        else if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:3000/api';
         } else {
+            // Fallback para produção
             return 'https://arandua1-production.up.railway.app/api';
         }
     }
