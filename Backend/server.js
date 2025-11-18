@@ -6,7 +6,7 @@ import rotas from "./router/routes.js";
 
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 const API_URL = IS_PRODUCTION 
-  ? 'arandua1-production.up.railway.app'
+  ? 'arandua1-production.up.railway.app/api'
   : 'http://localhost:3000';
 
 console.log(`🌍 Ambiente: ${IS_PRODUCTION ? 'PRODUÇÃO' : 'DESENVOLVIMENTO'}`);
