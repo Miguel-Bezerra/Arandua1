@@ -1283,7 +1283,6 @@ body:not(.about-page) .user-area {
     overflow-wrap: break-word;
 }
 
-/* ===== CORREÇÃO ESPECÍFICA PARA TEXTO LONGO ===== */
 /* Forçar quebra em qualquer texto muito longo */
 .story-content p:contains("funcionafuncionafunciona") {
     word-break: break-all;
@@ -3260,13 +3259,13 @@ img {
 }
 
 /* Variação com ícone */
-.test-button::after {
+.botao-tentar-novamente::after {
   content: '→';
   font-size: 18px;
   transition: all 0.3s ease;
 }
 
-.test-button:hover::after {
+.botao-tentar-novamente:hover::after {
   transform: translateX(5px);
 }
 
@@ -3324,7 +3323,6 @@ img {
     display: flex !important;
 }
 
-/* ===== FIX: normalizar comportamento de botões e garantir estilos aplicados ===== */
 /* Normalização básica para que estilos de classe sobreponham o reset do browser */
 button,
 input[type="button"],
