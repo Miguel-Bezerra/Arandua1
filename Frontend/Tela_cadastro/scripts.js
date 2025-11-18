@@ -194,7 +194,7 @@ async function manipularCadastro() {
         clearTimeout(timeoutId);
 
         if (!resposta.ok) {
-            const textoErro = await resposta.text();
+            const textoErro = await resposta;
             throw new Error(`HTTP ${resposta.status}: ${textoErro}`);
         }
 

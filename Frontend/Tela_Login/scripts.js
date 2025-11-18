@@ -43,7 +43,7 @@ class ApiConfig {
                     const dadosErro = await resposta.json();
                     mensagemErro = dadosErro.message || dadosErro.error || mensagemErro;
                 } catch {
-                    const textoErro = await resposta.text();
+                    const textoErro = await resposta;
                     mensagemErro = textoErro || mensagemErro;
                 }
                 
@@ -225,7 +225,7 @@ async function manipularLogin() {
         if (!resposta.ok) {
             let textoErro = 'Erro desconhecido';
             try {
-                textoErro = await resposta.text();
+                textoErro = await resposta;
             } catch {
                 textoErro = 'Não foi possível ler o erro';
             }
@@ -249,7 +249,7 @@ async function manipularLogin() {
             dadosResposta = await resposta.json();
         } else {
             // Se não for JSON, tentar como texto e depois parsear
-            const textoResposta = await resposta.text();
+            const textoResposta = await resposta;
             console.log('📄 Resposta como texto:', textoResposta);
             
             try {
@@ -339,7 +339,7 @@ async function tentarLogin(usuario, senha) {
         if (!resposta.ok) {
             if (resposta.status === 500) {
                 console.error('❌ Erro 500 - provavelmente problema na rota /login');
-                const textoErro = await resposta.text();
+                const textoErro = await resposta;
                 console.error('❌ Detalhes do erro:', textoErro);
                 throw new Error('Erro interno no servidor - verifique o console do servidor');
             }

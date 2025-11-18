@@ -37,7 +37,7 @@ class ApiConfig {
             console.log(`📡 Status da Resposta: ${resposta.status}`);
             
             if (!resposta.ok) {
-                const textoErro = await resposta.text();
+                const textoErro = await resposta;
                 console.error('❌ Erro HTTP:', resposta.status, textoErro);
                 throw new Error(`HTTP ${resposta.status}: ${resposta.statusText}`);
             }
@@ -424,7 +424,7 @@ async function atualizarPerfilUsuario(usuario) {
         clearTimeout(timeoutId);
 
         if (!resposta.ok) {
-            const textoErro = await resposta.text();
+            const textoErro = await resposta;
             throw new Error(`HTTP ${resposta.status}: ${textoErro}`);
         }
 

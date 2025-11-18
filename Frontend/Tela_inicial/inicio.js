@@ -506,7 +506,7 @@ async function criarHistoria() {
             adicionarNovaHistoriaAoFeed(novaHistoria);
             fecharModal();
         } else {
-            const textoErro = await resposta.text();
+            const textoErro = await resposta;
             console.error('❌ Erro do servidor:', resposta.status, textoErro);
             mostrarNotificacao(`❌ Erro ao publicar: ${textoErro}`, 'error');
         }
@@ -553,7 +553,7 @@ async function carregarPostagens() {
         if (!resposta.ok) {
             let textoErro = 'Erro desconhecido';
             try {
-                textoErro = await resposta.text();
+                textoErro = await resposta;
             } catch {
                 textoErro = 'Não foi possível ler o erro';
             }
@@ -1678,7 +1678,7 @@ async function manipularEnviarResposta(evento, idComentario) {
             mostrarNotificacao('💬 Resposta adicionada!', 'success');
             
         } else {
-            const textoErro = await resposta.text();
+            const textoErro = await resposta;
             console.error('❌ Erro do servidor:', textoErro);
             throw new Error(textoErro || 'Erro ao enviar resposta');
         }
@@ -2216,7 +2216,7 @@ async function manipularExcluirPost(evento) {
             }, 300);
             
         } else {
-            const textoErro = await resposta.text();
+            const textoErro = await resposta;
             console.error('❌ Erro do servidor:', textoErro);
             throw new Error(textoErro || 'Erro ao deletar história');
         }
@@ -2267,7 +2267,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
         });
         
         if (!resposta.ok) {
-            const textoErro = await resposta.text();
+            const textoErro = await resposta;
             throw new Error(`HTTP ${resposta.status}: ${textoErro}`);
         }
         
@@ -2438,7 +2438,7 @@ async function manipularEnviarComentario(idPost) {
             inputComentario.value = '';
             mostrarNotificacao('💬 Comentário adicionado!', 'success');
         } else {
-            const textoErro = await resposta.text();
+            const textoErro = await resposta;
             console.error('❌ Erro do servidor:', textoErro);
             throw new Error(textoErro || 'Erro ao enviar comentário');
         }
@@ -2475,7 +2475,7 @@ async function carregarComentariosComRespostas(idPost) {
             console.log('🔄 Rota hierárquica não encontrada, usando rota tradicional...');
             await carregarComentariosComRespostasFallback(idPost);
         } else {
-            throw new Error(`HTTP ${resposta.status}: ${await resposta.text()}`);
+            throw new Error(`HTTP ${resposta.status}: ${await resposta}`);
         }
         
     } catch (erro) {
@@ -2776,7 +2776,7 @@ async function manipularExcluirComentario(evento) {
                 }, 300);
                 
             } else {
-                const textoErro = await resposta.text();
+                const textoErro = await resposta;
                 console.error('❌ Erro na resposta:', textoErro);
                 throw new Error(`Erro ${resposta.status}: ${textoErro}`);
             }
