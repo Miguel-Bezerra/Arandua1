@@ -601,20 +601,6 @@ async function carregarPostagens() {
     }
 }
 
-function mostrarCarregandoHistorias() {
-    const areaConteudo = document.querySelector('.content');
-    if (!areaConteudo) return;
-
-    areaConteudo.innerHTML = `
-        <div class="carregando-histórias">
-            <div class="spinner"></div>
-            <h3>Carregando histórias...</h3>
-            <p>Aguarde enquanto buscamos as últimas histórias</p>
-        </div>
-    `;
-}
-
-
 function mostrarErroCarregamento(mensagem) {
     const areaConteudo = document.querySelector('.content');
     if (!areaConteudo) return;
