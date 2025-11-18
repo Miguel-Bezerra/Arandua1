@@ -201,7 +201,7 @@ async function manipularLogin() {
 
         console.log('📤 Enviando dados para login:', { usuario: usuario, senha: '***' });
 
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         console.log('🌐 URL base:', urlBase);
 
         // TIMEOUT para evitar espera infinita
