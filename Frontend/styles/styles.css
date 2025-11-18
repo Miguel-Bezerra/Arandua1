@@ -3143,7 +3143,7 @@ img {
   50% { transform: translateY(30px) scale(1.05); }
 }
 
-.empty-state {
+.estado-vazio {
   text-align: center;
   max-width: 500px;
   position: relative;
@@ -3162,7 +3162,7 @@ img {
   }
 }
 
-.empty-state h3 {
+.estado-vazio h3 {
   font-size: 32px;
   font-weight: 800;
   color: var(--primary-brown);
@@ -3174,7 +3174,7 @@ img {
   background-clip: text;
 }
 
-.empty-state h3::before {
+.estado-vazio h3::before {
   content: '📭';
   display: block;
   font-size: 64px;
@@ -3187,7 +3187,7 @@ img {
   50% { transform: translateY(-20px); }
 }
 
-.empty-state p {
+.estado-vazio p {
   font-size: 16px;
   color: var(--text-muted);
   margin: 0 0 30px 0;
@@ -3196,7 +3196,7 @@ img {
   letter-spacing: 0.3px;
 }
 
-.empty-state p::before {
+.estado-vazio p::before {
   content: '✨ ';
   color: var(--secondary-brown);
   font-weight: 700;

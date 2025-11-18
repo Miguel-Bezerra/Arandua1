@@ -1781,10 +1781,10 @@ function mostrarMensagemVazia() {
     mensagemVazia.className = 'nenhuma-historia';
     mensagemVazia.innerHTML = `
         <div class="estado-vazio">
-            <h3>📭 Nenhuma história encontrada</h3>
+            <h3>Nenhuma história encontrada</h3>
             <p>Seja o primeiro a compartilhar uma história!</p>
             <button type="button" onclick="abrirModal()" class="botao-tentar-novamente">
-                ✍️ Criar Primeira História
+                Criar Primeira História
             </button>
         </div>
     `;
