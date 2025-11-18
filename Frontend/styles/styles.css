@@ -435,7 +435,7 @@ body:not(.about-page) .user-area {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--secondary-brown) 100%);
+  background-image: url(../img/logo_Arandua.png);
   border: 2px solid var(--text-light);
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   display: flex;
@@ -1931,31 +1931,36 @@ img {
 
 .header {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 15px;
   margin-bottom: 30px;
+  justify-content: center;
+  width: 100%;
+  text-align: center;
 }
 
 .container-logo {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
 }
 
-.logo {
-  width: 90px;
-  height: 90px;
-  background-color: #b36a1f;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 18px;
-  border: 3px solid #e9cdad;
-  box-shadow: 0 0 10px #e9cdad;
-}
+  .logo {
+    position: relative;
+    right: 40px;
+    width: 150px;
+    height: 150px;
+    border-radius: 0;
+    background-image: url(../img/logo_Arandua.png);
+    background-size: 470px 250px;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
 .title {
   font-size: 40px;
@@ -1969,7 +1974,7 @@ img {
   background-color: rgba(169, 140, 107, 0.9);
   padding: 30px;
   border-radius: 15px;
-  width: 350px;
+  width: 500px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 25px rgb(255, 255, 255);
@@ -2109,7 +2114,7 @@ img {
   background-color: rgba(169, 140, 107, 0.95);
   padding: 30px;
   border-radius: 15px;
-  width: 350px;
+  width: 500px;
   display: flex;
   flex-direction: column;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
