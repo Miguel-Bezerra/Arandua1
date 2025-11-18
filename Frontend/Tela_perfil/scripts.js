@@ -2,11 +2,19 @@
 
 class ApiConfig {
     static getBaseUrl() {
-        if (window.location.hostname.includes('railway') || 
-            window.location.hostname !== 'localhost') {
+        // Verificar se estamos em produção (Netlify)
+        if (window.location.hostname.includes('netlify.app') || 
+            window.location.hostname.includes('railway')) {
             return 'https://arandua1-production.up.railway.app';
-        } else {
+        } 
+        // Verificar se estamos em desenvolvimento local
+        else if (window.location.hostname === 'localhost' || 
+                 window.location.hostname === '127.0.0.1') {
             return 'http://localhost:3000';
+        }
+        // Fallback para produção
+        else {
+            return 'https://arandua1-production.up.railway.app';
         }
     }
     
@@ -15,16 +23,30 @@ class ApiConfig {
         const url = `${baseUrl}${endpoint}`;
         
         console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+        console.log(`📍 Ambiente: ${window.location.hostname}`);
         
-        const response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            ...options
-        });
-        
-        return response;
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            
+            console.log(`📡 Response Status: ${response.status}`);
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Erro HTTP:', response.status, errorText);
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            return response;
+        } catch (error) {
+            console.error('❌ Erro de fetch:', error);
+            throw error;
+        }
     }
 }
 
@@ -36,6 +58,9 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = '../Tela_Login/tela_login.html';
         return;
     }
+    // Verificar se estamos no mobile
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 É mobile?', isMobile);
 
     setupUserInterface(loggedInUser);
     loadUserProfile(loggedInUser);
@@ -49,7 +74,8 @@ function getLoggedInUser() {
     if (userInfo) {
         try {
             const user = JSON.parse(userInfo);
-            if (user.isLoggedIn) {
+            // Verificar se tem a flag isLoggedIn OU se tem dados básicos do usuário
+            if (user.isLoggedIn || (user.id && user.nome)) {
                 return user;
             }
         } catch (error) {
@@ -81,20 +107,36 @@ function setupBackButton() {
 // Carregar dados do perfil do usuário
 async function loadUserProfile(user) {
     try {
-        console.log('Carregando perfil do usuário ID:', user.id);
-        const response = await ApiConfig.fetch(`/usuarios/${user.id}`);
+        console.log('📍 Ambiente atual:', window.location.hostname);
+        console.log('🌐 URL base que será usada:', ApiConfig.getBaseUrl());
+        
+        const baseUrl = ApiConfig.getBaseUrl();
+        console.log('Carregando perfil do usuário ID:', user.id, 'de:', baseUrl);
+        
+        // Testar conexão primeiro
+        const testResponse = await fetch(`${baseUrl}/health`);
+        console.log('🧪 Teste de conexão:', testResponse.status);
+        
+        const response = await fetch(`${baseUrl}/usuarios/${user.id}`);
         
         if (!response.ok) {
-            throw new Error('Erro ao carregar perfil');
+            throw new Error(`Erro ${response.status} ao carregar perfil`);
         }
 
         const userData = await response.json();
-        console.log('Dados do usuário carregados:', userData);
+        console.log('✅ Dados do usuário carregados:', userData);
         populateProfileForm(userData);
         
     } catch (error) {
-        console.error('Erro ao carregar perfil:', error);
+        console.error('❌ Erro ao carregar perfil:', error);
         showNotification('Erro ao carregar dados do perfil', 'error');
+        
+        // Tentar carregar dados do sessionStorage como fallback
+        const fallbackUser = getLoggedInUser();
+        if (fallbackUser) {
+            console.log('🔄 Usando dados do sessionStorage como fallback');
+            populateProfileForm(fallbackUser);
+        }
     }
 }
 
@@ -146,7 +188,7 @@ function showDefaultProfileImage() {
     }
 }
 
-// Carregar preview da imagem de perfil - FUNÇÃO CORRIGIDA
+// Carregar preview da imagem de perfil
 function loadProfileImagePreview(imageData) {
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
@@ -338,16 +380,16 @@ async function updateUserProfile(user) {
         email: email || null, 
         senhaFornecida: !!senha, 
         removeProfileImage,
-        novaImagem: !!profileImageUpload.files[0]
+        novaImagem: !!profileImageUpload.files[0],
+        ambiente: window.location.hostname
     });
 
-    // Validações
+    // Validações (manter as existentes)
     if (!nome) {
         showNotification('O nome é obrigatório', 'error');
         return;
     }
 
-    // Validação de senha apenas se o usuário preencher algum campo de senha
     if (senha || confirmarSenha) {
         if (!senha) {
             showNotification('Preencha a nova senha', 'error');
@@ -379,10 +421,9 @@ async function updateUserProfile(user) {
     // Apenas incluir senha se for fornecida
     if (senha) {
         updateData.senha = senha;
-        console.log('🔑 Incluindo nova senha na atualização');
     }
 
-    // Processar imagem de perfil
+    // Processar imagem de perfil - CORREÇÃO IMPORTANTE
     if (removeProfileImage) {
         updateData.ft_perfil = null;
         console.log('🗑️ Removendo foto de perfil');
@@ -390,8 +431,15 @@ async function updateUserProfile(user) {
         try {
             console.log('🖼️ Processando nova imagem...');
             const imageBase64 = await convertImageToBase64(profileImageUpload.files[0]);
-            updateData.ft_perfil = imageBase64;
-            console.log('✅ Imagem convertida para Base64');
+            
+            // CORREÇÃO: Extrair apenas a parte base64, sem o prefixo data URL
+            if (imageBase64.startsWith('data:')) {
+                const base64Data = imageBase64.split(',')[1];
+                updateData.ft_perfil = base64Data;
+                console.log('✅ Imagem convertida para Base64 (sem prefixo)');
+            } else {
+                updateData.ft_perfil = imageBase64;
+            }
         } catch (error) {
             console.error('❌ Erro ao processar imagem:', error);
             showNotification('Erro ao processar imagem', 'error');
@@ -401,54 +449,71 @@ async function updateUserProfile(user) {
 
     console.log('📦 Dados para atualização:', { 
         ...updateData, 
-        ft_perfil: updateData.ft_perfil ? 'BASE64_DATA' : updateData.ft_perfil 
+        ft_perfil: updateData.ft_perfil ? `BASE64[${updateData.ft_perfil.length} chars]` : 'null'
     });
 
-    // Fazer requisição para atualizar usuário - COM MELHOR TRATAMENTO DE ERRO
     try {
-    console.log(`🌐 Fazendo PUT para /usuarios/${user.id}`);
-    
-    const response = await ApiConfig.fetch(`/usuarios/${user.id}`, {
-        method: "PUT",
-        body: JSON.stringify(updateData),
-    });
-
-    console.log('📨 Resposta da API:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok
-    });
-
-    if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('✅ Resposta da API (sucesso):', data);
-
-    setTimeout(() => {
-            window.location.href = '../Tela_inicial/inicio.html';
-        }, 1500);
-
-    // Sucesso - continuar com o código atual...
-
-} catch (error) {
-    console.error('❌ Erro na API, tentando fallback local:', error);
-    
-    // Tentar salvar localmente
-    try {
-        const localResult = await saveProfileLocally(user, updateData);
-        showNotification('Perfil salvo localmente (servidor indisponível)', 'success');
+        const baseUrl = ApiConfig.getBaseUrl();
+        console.log(`🌐 Fazendo PUT para ${baseUrl}/usuarios/${user.id}`);
         
+        const response = await fetch(`${baseUrl}/usuarios/${user.id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(updateData),
+        });
+
+        console.log('📨 Resposta da API:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('✅ Perfil atualizado com sucesso:', data);
+
+        // ATUALIZAR SESSION STORAGE COM OS NOVOS DADOS
+        const updatedUserData = {
+            nome: updateData.nome,
+            email: updateData.email,
+            ft_perfil: updateData.ft_perfil // Incluir a nova foto
+        };
+        updateUserSession(updatedUserData);
+
+        showNotification('✅ Perfil atualizado com sucesso!', 'success');
+
+        // Redirecionar após um breve delay
         setTimeout(() => {
             window.location.href = '../Tela_inicial/inicio.html';
         }, 1500);
+
+    } catch (error) {
+        console.error('❌ Erro na API:', error);
         
-    } catch (localError) {
-        console.error('❌ Erro no fallback local:', localError);
-        showNotification('Erro ao salvar perfil. Tente novamente.', 'error');
+        // Tentar salvar localmente como fallback
+        try {
+            const localResult = await saveProfileLocally(user, updateData);
+            
+            // Atualizar session storage mesmo no fallback
+            updateUserSession(updateData);
+            
+            showNotification('✅ Perfil salvo localmente (servidor indisponível)', 'success');
+            
+            setTimeout(() => {
+                window.location.href = '../Tela_inicial/inicio.html';
+            }, 1500);
+            
+        } catch (localError) {
+            console.error('❌ Erro no fallback local:', localError);
+            showNotification('❌ Erro ao salvar perfil. Tente novamente.', 'error');
+        }
     }
-}
 }
 
 async function saveProfileLocally(user, updateData) {
@@ -783,6 +848,29 @@ const dynamicStyles = `
         background-color: #f5f5f5;
     }
 `;
+
+function updateUserSession(newUserData) {
+    try {
+        // Atualizar sessionStorage
+        const currentUser = getLoggedInUser();
+        const updatedUser = {
+            ...currentUser,
+            ...newUserData,
+            ft_perfil: newUserData.ft_perfil // Garantir que a foto seja atualizada
+        };
+        
+        sessionStorage.setItem('arandua_current_user', JSON.stringify(updatedUser));
+        console.log('✅ SessionStorage atualizado com nova foto');
+        
+        // Disparar evento customizado para notificar outras páginas
+        window.dispatchEvent(new CustomEvent('userProfileUpdated', {
+            detail: updatedUser
+        }));
+        
+    } catch (error) {
+        console.error('❌ Erro ao atualizar sessionStorage:', error);
+    }
+}
 
 const styleSheet = document.createElement('style');
 styleSheet.textContent = dynamicStyles;

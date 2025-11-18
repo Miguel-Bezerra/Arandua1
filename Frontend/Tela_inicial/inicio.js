@@ -74,14 +74,17 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function getLoggedInUser() {
-    try {
-        const userData = sessionStorage.getItem('arandua_current_user');
-        if (userData) {
-            const parsed = JSON.parse(userData);
-            return parsed.user || parsed;
+    const userInfo = sessionStorage.getItem('arandua_current_user');
+    if (userInfo) {
+        try {
+            const user = JSON.parse(userInfo);
+            // Verificar se tem a flag isLoggedIn OU se tem dados básicos do usuário
+            if (user.isLoggedIn || (user.id && user.nome)) {
+                return user;
+            }
+        } catch (error) {
+            console.error('Erro ao parsear usuário:', error);
         }
-    } catch (error) {
-        console.error('❌ Erro ao obter usuário:', error);
     }
     return null;
 }

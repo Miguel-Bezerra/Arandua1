@@ -244,7 +244,8 @@ async function handleCadastroSucesso(dados, nome) {
         email: document.getElementById("email").value.trim() || null,
         num_postagens: 0,
         foto_perfil: null,
-        loginTime: new Date().toISOString()
+        loginTime: new Date().toISOString(),
+        isLoggedIn: true  // ← CORREÇÃO IMPORTANTE: Adicionar esta flag
     };
     
     console.log('Salvando usuário no sessionStorage:', userInfo);

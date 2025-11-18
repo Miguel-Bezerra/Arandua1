@@ -359,16 +359,15 @@ async function handleSuccessfulLogin(user) {
     
     // Salvar informações do usuário no sessionStorage
     const userInfo = {
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        num_postagens: user.num_postagens,
-        loginTime: new Date().toISOString(),
-        isLoggedIn: true
+        id: userData.id,
+        nome: userData.nome,
+        email: userData.email,
+        ft_perfil: userData.ft_perfil,
+        isLoggedIn: true,  // ← Importante!
+        loginTime: new Date().toISOString()
     };
-    
     sessionStorage.setItem('arandua_current_user', JSON.stringify(userInfo));
-    
+        
     // Mostrar mensagem de sucesso
     showSuccess(`Bem-vindo, ${user.nome}!`);
     

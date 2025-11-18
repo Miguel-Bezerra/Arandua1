@@ -22,7 +22,8 @@ function getLoggedInUser() {
     if (userInfo) {
         try {
             const user = JSON.parse(userInfo);
-            if (user.isLoggedIn) {
+            // Verificar se tem a flag isLoggedIn OU se tem dados básicos do usuário
+            if (user.isLoggedIn || (user.id && user.nome)) {
                 return user;
             }
         } catch (error) {
