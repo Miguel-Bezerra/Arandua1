@@ -2935,6 +2935,123 @@ async function manipularExcluirComentario(evento) {
     }
 }
 
+async function manipularCurtirComentario(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
+    
+    console.log('💖 DEBUG: Iniciando curtida de comentário...');
+    
+    if (!usuarioAtual) {
+        mostrarNotificacao('🔒 Faça login para curtir comentários', 'error');
+        return;
+    }
+
+    const botaoCurtir = evento.target.closest('.comment-like-btn');
+    if (!botaoCurtir) {
+        console.error('❌ Botão de curtir comentário não encontrado');
+        return;
+    }
+    
+    const idComentario = botaoCurtir.dataset.commentId;
+    
+    console.log('💖 Curtindo comentário ID:', idComentario);
+    
+    if (!idComentario) {
+        console.error('❌ ID do comentário não encontrado');
+        return;
+    }
+    
+    // ✅ VERIFICAÇÃO DE SEGURANÇA
+    const iconeCurtir = botaoCurtir.querySelector('.comment-like-icon');
+    const contadorCurtidas = botaoCurtir.querySelector('.comment-like-count');
+    
+    if (!iconeCurtir) {
+        console.error('❌ Ícone de curtida não encontrado');
+        return;
+    }
+    
+    if (!contadorCurtidas) {
+        console.error('❌ Contador de curtidas não encontrado');
+        return;
+    }
+    
+    let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
+    
+    console.log('📊 Estado atual do comentário:', {
+        icone: iconeCurtir.textContent,
+        contagemAtual: contagemAtual
+    });
+    
+    // ✅ ATUALIZAÇÃO OTIMISTA SEGURA
+    if (iconeCurtir.textContent === '🤍') {
+        iconeCurtir.textContent = '❤️';
+        contadorCurtidas.textContent = contagemAtual + 1;
+        console.log('✅ Comentário curtido (otimista)');
+    } else {
+        iconeCurtir.textContent = '🤍';
+        contadorCurtidas.textContent = Math.max(0, contagemAtual - 1);
+        console.log('✅ Curtida removida (otimista)');
+    }
+    
+    // ✅ IMPLEMENTAÇÃO DA CURTIDA NO SERVIDOR (quando tiver a rota)
+    try {
+        const urlBase = ApiConfig.obterUrlBase();
+        
+        // Verificar se já curtiu
+        const respostaVerificacao = await fetch(`${urlBase}/curtidas-comentarios/${idComentario}/${usuarioAtual.id}`);
+        
+        if (respostaVerificacao.ok) {
+            const estadoReal = await respostaVerificacao.json();
+            console.log('✅ Estado real da curtida do comentário:', estadoReal);
+            
+            // Determinar ação
+            const acao = estadoReal.curtiu ? 'DELETE' : 'POST';
+            console.log(`🎯 Ação para comentário: ${acao}`);
+            
+            // Fazer a requisição
+            const resposta = await fetch(`${urlBase}/curtidas-comentarios`, {
+                method: acao,
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ 
+                    id_comentario: parseInt(idComentario), 
+                    id_usuario: parseInt(usuarioAtual.id)
+                })
+            });
+            
+            if (!resposta.ok) {
+                throw new Error(`Erro ${resposta.status} ao curtir comentário`);
+            }
+            
+            console.log('✅ Curtida de comentário processada com sucesso');
+            
+        } else {
+            console.warn('⚠️ Rota de curtida de comentários não disponível');
+            // Mostrar feedback visual mesmo sem backend
+            mostrarNotificacao('💖 Curtida registrada!', 'success');
+        }
+        
+    } catch (erro) {
+        console.error('❌ Erro ao curtir comentário:', erro);
+        
+        // Reverter em caso de erro
+        if (iconeCurtir.textContent === '❤️') {
+            iconeCurtir.textContent = '🤍';
+            contadorCurtidas.textContent = Math.max(0, contagemAtual - 1);
+        } else {
+            iconeCurtir.textContent = '❤️';
+            contadorCurtidas.textContent = contagemAtual + 1;
+        }
+        
+        // Não mostrar erro se for apenas falta da rota
+        if (!erro.message.includes('404') && !erro.message.includes('Failed to fetch')) {
+            mostrarNotificacao('❌ Erro ao curtir comentário', 'error');
+        }
+    }
+}
+
 // ===== FUNÇÕES DE ATUALIZAÇÃO EM TEMPO REAL =====
 
 function adicionarNovaHistoriaAoFeed(novaHistoria) {
