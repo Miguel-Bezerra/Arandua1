@@ -107,17 +107,19 @@ function setupBackButton() {
 // Carregar dados do perfil do usuário
 async function loadUserProfile(user) {
     try {
-        console.log('📍 Ambiente atual:', window.location.hostname);
-        console.log('🌐 URL base que será usada:', ApiConfig.getBaseUrl());
+        console.log('Carregando perfil do usuário ID:', user.id);
         
         const baseUrl = ApiConfig.getBaseUrl();
-        console.log('Carregando perfil do usuário ID:', user.id, 'de:', baseUrl);
         
-        // Testar conexão primeiro
-        const testResponse = await fetch(`${baseUrl}/health`);
-        console.log('🧪 Teste de conexão:', testResponse.status);
-        
-        const response = await fetch(`${baseUrl}/usuarios/${user.id}`);
+        // TIMEOUT para evitar espera longa
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos
+
+        const response = await fetch(`${baseUrl}/usuarios/${user.id}`, {
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
         
         if (!response.ok) {
             throw new Error(`Erro ${response.status} ao carregar perfil`);
@@ -129,9 +131,14 @@ async function loadUserProfile(user) {
         
     } catch (error) {
         console.error('❌ Erro ao carregar perfil:', error);
-        showNotification('Erro ao carregar dados do perfil', 'error');
         
-        // Tentar carregar dados do sessionStorage como fallback
+        if (error.name === 'AbortError') {
+            showNotification('⏰ Tempo de carregamento esgotado', 'error');
+        } else {
+            showNotification('Erro ao carregar dados do perfil', 'error');
+        }
+        
+        // Usar dados do sessionStorage IMEDIATAMENTE como fallback
         const fallbackUser = getLoggedInUser();
         if (fallbackUser) {
             console.log('🔄 Usando dados do sessionStorage como fallback');
@@ -142,26 +149,18 @@ async function loadUserProfile(user) {
 
 // Preencher formulário com dados do usuário
 function populateProfileForm(userData) {
+    // Preencher campos básicos primeiro (mais rápido)
     document.getElementById('profileName').value = userData.nome || '';
     document.getElementById('profileEmail').value = userData.email || '';
     
-    console.log('Preenchendo formulário:', {
-        nome: userData.nome,
-        email: userData.email,
-        temFoto: !!userData.ft_perfil,
-        tipoFoto: typeof userData.ft_perfil,
-        valorFoto: userData.ft_perfil ? userData.ft_perfil.substring(0, 50) + '...' : 'null'
-    });
-    
-    // Carregar preview da foto de perfil se existir
-    if (userData.ft_perfil) {
-        console.log('Carregando foto de perfil existente');
-        loadProfileImagePreview(userData.ft_perfil);
-    } else {
-        console.log('Nenhuma foto de perfil encontrada');
-        // Mostrar imagem padrão
-        showDefaultProfileImage();
-    }
+    // Carregar imagem em segundo plano (não bloquear a UI)
+    setTimeout(() => {
+        if (userData.ft_perfil) {
+            loadProfileImagePreview(userData.ft_perfil);
+        } else {
+            showDefaultProfileImage();
+        }
+    }, 100);
 }
 
 // Mostrar imagem de perfil padrão
@@ -193,92 +192,74 @@ function loadProfileImagePreview(imageData) {
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewContainer = document.getElementById('imagePreviewContainer');
     
-    console.log('Carregando preview da imagem:', {
-        temDados: !!imageData,
-        tipo: typeof imageData,
-        inicio: imageData ? imageData.substring(0, 30) : 'null'
-    });
+    if (!imagePreview || !imagePreviewContainer) return;
     
-    if (imagePreview && imagePreviewContainer) {
-        // Se a imageData for null, undefined ou string vazia
-        if (!imageData) {
-            console.log('Sem dados de imagem, mostrando padrão');
-            showDefaultProfileImage();
-            return;
-        }
-        
-        // Se a imageData já for uma URL de data (base64)
-        if (imageData.startsWith('data:')) {
-            console.log('Imagem já está em formato data URL');
+    // Se não há dados de imagem, mostrar padrão IMEDIATAMENTE
+    if (!imageData) {
+        showDefaultProfileImage();
+        return;
+    }
+    
+    // Otimização: Se já for uma URL de data, usar diretamente
+    if (imageData.startsWith('data:')) {
+        imagePreview.src = imageData;
+        imagePreviewContainer.classList.remove('hidden');
+        return;
+    }
+    
+    // Otimização: Se for URL externa, carregar com timeout
+    if (imageData.startsWith('http')) {
+        const img = new Image();
+        img.onload = function() {
             imagePreview.src = imageData;
             imagePreviewContainer.classList.remove('hidden');
-            console.log('Preview da imagem carregado com sucesso (data URL)');
-            return;
-        }
+        };
+        img.onerror = function() {
+            showDefaultProfileImage();
+        };
+        img.src = imageData;
         
-        // Se a imageData for uma URL externa
-        if (imageData.startsWith('http')) {
-            console.log('Imagem é uma URL externa');
-            imagePreview.src = imageData;
-            imagePreview.onload = function() {
-                imagePreviewContainer.classList.remove('hidden');
-                console.log('Preview da imagem carregado com sucesso (URL externa)');
-            };
-            imagePreview.onerror = function() {
-                console.error('Erro ao carregar imagem da URL externa');
+        // Timeout para imagem externa
+        setTimeout(() => {
+            if (imagePreview.src !== imageData) {
                 showDefaultProfileImage();
-            };
-            return;
-        }
+            }
+        }, 3000);
+        return;
+    }
+    
+    // Para base64 sem prefixo, processar rapidamente
+    if (typeof imageData === 'string' && imageData.length > 100) {
+        // Tentar apenas JPEG e PNG (mais comuns)
+        const formats = ['image/jpeg', 'image/png'];
         
-        // Se a imageData for uma string base64 sem o prefixo
-        if (typeof imageData === 'string' && imageData.length > 100) {
-            console.log('Imagem parece ser base64 sem prefixo, tentando adicionar prefixo');
-            // Tentar diferentes formatos
-            const formats = ['image/jpeg', 'image/png', 'image/gif'];
-            let loaded = false;
-            
-            for (let format of formats) {
-                const testUrl = `data:${format};base64,${imageData}`;
-                const testImage = new Image();
-                
-                testImage.onload = function() {
-                    if (!loaded) {
-                        loaded = true;
-                        console.log(`Imagem carregada com sucesso no formato ${format}`);
-                        imagePreview.src = testUrl;
-                        imagePreviewContainer.classList.remove('hidden');
-                    }
-                };
-                
-                testImage.onerror = function() {
-                    console.log(`Formato ${format} falhou`);
-                };
-                
-                testImage.src = testUrl;
+        const tryFormat = (index) => {
+            if (index >= formats.length) {
+                showDefaultProfileImage();
+                return;
             }
             
-            // Se nenhum formato funcionar após um tempo, mostrar padrão
-            setTimeout(() => {
-                if (!loaded) {
-                    console.log('Nenhum formato de imagem funcionou, mostrando padrão');
-                    showDefaultProfileImage();
-                }
-            }, 1000);
+            const testUrl = `data:${formats[index]};base64,${imageData}`;
+            const testImage = new Image();
             
-            return;
-        }
+            testImage.onload = function() {
+                imagePreview.src = testUrl;
+                imagePreviewContainer.classList.remove('hidden');
+            };
+            
+            testImage.onerror = function() {
+                tryFormat(index + 1);
+            };
+            
+            testImage.src = testUrl;
+        };
         
-        // Se chegou aqui, não conseguiu carregar a imagem
-        console.log('Não foi possível carregar a imagem, mostrando padrão');
-        showDefaultProfileImage();
-        
-    } else {
-        console.error('Elementos de preview não encontrados:', {
-            imagePreview: !!imagePreview,
-            imagePreviewContainer: !!imagePreviewContainer
-        });
+        tryFormat(0);
+        return;
     }
+    
+    // Fallback rápido
+    showDefaultProfileImage();
 }
 
 // Configurar funcionalidades do perfil
@@ -374,40 +355,18 @@ async function updateUserProfile(user) {
     const profileImageUpload = document.getElementById('profileImageUpload');
     const removeProfileImage = document.getElementById('removeProfileImage').value === 'true';
 
-    console.log('🔧 Atualizando perfil:', { 
-        userId: user.id,
-        nome, 
-        email: email || null, 
-        senhaFornecida: !!senha, 
-        removeProfileImage,
-        novaImagem: !!profileImageUpload.files[0],
-        ambiente: window.location.hostname
-    });
-
-    // Validações (manter as existentes)
+    // Validações RÁPIDAS
     if (!nome) {
         showNotification('O nome é obrigatório', 'error');
         return;
     }
 
     if (senha || confirmarSenha) {
-        if (!senha) {
-            showNotification('Preencha a nova senha', 'error');
-            return;
-        }
-        
-        if (!confirmarSenha) {
-            showNotification('Confirme a nova senha', 'error');
-            return;
-        }
-        
-        if (senha !== confirmarSenha) {
-            showNotification('As senhas não coincidem', 'error');
-            return;
-        }
-
-        if (senha.length < 6) {
-            showNotification('A senha deve ter pelo menos 6 caracteres', 'error');
+        if (!senha || !confirmarSenha || senha !== confirmarSenha || senha.length < 6) {
+            if (!senha) showNotification('Preencha a nova senha', 'error');
+            else if (!confirmarSenha) showNotification('Confirme a nova senha', 'error');
+            else if (senha !== confirmarSenha) showNotification('As senhas não coincidem', 'error');
+            else if (senha.length < 6) showNotification('A senha deve ter pelo menos 6 caracteres', 'error');
             return;
         }
     }
@@ -423,22 +382,21 @@ async function updateUserProfile(user) {
         updateData.senha = senha;
     }
 
-    // Processar imagem de perfil - CORREÇÃO IMPORTANTE
+    // Processar imagem de perfil de forma ASSÍNCRONA e RÁPIDA
     if (removeProfileImage) {
         updateData.ft_perfil = null;
-        console.log('🗑️ Removendo foto de perfil');
     } else if (profileImageUpload.files[0]) {
         try {
-            console.log('🖼️ Processando nova imagem...');
-            const imageBase64 = await convertImageToBase64(profileImageUpload.files[0]);
+            // Limitar tamanho da imagem ANTES de processar
+            const file = profileImageUpload.files[0];
+            if (file.size > 2 * 1024 * 1024) { // 2MB max
+                showNotification('Imagem muito grande. Máximo 2MB.', 'error');
+                return;
+            }
             
-            // CORREÇÃO: Extrair apenas a parte base64, sem o prefixo data URL
+            const imageBase64 = await convertImageToBase64(file);
             if (imageBase64.startsWith('data:')) {
-                const base64Data = imageBase64.split(',')[1];
-                updateData.ft_perfil = base64Data;
-                console.log('✅ Imagem convertida para Base64 (sem prefixo)');
-            } else {
-                updateData.ft_perfil = imageBase64;
+                updateData.ft_perfil = imageBase64.split(',')[1];
             }
         } catch (error) {
             console.error('❌ Erro ao processar imagem:', error);
@@ -447,28 +405,23 @@ async function updateUserProfile(user) {
         }
     }
 
-    console.log('📦 Dados para atualização:', { 
-        ...updateData, 
-        ft_perfil: updateData.ft_perfil ? `BASE64[${updateData.ft_perfil.length} chars]` : 'null'
-    });
-
     try {
         const baseUrl = ApiConfig.getBaseUrl();
-        console.log(`🌐 Fazendo PUT para ${baseUrl}/usuarios/${user.id}`);
         
+        // TIMEOUT para update
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
         const response = await fetch(`${baseUrl}/usuarios/${user.id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(updateData),
+            signal: controller.signal
         });
 
-        console.log('📨 Resposta da API:', {
-            status: response.status,
-            statusText: response.statusText,
-            ok: response.ok
-        });
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorText = await response.text();
@@ -476,42 +429,37 @@ async function updateUserProfile(user) {
         }
 
         const data = await response.json();
-        console.log('✅ Perfil atualizado com sucesso:', data);
 
-        // ATUALIZAR SESSION STORAGE COM OS NOVOS DADOS
-        const updatedUserData = {
+        // Atualizar session storage IMEDIATAMENTE
+        updateUserSession({
             nome: updateData.nome,
             email: updateData.email,
-            ft_perfil: updateData.ft_perfil // Incluir a nova foto
-        };
-        updateUserSession(updatedUserData);
+            ft_perfil: updateData.ft_perfil
+        });
 
         showNotification('✅ Perfil atualizado com sucesso!', 'success');
 
-        // Redirecionar após um breve delay
+        // Redirecionar mais rápido
         setTimeout(() => {
             window.location.href = '../Tela_inicial/inicio.html';
-        }, 1500);
+        }, 800); // Reduzido de 1500 para 800ms
 
     } catch (error) {
         console.error('❌ Erro na API:', error);
         
-        // Tentar salvar localmente como fallback
-        try {
-            const localResult = await saveProfileLocally(user, updateData);
-            
-            // Atualizar session storage mesmo no fallback
-            updateUserSession(updateData);
-            
-            showNotification('✅ Perfil salvo localmente (servidor indisponível)', 'success');
-            
+        if (error.name === 'AbortError') {
+            showNotification('⏰ Tempo de atualização esgotado', 'error');
+        } else {
+            // Fallback rápido
+            updateUserSession({
+                nome: updateData.nome,
+                email: updateData.email,
+                ft_perfil: updateData.ft_perfil
+            });
+            showNotification('✅ Alterações salvas localmente', 'success');
             setTimeout(() => {
                 window.location.href = '../Tela_inicial/inicio.html';
-            }, 1500);
-            
-        } catch (localError) {
-            console.error('❌ Erro no fallback local:', localError);
-            showNotification('❌ Erro ao salvar perfil. Tente novamente.', 'error');
+            }, 800);
         }
     }
 }

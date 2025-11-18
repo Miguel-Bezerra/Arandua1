@@ -3,53 +3,39 @@ console.log('🔧 scripts.js está carregando...');
 
 class ApiConfig {
     static getBaseUrl() {
-        // Usar SEMPRE o Railway diretamente - removendo o proxy Netlify
-        return 'https://arandua1-production.up.railway.app';
+        if (window.location.hostname.includes('netlify.app')) {
+            // Usar proxy do Netlify
+            return '/api';
+        } else if (window.location.hostname === 'localhost' || 
+                  window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:3000';
+        } else {
+            return 'https://arandua1-production.up.railway.app';
+        }
     }
     
     static async fetch(endpoint, options = {}) {
-    const baseUrl = this.getBaseUrl();
-    const url = `${baseUrl}${endpoint}`;
-    
-    console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
-    
-    try {
-        const response = await fetch(url, {
-            headers: {
-                'Content-Type': 'application/json',
-                ...options.headers
-            },
-            mode: 'cors',
-            signal: controller.signal,
-            ...options
-        });
+        const baseUrl = this.getBaseUrl();
+        const url = `${baseUrl}${endpoint}`;
         
-        clearTimeout(timeoutId);
+        console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
         
-        console.log(`📡 Response Status: ${response.status}`);
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Erro HTTP:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            });
+            
+            return response;
+        } catch (error) {
+            console.error('❌ Erro de fetch:', error);
+            throw error;
         }
-        
-        return response;
-    } catch (error) {
-        clearTimeout(timeoutId);
-        
-        if (error.name === 'AbortError') {
-            console.error('❌ Timeout na requisição');
-            throw new Error('Timeout: Servidor não respondeu em 10 segundos');
-        }
-        
-        console.error('❌ Erro de fetch:', error);
-        throw error;
     }
-}}
+}
 
 let currentUser = null;
 let allPosts = [];
@@ -74,17 +60,14 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function getLoggedInUser() {
-    const userInfo = sessionStorage.getItem('arandua_current_user');
-    if (userInfo) {
-        try {
-            const user = JSON.parse(userInfo);
-            // Verificar se tem a flag isLoggedIn OU se tem dados básicos do usuário
-            if (user.isLoggedIn || (user.id && user.nome)) {
-                return user;
-            }
-        } catch (error) {
-            console.error('Erro ao parsear usuário:', error);
+    try {
+        const userData = sessionStorage.getItem('arandua_current_user');
+        if (userData) {
+            const parsed = JSON.parse(userData);
+            return parsed.user || parsed;
         }
+    } catch (error) {
+        console.error('❌ Erro ao obter usuário:', error);
     }
     return null;
 }
@@ -599,30 +582,25 @@ async function loadPosts() {
         debugDOM();
         
         const baseUrl = ApiConfig.getBaseUrl();
-        console.log('🌐 URL base definitiva:', baseUrl);
+        console.log('🌐 URL base:', baseUrl);
         
-        // Testar primeiro se o servidor está respondendo
-        console.log('🔍 Testando conexão com o servidor...');
-        const testResponse = await fetch(`${baseUrl}/health`, {
+        const response = await fetch(`${baseUrl}/historias`, {
             method: 'GET',
             headers: {
+                'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             mode: 'cors'
         });
-        
-        if (!testResponse.ok) {
-            throw new Error(`Servidor não está respondendo: ${testResponse.status}`);
+
+        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Response ok?', response.ok);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Erro HTTP:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${response.statusText || 'Erro no servidor'}`);
         }
-        
-        console.log('✅ Servidor está respondendo, carregando histórias...');
-        
-        const response = await ApiConfig.fetch('/historias', {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
 
         const historias = await response.json();
         console.log(`✅ ${historias.length} histórias carregadas com sucesso`);
@@ -633,62 +611,18 @@ async function loadPosts() {
         return historias;
         
     } catch (error) {
-        console.error('❌ Erro ao carregar histórias:', error);
+        console.error('❌ Erro detalhado ao carregar histórias:', {
+            message: error.message,
+            name: error.name,
+            stack: error.stack
+        });
         
-        // Mostrar erro específico para o usuário
-        let errorMessage = 'Erro ao carregar histórias';
+        showNotification('Erro ao carregar histórias: ' + error.message, 'error');
+        showEmptyMessage();
         
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-            errorMessage = '❌ Erro de conexão. Verifique sua internet e tente novamente.';
-        } else if (error.message.includes('404')) {
-            errorMessage = '❌ Servidor indisponível no momento. Tente novamente mais tarde.';
-        } else if (error.message.includes('CORS')) {
-            errorMessage = '❌ Erro de configuração do servidor.';
-        }
-        
-        showNotification(errorMessage, 'error');
-        
-        // Carregar dados de exemplo como fallback
-        loadSampleData();
-        
+        // Retorna array vazio para não quebrar a aplicação
         return [];
     }
-}
-
-// Função de fallback com dados de exemplo
-function loadSampleData() {
-    console.log('📝 Carregando dados de exemplo...');
-    
-    const samplePosts = [
-        {
-            id_historia: 1,
-            id: 1,
-            titulo: "Bem-vindo ao Aranduá!",
-            conteudo: "Esta é uma história de exemplo enquanto configuramos a conexão com o servidor. Em breve você verá as histórias reais aqui!",
-            categoria: "outros",
-            id_usuario: 1,
-            autor: "Sistema",
-            num_curtidas: 5,
-            data_criacao: new Date().toISOString(),
-            imagem_capa: null
-        },
-        {
-            id_historia: 2,
-            id: 2,
-            titulo: "Como usar a plataforma",
-            conteudo: "Clique no botão '+' para criar sua primeira história. Você pode filtrar por categorias e interagir com as histórias de outros usuários.",
-            categoria: "conhecimentos", 
-            id_usuario: 1,
-            autor: "Sistema",
-            num_curtidas: 3,
-            data_criacao: new Date().toISOString(),
-            imagem_capa: null
-        }
-    ];
-    
-    allPosts = samplePosts;
-    renderPosts(samplePosts);
-    showNotification('📝 Modo demonstração: dados de exemplo carregados', 'info');
 }
 
 // ===== RENDERIZAÇÃO =====

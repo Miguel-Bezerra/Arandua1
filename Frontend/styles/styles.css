@@ -216,6 +216,40 @@ body:not(.about-page) .user-area {
     }
 }
 
+/* OTIMIZAÇÕES DE PERFORMANCE */
+.post, .story-item, .comment-item {
+    will-change: transform;
+    contain: layout style;
+}
+
+.content {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
+}
+
+/* ANIMAÇÕES OTIMIZADAS */
+.like-btn, .comment-btn, .action-btn {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    perspective: 1000px;
+}
+
+/* TRANSITIONS MAIS RÁPIDAS */
+.post, .comment-item {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* LOADING STATES */
+.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
 /* RESPONSIVIDADE */
 
 @media (max-width: 1024px) {

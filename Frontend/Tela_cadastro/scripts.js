@@ -177,19 +177,41 @@ async function handleCadastro() {
 
         console.log('Enviando para API:', novoUsuario);
 
-         const dados = await ApiConfig.fetch('/usuarios', {
+        // TIMEOUT para evitar espera infinita
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
+
+        const baseUrl = ApiConfig.getBaseUrl();
+        const response = await fetch(`${baseUrl}/usuarios`, {
             method: "POST",
-            body: JSON.stringify(novoUsuario)
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(novoUsuario),
+            signal: controller.signal
         });
 
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const dados = await response.json();
+        
         if (dados) {
             await handleCadastroSucesso(dados, nome);
         } else {
-            handleCadastroErro(dados.message || 'Erro ao criar usuário');
+            handleCadastroErro(dados?.message || 'Erro ao criar usuário');
         }
     } catch (erro) {
         console.error("Erro ao enviar requisição:", erro);
-        showError("❌ Erro ao conectar com o servidor. Verifique se o servidor está rodando.");
+        if (erro.name === 'AbortError') {
+            showError("⏰ Tempo de conexão esgotado. Tente novamente.");
+        } else {
+            showError("❌ Erro ao conectar com o servidor.");
+        }
     } finally {
         showLoading(false);
     }
@@ -236,7 +258,7 @@ function isValidEmail(email) {
 async function handleCadastroSucesso(dados, nome) {
     console.log('Cadastro bem-sucedido:', dados);
     
-    showSuccess("✅ Cadastro realizado com sucesso! Redirecionando...");
+    showSuccess("✅ Cadastro realizado com sucesso!");
     
     const userInfo = {
         id: dados.id || dados.lastID || Date.now(),
@@ -245,21 +267,16 @@ async function handleCadastroSucesso(dados, nome) {
         num_postagens: 0,
         foto_perfil: null,
         loginTime: new Date().toISOString(),
-        isLoggedIn: true  // ← CORREÇÃO IMPORTANTE: Adicionar esta flag
+        isLoggedIn: true
     };
     
-    console.log('Salvando usuário no sessionStorage:', userInfo);
-    
+    // Salvar imediatamente sem delay desnecessário
     sessionStorage.setItem('arandua_current_user', JSON.stringify(userInfo));
     
-    const saved = sessionStorage.getItem('arandua_current_user');
-    console.log('Verificação - Dados salvos:', saved ? JSON.parse(saved) : 'Falha ao salvar');
-    
-    // Redirecionar com timeout
+    // Redirecionar mais rápido
     setTimeout(() => {
-        console.log('Redirecionando para home...');
         window.location.href = '../Tela_inicial/inicio.html';
-    }, 1500);
+    }, 800); // Reduzido de 1500 para 800ms
 }
 
 function handleCadastroErro(mensagem) {

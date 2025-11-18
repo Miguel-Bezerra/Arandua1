@@ -160,68 +160,109 @@ function setupLoginFunctionality() {
 
 // Função principal de login
 async function handleLogin() {
-    console.log('Iniciando processo de login...');
-    
-    const usuario = document.getElementById('usuario').value.trim();
-    const senha = document.getElementById('senha').value;
+    console.log('🔐 Iniciando processo de login...');
 
-    console.log('Dados:', { usuario, senha });
+    // Pega os valores dos campos
+    const email = document.getElementById("email").value.trim();
+    const senha = document.getElementById("senha").value;
 
-    // Validação básica
-    if (!validateInputs(usuario, senha)) {
+    // Validação
+    if (!validateLoginInputs(email, senha)) {
         return;
     }
 
-    // Mostrar loading
     showLoading(true);
 
     try {
-        // Tentar fazer login
-        const loginResult = await attemptLogin(usuario, senha);
-        
-        if (loginResult.success) {
-            // Login bem-sucedido
-            await handleSuccessfulLogin(loginResult.user);
-        } else {
-            // Login falhou
-            handleFailedLogin(loginResult.message);
+        const loginData = {
+            email: email,
+            senha: senha
+        };
+
+        console.log('📤 Enviando dados para login:', { email: email, senha: '***' });
+
+        const baseUrl = ApiConfig.getBaseUrl();
+        console.log('🌐 URL base:', baseUrl);
+
+        // TIMEOUT para evitar espera infinita
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch(`${baseUrl}/login`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(loginData),
+            signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        console.log('📡 Status da resposta:', response.status);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ Erro HTTP:', response.status, errorText);
+            
+            if (response.status === 401) {
+                throw new Error('Email ou senha incorretos');
+            } else if (response.status === 404) {
+                throw new Error('Usuário não encontrado');
+            } else {
+                throw new Error(`Erro ${response.status}: ${errorText}`);
+            }
         }
-    } catch (error) {
-        console.error('Erro durante o login:', error);
-        showError('Erro de conexão. Verifique se o servidor está rodando.');
+
+        // 🎯 CORREÇÃO: Processar resposta
+        const responseData = await response.json();
+        console.log('✅ Resposta do servidor:', responseData);
+        
+        // Chamar função de sucesso com os dados
+        await handleSuccessfulLogin(responseData, email, senha);
+
+    } catch (erro) {
+        console.error("❌ Erro durante o login:", erro);
+        
+        if (erro.name === 'AbortError') {
+            showError("⏰ Tempo de conexão esgotado. Tente novamente.");
+        } else {
+            showError(`❌ ${erro.message}`);
+        }
+        
+        // Limpar senha em caso de erro
+        document.getElementById("senha").value = '';
+        document.getElementById("senha").focus();
     } finally {
-        // Esconder loading
         showLoading(false);
     }
 }
 
 // Validar inputs
 function validateInputs(usuario, senha) {
-    if (!usuario) {
-        showError('Por favor, insira seu usuário ou email.');
-        document.getElementById('usuario').focus();
+     if (!email || !senha) {
+        showError("⚠️ Email e senha são obrigatórios.");
         return false;
     }
 
-    if (!senha) {
-        showError('Por favor, insira sua senha.');
-        document.getElementById('senha').focus();
-        return false;
-    }
-
-    if (usuario.length < 3) {
-        showError('Usuário deve ter pelo menos 3 caracteres.');
-        document.getElementById('usuario').focus();
+    if (!isValidEmail(email)) {
+        showError("❌ Por favor, insira um email válido.");
+        document.getElementById("email").focus();
         return false;
     }
 
     if (senha.length < 6) {
-        showError('Senha deve ter pelo menos 6 caracteres.');
-        document.getElementById('senha').focus();
+        showError("❌ A senha deve ter pelo menos 6 caracteres.");
+        document.getElementById("senha").focus();
         return false;
     }
 
     return true;
+}
+
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
 // Tentar fazer login via API - CORRIGIDO para suas rotas
@@ -354,27 +395,66 @@ async function attemptLoginAlternative(usuario, senha) {
 }
 
 // Manipular login bem-sucedido
-async function handleSuccessfulLogin(user) {
-    console.log('Login bem-sucedido:', user);
-    
-    // Salvar informações do usuário no sessionStorage
-    const userInfo = {
-        id: userData.id,
-        nome: userData.nome,
-        email: userData.email,
-        ft_perfil: userData.ft_perfil,
-        isLoggedIn: true,  // ← Importante!
-        loginTime: new Date().toISOString()
-    };
-    sessionStorage.setItem('arandua_current_user', JSON.stringify(userInfo));
+async function handleSuccessfulLogin(response, email, senha) {
+    try {
+        console.log('✅ Login bem-sucedido, processando resposta...');
         
-    // Mostrar mensagem de sucesso
-    showSuccess(`Bem-vindo, ${user.nome}!`);
-    
-    // Redirecionar após breve delay
-    setTimeout(() => {
-        window.location.href = '../Tela_inicial/inicio.html';
-    }, 1500);
+        // 🎯 CORREÇÃO: Verificar se a resposta tem dados
+        let userData;
+        
+        if (response && typeof response === 'object') {
+            // Se a resposta já é um objeto JSON
+            userData = response;
+        } else {
+            // Tentar parsear se for string
+            userData = JSON.parse(response);
+        }
+        
+        console.log('📦 Dados do usuário recebidos:', userData);
+
+        // 🎯 CORREÇÃO: Validar dados essenciais
+        if (!userData || (!userData.id && !userData.userId)) {
+            console.error('❌ Dados do usuário incompletos:', userData);
+            throw new Error('Dados do usuário incompletos na resposta do servidor');
+        }
+
+        // 🎯 CORREÇÃO: Garantir estrutura correta
+        const userInfo = {
+            id: userData.id || userData.userId || userData.ID,
+            nome: userData.nome || userData.username || userData.Nome || 'Usuário',
+            email: email || userData.email || null,
+            ft_perfil: userData.ft_perfil || userData.foto_perfil || null,
+            num_postagens: userData.num_postagens || 0,
+            isLoggedIn: true,
+            loginTime: new Date().toISOString()
+        };
+
+        console.log('💾 Salvando usuário no sessionStorage:', userInfo);
+        
+        // Salvar no sessionStorage
+        sessionStorage.setItem('arandua_current_user', JSON.stringify(userInfo));
+        
+        // Verificar se salvou corretamente
+        const saved = sessionStorage.getItem('arandua_current_user');
+        if (!saved) {
+            throw new Error('Falha ao salvar dados do usuário');
+        }
+        
+        console.log('✅ Usuário salvo com sucesso:', JSON.parse(saved));
+        
+        // Mostrar feedback
+        showSuccess("✅ Login realizado com sucesso! Redirecionando...");
+        
+        // Redirecionar após breve delay
+        setTimeout(() => {
+            console.log('🔄 Redirecionando para página inicial...');
+            window.location.href = '../Tela_inicial/inicio.html';
+        }, 1000);
+        
+    } catch (error) {
+        console.error('❌ Erro ao processar login:', error);
+        showError(`❌ Erro ao processar login: ${error.message}`);
+    }
 }
 
 // Manipular login falho
