@@ -3125,7 +3125,7 @@ img {
   animation: float 6s ease-in-out infinite;
 }
 
-.nenhuma-historia {
+.nenhuma-historia::after {
   content: '';
   position: absolute;
   bottom: -30%;
@@ -3203,7 +3203,7 @@ img {
 }
 
 /* Botão de ação no empty state */
-.botao-tentar-novamente {
+.test-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3225,7 +3225,7 @@ img {
   text-transform: uppercase;
 }
 
-.botao-tentar-novamente::before {
+.test-button::before {
   content: '';
   position: absolute;
   top: 0;
@@ -3237,21 +3237,21 @@ img {
   z-index: 1;
 }
 
-.botao-tentar-novamente:hover::before {
+.test-button:hover::before {
   left: 100%;
 }
 
-.botao-tentar-novamente:hover {
+.test-button:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 12px 35px rgba(122, 82, 48, 0.35);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.botao-tentar-novamente:active {
+.test-button:active {
   transform: translateY(-1px) scale(0.98);
 }
 
-.botao-tentar-novamente span {
+.test-button span {
   position: relative;
   z-index: 2;
   display: flex;
@@ -3260,13 +3260,13 @@ img {
 }
 
 /* Variação com ícone */
-.botao-tentar-novamente::after {
+.test-button::after {
   content: '→';
   font-size: 18px;
   transition: all 0.3s ease;
 }
 
-.botao-tentar-novamente:hover::after {
+.test-button:hover::after {
   transform: translateX(5px);
 }
 
