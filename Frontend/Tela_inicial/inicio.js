@@ -537,12 +537,6 @@ async function carregarPostagens() {
         // Mostrar estado de carregamento
         mostrarCarregandoHistorias();
 
-        // Testar conexão primeiro
-        const conexaoOk = await AuxiliarDebug.testarConexaoAPI();
-        if (!conexaoOk) {
-            throw new Error('API não está respondendo. Verifique sua conexão.');
-        }
-
         const urlBase = ApiConfig.obterUrlBase();
         console.log('🌐 URL base:', urlBase);
 
