@@ -533,9 +533,6 @@ function depurarDOM() {
 async function carregarPostagens() {
     try {
         console.log('📚 Iniciando carregamento de histórias...');
-        
-        // Mostrar estado de carregamento
-        mostrarCarregandoHistorias();
 
         const urlBase = ApiConfig.obterUrlBase();
         console.log('🌐 URL base:', urlBase);
