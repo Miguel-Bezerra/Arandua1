@@ -773,6 +773,8 @@ async function testarConexaoAPI() {
     }
 }
 
+
+
 // Executar teste quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
     testarConexaoAPI();

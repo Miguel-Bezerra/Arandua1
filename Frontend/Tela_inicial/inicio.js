@@ -1,10 +1,9 @@
-// scripts.js - VERSÃO CORRIGIDA PARA HISTÓRIAS
-console.log('🔧 scripts.js está carregando...');
+// inicio.js - VERSÃO EM PORTUGUÊS
+console.log('🔧 inicio.js está carregando...');
 
-class ApiConfig {
-    static getBaseUrl() {
+class ConfiguracaoAPI {
+    static obterUrlBase() {
         if (window.location.hostname.includes('netlify.app')) {
-            // Usar proxy do Netlify
             return '/api';
         } else if (window.location.hostname === 'localhost' || 
                   window.location.hostname === '127.0.0.1') {
@@ -14,76 +13,76 @@ class ApiConfig {
         }
     }
     
-    static async fetch(endpoint, options = {}) {
-        const baseUrl = this.getBaseUrl();
-        const url = `${baseUrl}${endpoint}`;
+    static async fazerRequisicao(endpoint, opcoes = {}) {
+        const urlBase = this.obterUrlBase();
+        const url = `${urlBase}${endpoint}`;
         
-        console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+        console.log(`🌐 Requisição API: ${opcoes.method || 'GET'} ${url}`);
         
         try {
-            const response = await fetch(url, {
+            const resposta = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...options.headers
+                    ...opcoes.headers
                 },
-                ...options
+                ...opcoes
             });
             
-            return response;
-        } catch (error) {
-            console.error('❌ Erro de fetch:', error);
-            throw error;
+            return resposta;
+        } catch (erro) {
+            console.error('❌ Erro na requisição:', erro);
+            throw erro;
         }
     }
 }
 
-let currentUser = null;
-let allPosts = [];
-let isInSearchMode = false;
-let isCreatingPost = false;
-let selectedCategories = [];
-let allCategories = [];
+let usuarioAtual = null;
+let todasPostagens = [];
+let estaNoModoPesquisa = false;
+let estaCriandoPost = false;
+let categoriasSelecionadas = [];
+let todasCategorias = [];
 
 // ===== INICIALIZAÇÃO =====
 document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 DOM Carregado - Iniciando aplicação...');
     
-    currentUser = getLoggedInUser();
+    usuarioAtual = obterUsuarioLogado();
     
-    if (currentUser) {
-        console.log('✅ Usuário logado:', currentUser);
-        initializeApp();
+    if (usuarioAtual) {
+        console.log('✅ Usuário logado:', usuarioAtual);
+        inicializarAplicacao();
     } else {
         console.log('❌ Usuário não logado - redirecionando...');
         window.location.href = '../Tela_Login/tela_login.html';
     }
 });
 
-function getLoggedInUser() {
+function obterUsuarioLogado() {
     try {
-        const userData = sessionStorage.getItem('arandua_current_user');
-        if (userData) {
-            const parsed = JSON.parse(userData);
-            return parsed.user || parsed;
+        const dadosUsuario = sessionStorage.getItem('arandua_current_user');
+        if (dadosUsuario) {
+            const analisado = JSON.parse(dadosUsuario);
+            return analisado.user || analisado;
         }
-    } catch (error) {
-        console.error('❌ Erro ao obter usuário:', error);
+    } catch (erro) {
+        console.error('❌ Erro ao obter usuário:', erro);
     }
     return null;
 }
 
-async function initializeApp() {
+async function inicializarAplicacao() {
     console.log('🚀 Inicializando aplicação...');
     
     try {
         // AGUARDAR DOM completamente pronto
         if (document.readyState !== 'complete') {
             console.log('⏳ Aguardando DOM completo...');
-            await new Promise(resolve => {
+            await new Promise(resolver => {
                 if (document.readyState === 'complete') {
-                    resolve();
+                    resolver();
                 } else {
-                    window.addEventListener('load', resolve, { once: true });
+                    window.addEventListener('load', resolver, { once: true });
                 }
             });
         }
@@ -91,56 +90,56 @@ async function initializeApp() {
         console.log('✅ DOM completamente carregado');
         
         // DEBUG: Verificar elementos críticos
-        debugDOM();
+        depurarDOM();
         
         // Configuração básica primeiro
-        setupBasicUI();
-        setupDropdown();
-        setupModal();
+        configurarInterfaceBasica();
+        configurarDropdown();
+        configurarModal();
         
         // Aguardar renderização
-        await new Promise(resolve => setTimeout(resolve, 50));
+        await new Promise(resolver => setTimeout(resolver, 50));
         
         // Configuração restante
-        setupSearch();
-        setupCategoryFilter();
-        setupGlobalEventListeners();
+        configurarPesquisa();
+        configurarFiltroCategorias();
+        configurarOuvintesEventosGlobais();
         atualizarExibicaoCategoriasAtivas();
-        preventLinkReload();
+        prevenirRecarregamentoLinks();
         
         // Aguardar mais um pouco
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolver => setTimeout(resolver, 100));
         
         // CARREGAR POSTS POR ÚLTIMO
         console.log('📚 Iniciando carregamento de posts...');
-        await loadPosts();
+        await carregarPostagens();
         
         console.log('✅ Aplicação inicializada com sucesso');
         
-    } catch (error) {
-        console.error('❌ Erro na inicialização:', error);
-        showNotification('Erro ao carregar aplicação: ' + error.message, 'error');
+    } catch (erro) {
+        console.error('❌ Erro na inicialização:', erro);
+        mostrarErroCarregamento('Falha ao inicializar a aplicação: ' + erro.message);
         
         // Tentar carregar posts mesmo com erro
         setTimeout(() => {
             console.log('🔄 Tentativa de recuperação...');
-            loadPosts();
-        }, 1000);
+            carregarPostagens();
+        }, 2000);
     }
 }
 
-function setupBasicUI() {
+function configurarInterfaceBasica() {
     console.log('🔧 Configurando UI básica...');
     
     // Configurar usuário
-    if (currentUser) {
-        const userButton = document.getElementById('userButton');
-        const userName = document.getElementById('userName');
+    if (usuarioAtual) {
+        const botaoUsuario = document.getElementById('userButton');
+        const nomeUsuario = document.getElementById('userName');
         
-        if (userButton) {
-            const userNameElement = userButton.querySelector('.user-name');
-            if (userNameElement) {
-                userNameElement.textContent = currentUser.nome || 'Usuário';
+        if (botaoUsuario) {
+            const elementoNomeUsuario = botaoUsuario.querySelector('.user-name');
+            if (elementoNomeUsuario) {
+                elementoNomeUsuario.textContent = usuarioAtual.nome || 'Usuário';
             } else {
                 console.warn('⚠️ Elemento .user-name não encontrado no userButton');
             }
@@ -148,95 +147,53 @@ function setupBasicUI() {
             console.warn('⚠️ userButton não encontrado');
         }
         
-        if (userName) {
-            userName.textContent = currentUser.nome || 'Usuário';
+        if (nomeUsuario) {
+            nomeUsuario.textContent = usuarioAtual.nome || 'Usuário';
         } else {
             console.warn('⚠️ userName não encontrado');
         }
         
-        console.log('✅ Usuário configurado:', currentUser.nome);
+        console.log('✅ Usuário configurado:', usuarioAtual.nome);
     } else {
-        console.error('❌ currentUser não definido');
-    }
-}
-
-// ===== INTERFACE DO USUÁRIO =====
-function setupUserInterface() {
-    const userButton = document.getElementById('userButton');
-    const userName = document.getElementById('userName');
-    
-    if (userButton && currentUser) {
-        const userNameElement = userButton.querySelector('.user-name');
-        if (userNameElement) {
-            userNameElement.textContent = currentUser.nome || 'Usuário';
-        }
-        
-        if (userName) {
-            userName.textContent = currentUser.nome || 'Usuário';
-        }
-        
-        console.log('✅ Interface do usuário configurada:', currentUser.nome);
-    }
-}
-
-// ===== WEBSOCKET PARA ATUALIZAÇÕES EM TEMPO REAL =====
-
-
-function atualizarContadorCurtidas(postId, likeCount) {
-    const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
-    if (likeBtn) {
-        const likeCountElement = likeBtn.querySelector('.like-count');
-        if (likeCountElement) {
-            likeCountElement.textContent = likeCount;
-        }
-    }
-}
-
-function atualizarContadorComentarios(postId, increment = true) {
-    const commentBtn = document.querySelector(`.comment-btn[data-post-id="${postId}"]`);
-    if (commentBtn) {
-        const commentText = commentBtn.querySelector('.comment-text');
-        if (commentText) {
-            // Implementar contador de comentários se necessário
-        }
+        console.error('❌ usuarioAtual não definido');
     }
 }
 
 // ===== DROPDOWN =====
-function setupDropdown() {
-    const userButton = document.getElementById('userButton');
-    const dropdownMenu = document.getElementById('userDropdown');
-    const userArea = document.querySelector('.user-area');
+function configurarDropdown() {
+    const botaoUsuario = document.getElementById('userButton');
+    const menuDropdown = document.getElementById('userDropdown');
+    const areaUsuario = document.querySelector('.user-area');
 
-    if (userButton && dropdownMenu && userArea) {
+    if (botaoUsuario && menuDropdown && areaUsuario) {
         console.log('🔧 Configurando dropdown do usuário...');
         
-        userButton.addEventListener('click', function(e) {
-            e.preventDefault(); // ✅ ADICIONAR
+        botaoUsuario.addEventListener('click', function(e) {
+            e.preventDefault();
             e.stopPropagation();
-            console.log('🎯 Dropdown clicado, estado atual:', dropdownMenu.classList.contains('hidden'));
+            console.log('🎯 Dropdown clicado, estado atual:', menuDropdown.classList.contains('hidden'));
             
-            const isHidden = dropdownMenu.classList.contains('hidden');
+            const estaOculto = menuDropdown.classList.contains('hidden');
             
-            if (isHidden) {
-                dropdownMenu.classList.remove('hidden');
-                userArea.classList.add('active');
+            if (estaOculto) {
+                menuDropdown.classList.remove('hidden');
+                areaUsuario.classList.add('active');
                 console.log('✅ Dropdown aberto');
             } else {
-                dropdownMenu.classList.add('hidden');
-                userArea.classList.remove('active');
+                menuDropdown.classList.add('hidden');
+                areaUsuario.classList.remove('active');
                 console.log('❌ Dropdown fechado');
             }
         });
 
         document.addEventListener('click', function(e) {
-            if (!userArea.contains(e.target)) {
-                dropdownMenu.classList.add('hidden');
-                userArea.classList.remove('active');
+            if (!areaUsuario.contains(e.target)) {
+                menuDropdown.classList.add('hidden');
+                areaUsuario.classList.remove('active');
             }
         });
 
-        dropdownMenu.addEventListener('click', function(e) {
+        menuDropdown.addEventListener('click', function(e) {
             e.stopPropagation();
         });
 
@@ -247,17 +204,17 @@ function setupDropdown() {
 
 function alternarDropdown() {
     const dropdown = document.getElementById('userDropdown');
-    const userArea = document.querySelector('.user-area');
+    const areaUsuario = document.querySelector('.user-area');
     
-    if (dropdown && userArea) {
-        const isHidden = dropdown.classList.contains('hidden');
+    if (dropdown && areaUsuario) {
+        const estaOculto = dropdown.classList.contains('hidden');
         
-        if (isHidden) {
+        if (estaOculto) {
             dropdown.classList.remove('hidden');
-            userArea.classList.add('active');
+            areaUsuario.classList.add('active');
         } else {
             dropdown.classList.add('hidden');
-            userArea.classList.remove('active');
+            areaUsuario.classList.remove('active');
         }
     }
 }
@@ -269,24 +226,24 @@ function manipularLogout() {
 }
 
 // ===== MODAL DE CRIAÇÃO DE HISTÓRIA =====
-function setupModal() {
-    const fabButton = document.getElementById('fabButton');
+function configurarModal() {
+    const botaoFab = document.getElementById('fabButton');
     const modal = document.getElementById('postCreationModal');
-    const cancelButton = document.getElementById('cancelPostBtn');
-    const postForm = document.getElementById('postForm');
-    const contentInput = document.getElementById('postContent');
+    const botaoCancelar = document.getElementById('cancelPostBtn');
+    const formularioPost = document.getElementById('postForm');
+    const inputConteudo = document.getElementById('postContent');
 
-    if (fabButton) {
-        fabButton.addEventListener('click', (e) => {
+    if (botaoFab) {
+        botaoFab.addEventListener('click', (e) => {
             e.preventDefault();
             if (modal) modal.classList.remove('hidden');
         });
     }
 
-    if (cancelButton) {
-        cancelButton.addEventListener('click', (e) => {
+    if (botaoCancelar) {
+        botaoCancelar.addEventListener('click', (e) => {
             e.preventDefault();
-            closeModal();
+            fecharModal();
         });
     }
 
@@ -294,110 +251,108 @@ function setupModal() {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
                 e.preventDefault();
-                closeModal();
+                fecharModal();
             }
         });
     }
 
-    if (postForm) {
-        postForm.addEventListener('submit', async (e) => {
+    if (formularioPost) {
+        formularioPost.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await createStory();
+            await criarHistoria();
         });
     }
 
-    if (contentInput) {
-        contentInput.addEventListener('input', atualizarContadorCaracteres);
+    if (inputConteudo) {
+        inputConteudo.addEventListener('input', atualizarContadorCaracteres);
     }
 
-    setupImagePreview();
+    configurarPreviaImagem();
 }
 
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
+function arquivoParaBase64(arquivo) {
+    return new Promise((resolver, rejeitar) => {
+        const leitor = new FileReader();
+        leitor.readAsDataURL(arquivo);
+        leitor.onload = () => {
+            const base64 = leitor.result.split(',')[1];
+            resolver(base64);
         };
-        reader.onerror = error => reject(error);
+        leitor.onerror = erro => rejeitar(erro);
     });
 }
 
-function openModal() {
+function abrirModal() {
     console.log('📖 Abrindo modal de criação de história...');
     const modal = document.getElementById('postCreationModal');
     if (modal) {
         modal.classList.remove('hidden');
-        const titleInput = document.getElementById('postTitle');
-        if (titleInput) titleInput.focus();
+        const inputTitulo = document.getElementById('postTitle');
+        if (inputTitulo) inputTitulo.focus();
     }
 }
 
-function closeModal() {
+function fecharModal() {
     console.log('📖 Fechando modal...');
     const modal = document.getElementById('postCreationModal');
-    const form = document.getElementById('postForm');
+    const formulario = document.getElementById('postForm');
     
     if (modal) modal.classList.add('hidden');
-    if (form) {
-        form.reset();
+    if (formulario) {
+        formulario.reset();
         atualizarContadorCaracteres();
     }
     
-    removeImage();
+    removerImagem();
 }
 
 function atualizarContadorCaracteres() {
-    const contentInput = document.getElementById('postContent');
-    const charCount = document.getElementById('charCount');
+    const inputConteudo = document.getElementById('postContent');
+    const contadorCaracteres = document.getElementById('charCount');
     
-    if (contentInput && charCount) {
-        const count = contentInput.value.length;
-        charCount.textContent = count;
+    if (inputConteudo && contadorCaracteres) {
+        const contagem = inputConteudo.value.length;
+        contadorCaracteres.textContent = contagem;
         
-        if (count > 5000) {
-            charCount.style.color = '#f44336';
-        } else if (count > 3000) {
-            charCount.style.color = '#ff9800';
+        if (contagem > 5000) {
+            contadorCaracteres.style.color = '#f44336';
+        } else if (contagem > 3000) {
+            contadorCaracteres.style.color = '#ff9800';
         } else {
-            charCount.style.color = '#666';
+            contadorCaracteres.style.color = '#666';
         }
     }
 }
 
-// ===== REVERTIDO: createStory para versão anterior (sem compressImage) =====
-
-function compressImage(file, options = {}) {
+function comprimirImagem(arquivo, opcoes = {}) {
     const {
         maxWidth = 800,
         maxHeight = 600,
         quality = 0.7,
         maxSizeMB = 1,
         outputFormat = 'jpeg'
-    } = options;
+    } = opcoes;
 
-    return new Promise((resolve, reject) => {
-        console.log(`🖼️ Compressão avançada: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+    return new Promise((resolver, rejeitar) => {
+        console.log(`🖼️ Compressão avançada: ${arquivo.name} (${(arquivo.size / 1024 / 1024).toFixed(2)} MB)`);
 
         // Se a imagem já é pequena, não comprime
-        if (file.size <= maxSizeMB * 1024 * 1024) {
+        if (arquivo.size <= maxSizeMB * 1024 * 1024) {
             console.log('📦 Imagem já está dentro do tamanho limite, convertendo diretamente...');
-            fileToBase64(file).then(resolve).catch(reject);
+            arquivoParaBase64(arquivo).then(resolver).catch(rejeitar);
             return;
         }
 
-        const reader = new FileReader();
+        const leitor = new FileReader();
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         const img = new Image();
 
-        reader.onload = function(e) {
+        leitor.onload = function(e) {
             img.onload = function() {
                 let width = img.width;
                 let height = img.height;
-                let currentQuality = quality;
+                let qualidadeAtual = quality;
 
                 // Redimensionar se necessário
                 if (width > maxWidth || height > maxHeight) {
@@ -419,153 +374,153 @@ function compressImage(file, options = {}) {
                 ctx.drawImage(img, 0, 0, width, height);
 
                 // Tentar diferentes qualidades se necessário
-                const compressWithQuality = (quality) => {
-                    const mimeType = outputFormat === 'png' ? 'image/png' : 'image/jpeg';
-                    const compressedBase64 = canvas.toDataURL(mimeType, quality);
-                    const base64Data = compressedBase64.split(',')[1];
-                    const sizeMB = (base64Data.length * 0.75) / 1024 / 1024; // Aproximação do tamanho
+                const comprimirComQualidade = (qualidade) => {
+                    const tipoMime = outputFormat === 'png' ? 'image/png' : 'image/jpeg';
+                    const base64Comprimido = canvas.toDataURL(tipoMime, qualidade);
+                    const dadosBase64 = base64Comprimido.split(',')[1];
+                    const tamanhoMB = (dadosBase64.length * 0.75) / 1024 / 1024;
 
-                    console.log(`🎯 Qualidade ${quality}: ${sizeMB.toFixed(2)} MB`);
+                    console.log(`🎯 Qualidade ${qualidade}: ${tamanhoMB.toFixed(2)} MB`);
 
-                    if (sizeMB > maxSizeMB && quality > 0.3) {
-                        return compressWithQuality(quality - 0.1);
+                    if (tamanhoMB > maxSizeMB && qualidade > 0.3) {
+                        return comprimirComQualidade(qualidade - 0.1);
                     }
 
-                    return base64Data;
+                    return dadosBase64;
                 };
 
-                const finalBase64 = compressWithQuality(currentQuality);
-                console.log(`✅ Compressão final: ${(finalBase64.length / 1024 / 1024).toFixed(2)} MB`);
-                resolve(finalBase64);
+                const base64Final = comprimirComQualidade(qualidadeAtual);
+                console.log(`✅ Compressão final: ${(base64Final.length / 1024 / 1024).toFixed(2)} MB`);
+                resolver(base64Final);
             };
 
-            img.onerror = reject;
+            img.onerror = rejeitar;
             img.src = e.target.result;
         };
 
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
+        leitor.onerror = rejeitar;
+        leitor.readAsDataURL(arquivo);
     });
 }
 
-async function createStory() {
-    if (isCreatingPost) return;
-    isCreatingPost = true;
+async function criarHistoria() {
+    if (estaCriandoPost) return;
+    estaCriandoPost = true;
 
     console.log('🔍 DEBUG: Iniciando criação de história...');
 
     // Coletar dados do formulário
-    const titleInput = document.getElementById('postTitle');
-    const categoryInput = document.getElementById('postCategory');
-    const contentInput = document.getElementById('postContent');
-    const tagsInput = document.getElementById('postTags');
-    const imageInput = document.getElementById('postImage');
+    const inputTitulo = document.getElementById('postTitle');
+    const inputCategoria = document.getElementById('postCategory');
+    const inputConteudo = document.getElementById('postContent');
+    const inputTags = document.getElementById('postTags');
+    const inputImagem = document.getElementById('postImage');
 
-    const title = titleInput ? titleInput.value.trim() : '';
-    const category = categoryInput ? categoryInput.value : '';
-    const content = contentInput ? contentInput.value.trim() : '';
-    const tags = tagsInput ? tagsInput.value.trim() : '';
+    const titulo = inputTitulo ? inputTitulo.value.trim() : '';
+    const categoria = inputCategoria ? inputCategoria.value : '';
+    const conteudo = inputConteudo ? inputConteudo.value.trim() : '';
+    const tags = inputTags ? inputTags.value.trim() : '';
 
     // Validações
-    if (!title || title.length < 2) {
-        showNotification('❌ Título deve ter pelo menos 2 caracteres', 'error');
-        isCreatingPost = false;
+    if (!titulo || titulo.length < 2) {
+        mostrarNotificacao('❌ Título deve ter pelo menos 2 caracteres', 'error');
+        estaCriandoPost = false;
         return;
     }
 
-    if (!category) {
-        showNotification('❌ Selecione uma categoria', 'error');
-        isCreatingPost = false;
+    if (!categoria) {
+        mostrarNotificacao('❌ Selecione uma categoria', 'error');
+        estaCriandoPost = false;
         return;
     }
 
-    if (!content || content.length < 5) {
-        showNotification('❌ Conteúdo deve ter pelo menos 5 caracteres', 'error');
-        isCreatingPost = false;
+    if (!conteudo || conteudo.length < 5) {
+        mostrarNotificacao('❌ Conteúdo deve ter pelo menos 5 caracteres', 'error');
+        estaCriandoPost = false;
         return;
     }
 
-    let userId = currentUser?.id;
-    if (!userId) {
-        showNotification('❌ Usuário não identificado', 'error');
-        isCreatingPost = false;
+    let idUsuario = usuarioAtual?.id;
+    if (!idUsuario) {
+        mostrarNotificacao('❌ Usuário não identificado', 'error');
+        estaCriandoPost = false;
         return;
     }
 
-    let imageBase64 = null;
-    if (imageInput && imageInput.files[0]) {
+    let imagemBase64 = null;
+    if (inputImagem && inputImagem.files[0]) {
         try {
-            const file = imageInput.files[0];
-            console.log(`🖼️ Processando imagem: ${file.name}, ${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            const arquivo = inputImagem.files[0];
+            console.log(`🖼️ Processando imagem: ${arquivo.name}, ${(arquivo.size / 1024 / 1024).toFixed(2)} MB`);
             
             // 🔥 USAR COMPRESSÃO AQUI
-            if (file.type.startsWith('image/')) {
-                showNotification('📦 Comprimindo imagem...', 'info');
-                imageBase64 = await compressImage(file);
-                console.log(`✅ Imagem comprimida: ${imageBase64 ? (imageBase64.length / 1024 / 1024).toFixed(2) + ' MB' : 'null'}`);
+            if (arquivo.type.startsWith('image/')) {
+                mostrarNotificacao('📦 Comprimindo imagem...', 'info');
+                imagemBase64 = await comprimirImagem(arquivo);
+                console.log(`✅ Imagem comprimida: ${imagemBase64 ? (imagemBase64.length / 1024 / 1024).toFixed(2) + ' MB' : 'null'}`);
             } else {
-                showNotification('❌ Arquivo não é uma imagem válida', 'error');
-                isCreatingPost = false;
+                mostrarNotificacao('❌ Arquivo não é uma imagem válida', 'error');
+                estaCriandoPost = false;
                 return;
             }
         } catch (err) {
             console.error('❌ Erro ao comprimir imagem:', err);
-            showNotification('❌ Erro ao processar imagem', 'error');
-            isCreatingPost = false;
+            mostrarNotificacao('❌ Erro ao processar imagem', 'error');
+            estaCriandoPost = false;
             return;
         }
     }
 
-    const storyData = {
-        id_usuario: parseInt(userId),
-        titulo: title,
-        conteudo: content,
-        categoria: category,
+    const dadosHistoria = {
+        id_usuario: parseInt(idUsuario),
+        titulo: titulo,
+        conteudo: conteudo,
+        categoria: categoria,
         tags: tags
     };
 
     // Adicionar imagem apenas se existir
-    if (imageBase64) {
-        storyData.imagem_capa = imageBase64;
+    if (imagemBase64) {
+        dadosHistoria.imagem_capa = imagemBase64;
     }
 
     console.log('📤 Dados que serão enviados:', {
-        ...storyData,
-        imagem_capa: imageBase64 ? `[IMAGEM: ${imageBase64.length} caracteres]` : 'null'
+        ...dadosHistoria,
+        imagem_capa: imagemBase64 ? `[IMAGEM: ${imagemBase64.length} caracteres]` : 'null'
     });
 
     try {
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/historias`, {
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const resposta = await fetch(`${urlBase}/historias`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(storyData)
+            body: JSON.stringify(dadosHistoria)
         });
 
-        if (response.ok) {
-            const newStory = await response.json();
-            console.log('✅ História criada com sucesso:', newStory);
-            showNotification('✅ História publicada com sucesso!', 'success');
-            addNewStoryToFeed(newStory);
-            closeModal();
+        if (resposta.ok) {
+            const novaHistoria = await resposta.json();
+            console.log('✅ História criada com sucesso:', novaHistoria);
+            mostrarNotificacao('✅ História publicada com sucesso!', 'success');
+            adicionarNovaHistoriaAoFeed(novaHistoria);
+            fecharModal();
         } else {
-            const errorText = await response.text();
-            console.error('❌ Erro do servidor:', response.status, errorText);
-            showNotification(`❌ Erro ao publicar: ${errorText}`, 'error');
+            const textoErro = await resposta.text();
+            console.error('❌ Erro do servidor:', resposta.status, textoErro);
+            mostrarNotificacao(`❌ Erro ao publicar: ${textoErro}`, 'error');
         }
-    } catch (error) {
-        console.error('❌ Erro de rede ao criar história:', error);
-        showNotification('❌ Erro de conexão ao publicar história', 'error');
+    } catch (erro) {
+        console.error('❌ Erro de rede ao criar história:', erro);
+        mostrarNotificacao('❌ Erro de conexão ao publicar história', 'error');
     } finally {
-        isCreatingPost = false;
+        estaCriandoPost = false;
     }
 }
 
 // ===== CARREGAMENTO DE POSTAGENS/HISTÓRIAS =====
 
-function debugDOM() {
+function depurarDOM() {
     console.log('🔍 DEBUG DOM:');
     console.log('📍 Elemento .content:', document.querySelector('.content'));
     console.log('📍 Elemento #userButton:', document.getElementById('userButton'));
@@ -575,16 +530,24 @@ function debugDOM() {
     console.log('📍 HTML do .content:', document.querySelector('.content')?.innerHTML?.substring(0, 200) + '...');
 }
 
-async function loadPosts() {
+async function carregarPostagens() {
     try {
         console.log('📚 Iniciando carregamento de histórias...');
+        
+        // Mostrar estado de carregamento
+        mostrarCarregandoHistorias();
 
-        debugDOM();
+        // Testar conexão primeiro
+        const conexaoOk = await AuxiliarDebug.testarConexaoAPI();
+        if (!conexaoOk) {
+            throw new Error('API não está respondendo. Verifique sua conexão.');
+        }
+
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        console.log('🌐 URL base:', urlBase);
         
-        const baseUrl = ApiConfig.getBaseUrl();
-        console.log('🌐 URL base:', baseUrl);
-        
-        const response = await fetch(`${baseUrl}/historias`, {
+        console.log('🔄 Fazendo requisição para /historias...');
+        const resposta = await fetch(`${urlBase}/historias`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
@@ -593,41 +556,93 @@ async function loadPosts() {
             mode: 'cors'
         });
 
-        console.log('📡 Status da resposta:', response.status);
-        console.log('📡 Response ok?', response.ok);
+        console.log('📡 Status da resposta:', resposta.status);
+        console.log('📡 Response ok?', resposta.ok);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Erro HTTP:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: ${response.statusText || 'Erro no servidor'}`);
+        if (!resposta.ok) {
+            let textoErro = 'Erro desconhecido';
+            try {
+                textoErro = await resposta.text();
+            } catch {
+                textoErro = 'Não foi possível ler o erro';
+            }
+            
+            console.error('❌ Erro HTTP completo:', {
+                status: resposta.status,
+                statusText: resposta.statusText,
+                textoErro: textoErro,
+                url: `${urlBase}/historias`
+            });
+            
+            throw new Error(`Erro ${resposta.status}: ${resposta.statusText || 'Servidor não respondeu corretamente'}`);
         }
 
-        const historias = await response.json();
+        console.log('✅ Resposta OK, processando JSON...');
+        const historias = await resposta.json();
         console.log(`✅ ${historias.length} histórias carregadas com sucesso`);
         
-        allPosts = historias;
-        renderPosts(historias);
+        // Validar estrutura dos dados
+        if (!Array.isArray(historias)) {
+            console.error('❌ Dados recebidos não são um array:', typeof historias);
+            throw new Error('Formato de dados inválido da API');
+        }
+
+        todasPostagens = historias;
+        renderizarPostagens(historias);
         
         return historias;
         
-    } catch (error) {
+    } catch (erro) {
         console.error('❌ Erro detalhado ao carregar histórias:', {
-            message: error.message,
-            name: error.name,
-            stack: error.stack
+            message: erro.message,
+            name: erro.name,
+            stack: erro.stack,
+            url: `${ConfiguracaoAPI.obterUrlBase()}/historias`
         });
         
-        showNotification('Erro ao carregar histórias: ' + error.message, 'error');
-        showEmptyMessage();
+        mostrarErroCarregamento(erro.message);
         
         // Retorna array vazio para não quebrar a aplicação
         return [];
     }
 }
 
+function mostrarCarregandoHistorias() {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) return;
+
+    areaConteudo.innerHTML = `
+        <div class="carregando-histórias">
+            <div class="spinner"></div>
+            <h3>Carregando histórias...</h3>
+            <p>Aguarde enquanto buscamos as últimas histórias</p>
+        </div>
+    `;
+}
+
+
+function mostrarErroCarregamento(mensagem) {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) return;
+
+    areaConteudo.innerHTML = `
+        <div class="erro-carregamento">
+            <div class="erro-icone">⚠️</div>
+            <h3>Erro ao carregar histórias</h3>
+            <p>${mensagem}</p>
+            <button onclick="carregarPostagens()" class="botao-tentar-novamente">
+                Tentar Novamente
+            </button>
+            <button onclick="testarConexaoManual()" class="botao-tentar-novamente" style="margin-left: 10px; background: #666;">
+                Testar Conexão
+            </button>
+        </div>
+    `;
+}
+
 // ===== RENDERIZAÇÃO =====
 
-function debugDataAttributes() {
+function depurarAtributosDados() {
     console.log('🔍 DEBUG: Verificando data attributes...');
     
     const posts = document.querySelectorAll('.post, .story-item');
@@ -635,308 +650,163 @@ function debugDataAttributes() {
     
     posts.forEach((post, index) => {
         const postId = post.dataset.postId;
-        const likeBtn = post.querySelector('.like-btn');
-        const commentBtn = post.querySelector('.comment-btn');
+        const botaoCurtir = post.querySelector('.like-btn');
+        const botaoComentar = post.querySelector('.comment-btn');
         
         console.log(`📝 Post ${index + 1}:`, {
             element: post.className,
             postId: postId,
-            likeBtnHasId: likeBtn ? likeBtn.dataset.postId : 'N/A',
-            commentBtnHasId: commentBtn ? commentBtn.dataset.postId : 'N/A',
-            commentsSection: document.getElementById(`comments-${postId}`) ? 'EXISTS' : 'MISSING'
+            botaoCurtirTemId: botaoCurtir ? botaoCurtir.dataset.postId : 'N/A',
+            botaoComentarTemId: botaoComentar ? botaoComentar.dataset.postId : 'N/A',
+            secaoComentarios: document.getElementById(`comments-${postId}`) ? 'EXISTS' : 'MISSING'
         });
     });
 }
 
-function renderPosts(postagens) {
+function renderizarPostagens(postagens) {
     console.log('🎨 DEBUG: Renderizando posts...', postagens);
     
-    const contentArea = document.querySelector('.content');
-    if (!contentArea) {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) {
         console.error('❌ Área de conteúdo não encontrada para renderização');
         // Tentar encontrar alternativas
-        const alternatives = document.querySelector('main, body');
-        if (alternatives) {
-            console.log('🔄 Usando elemento alternativo:', alternatives.tagName);
-            renderPostsToElement(postagens, alternatives);
+        const alternativas = document.querySelector('main, body');
+        if (alternativas) {
+            console.log('🔄 Usando elemento alternativo:', alternativas.tagName);
+            renderizarPostagensParaElemento(postagens, alternativas);
         }
         return;
     }
 
     console.log('✅ Área de conteúdo encontrada, limpando...');
-    clearPostContent();
+    limparConteudoPosts();
 
     if (!postagens || postagens.length === 0) {
         console.log('📭 Nenhuma postagem para renderizar');
-        showEmptyMessage();
+        mostrarMensagemVazia();
         return;
     }
 
     console.log(`🖼️ Renderizando ${postagens.length} postagem(ns)`);
     
-    const hasStories = postagens.some(post => post.titulo);
-    console.log('📖 Tem histórias?', hasStories);
+    const temHistorias = postagens.some(post => post.titulo);
+    console.log('📖 Tem histórias?', temHistorias);
     
-    if (hasStories) {
-        renderStories(postagens);
+    if (temHistorias) {
+        renderizarHistorias(postagens);
     } else {
-        renderSimplePosts(postagens);
+        renderizarPostsSimples(postagens);
     }
     
     // DEBUG: Verificar resultado
     setTimeout(() => {
-        debugDataAttributes();
+        depurarAtributosDados();
     }, 500);
 }
 
-function renderStories(historias) {
-    const contentArea = document.querySelector('.content');
-    if (!contentArea) return;
+function renderizarHistorias(historias) {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) return;
 
     // DEBUG: Verificar as histórias antes de renderizar
-    debugStories(historias);
+    depurarHistorias(historias);
 
     historias.forEach(historia => {
-        const storyElement = createStoryElement(historia);
-        contentArea.appendChild(storyElement);
+        const elementoHistoria = criarElementoHistoria(historia);
+        areaConteudo.appendChild(elementoHistoria);
     });
 }
 
-function renderSimpleAvatar(element, user, size = 'normal') {
-    if (!element) {
-        console.warn('⚠️ Elemento do avatar não existe');
-        return;
-    }
-    
-    console.log('🎯 Renderizando avatar SIMPLES:', {
-        temElemento: !!element,
-        user: user,
-        temNome: !!user?.nome,
-        temFoto: !!user?.foto_perfil
+function renderizarPostsSimples(postagens) {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) return;
+
+    postagens.forEach(post => {
+        const elementoPost = criarElementoPost(post);
+        areaConteudo.appendChild(elementoPost);
     });
-    
-    // 🎯 CORREÇÃO: Dados mínimos garantidos
-    const userName = user?.nome || 'Usuário';
-    const userFoto = user?.foto_perfil || user?.foto_perfil_autor || user?.ft_perfil;
-    
-    // 🎯 CORREÇÃO: Avatar padrão SEMPRE funciona
-    const initials = userName.charAt(0).toUpperCase();
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
-    const colorIndex = user?.id ? user.id % colors.length : Math.floor(Math.random() * colors.length);
-    
-    // Tamanhos
-    const sizePx = size === 'x-small' ? '24px' : size === 'small' ? '32px' : '40px';
-    const fontSize = size === 'x-small' ? '10px' : size === 'small' ? '12px' : '14px';
-    
-    // 🎯 CORREÇÃO: Tentar imagem apenas se existir realmente
-    if (userFoto && userFoto.length > 10) {
-        let imageUrl = userFoto;
-        
-        // Garantir que base64 tem prefixo
-        if (userFoto.length > 100 && !userFoto.startsWith('data:')) {
-            imageUrl = `data:image/jpeg;base64,${userFoto}`;
-        }
-        
-        console.log('🖼️ Tentando carregar imagem do avatar:', imageUrl.substring(0, 30) + '...');
-        
-        element.innerHTML = `
-            <img src="${imageUrl}" alt="${userName}" 
-                 style="width: ${sizePx}; height: ${sizePx}; border-radius: 50%; object-fit: cover;"
-                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-            <div style="display: none; width: ${sizePx}; height: ${sizePx}; border-radius: 50%; background: ${colors[colorIndex]}; 
-                       display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: ${fontSize};">
-                ${initials}
-            </div>
-        `;
-    } else {
-        // 🎯 CORREÇÃO: Avatar padrão direto
-        console.log('📝 Usando avatar padrão para:', userName);
-        element.innerHTML = `
-            <div style="width: ${sizePx}; height: ${sizePx}; border-radius: 50%; background: ${colors[colorIndex]}; 
-                       display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: ${fontSize};">
-                ${initials}
-            </div>
-        `;
-    }
 }
 
-// 🎯 NOVA FUNÇÃO: Avatar padrão para fallback
-function showFallbackAvatar(element, user, size = 'normal') {
-    const initials = user?.nome ? user.nome.charAt(0).toUpperCase() : 'U';
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
-    const colorIndex = user?.id ? user.id % colors.length : Math.floor(Math.random() * colors.length);
-    
-    // 🎯 CORREÇÃO: Tamanhos específicos para comentários
-    const sizes = {
-        'x-small': { size: '24px', fontSize: '10px' },
-        'small': { size: '32px', fontSize: '12px' },
-        'normal': { size: '40px', fontSize: '14px' },
-        'large': { size: '48px', fontSize: '16px' }
-    };
-    
-    const { size: pxSize, fontSize } = sizes[size] || sizes.normal;
-    
-    element.innerHTML = `
-        <div style="
-            width: ${pxSize}; 
-            height: ${pxSize}; 
-            border-radius: 50%; 
-            background: ${colors[colorIndex]}; 
-            display: flex; 
-            align-items: center; 
-            justify-content: center; 
-            color: white; 
-            font-weight: bold;
-            font-size: ${fontSize};
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        ">
-            ${initials}
-        </div>
-    `;
-    console.log('✅ Avatar padrão criado com iniciais:', initials);
-}
-
-// 🎯 NOVA FUNÇÃO: Buscar imagem específica para comentários
-function getProfileImageForComment(user) {
-    if (!user) {
-        console.log('❌ Usuário não definido em getProfileImageForComment');
-        return null;
-    }
-    
-    console.log('🔍 Buscando imagem para comentário:', user.nome);
-    
-    // 🎯 CORREÇÃO: Tentar em ordem de prioridade para comentários
-    const foto = user.foto_perfil || user.foto_perfil_autor || user.ft_perfil || user.imagem_perfil || user.avatar;
-    
-    if (!foto) {
-        console.log('📭 Nenhuma foto encontrada para o usuário nos comentários');
-        return null;
-    }
-    
-    // 🎯 CORREÇÃO: Verificar se é uma URL válida
-    if (foto.startsWith('http') || foto.startsWith('data:')) {
-        console.log('✅ Imagem URL encontrada para comentário');
-        return foto;
-    }
-    
-    // 🎯 CORREÇÃO: Se é base64, garantir o prefixo
-    if (foto.length > 100 && !foto.startsWith('data:')) {
-        console.log('✅ Imagem base64 encontrada, adicionando prefixo');
-        return `data:image/jpeg;base64,${foto}`;
-    }
-    
-    // 🎯 CORREÇÃO: Se parece ser base64 mas tem prefixo errado
-    if (foto.length > 100 && foto.startsWith('data:')) {
-        console.log('✅ Imagem base64 com prefixo já');
-        return foto;
-    }
-    
-    console.log('❌ Formato de imagem não reconhecido para comentário:', foto.substring(0, 50));
-    return null;
-}
-
-function createStoryElement(historia) {
+function criarElementoHistoria(historia) {
     console.log('🛠️ Criando elemento para história:', historia.id_historia || historia.id);
-    console.log('   📋 Tags recebidas:', historia.tags);
     
-    const storyElement = document.createElement('div');
-    storyElement.className = 'post chat-item message-bubble story-item';
-    storyElement.dataset.postId = historia.id_historia || historia.id;
+    const elementoHistoria = document.createElement('div');
+    elementoHistoria.className = 'post chat-item message-bubble story-item';
+    elementoHistoria.dataset.postId = historia.id_historia || historia.id;
 
-    const isAuthor = currentUser && currentUser.id == historia.id_usuario;
-    const category = historia.categoria || 'outros';
+    const ehAutor = usuarioAtual && usuarioAtual.id == historia.id_usuario;
+    const categoria = historia.categoria || 'outros';
     const postId = historia.id_historia || historia.id;
-    storyElement.dataset.postId = postId;
+    elementoHistoria.dataset.postId = postId;
     
-    // ===== PROCESSAMENTO DAS TAGS - VERSÃO MAIS ROBUSTA =====
+    // Processamento das tags
     let tags = [];
     
     if (historia.tags) {
         console.log('   🔍 Processando tags...');
         
         if (typeof historia.tags === 'string') {
-            // Se for string, tentar diferentes métodos de parsing
-            const rawTags = historia.tags.trim();
+            const tagsBrutas = historia.tags.trim();
             
-            if (rawTags.startsWith('[') && rawTags.endsWith(']')) {
-                // Tentar parsear como JSON array
+            if (tagsBrutas.startsWith('[') && tagsBrutas.endsWith(']')) {
                 try {
-                    tags = JSON.parse(rawTags)
+                    tags = JSON.parse(tagsBrutas)
                         .map(t => String(t).trim())
                         .filter(t => t && t !== 'null' && t !== 'undefined' && t !== '');
-                    console.log('   ✅ Tags parseadas como JSON:', tags);
                 } catch (e) {
-                    console.log('   ❌ Falha ao parsear JSON, usando split por vírgula');
-                    tags = rawTags.replace(/[\[\]"]/g, '') // Remove colchetes e aspas
+                    tags = tagsBrutas.replace(/[\[\]"]/g, '')
                                  .split(',')
                                  .map(t => t.trim())
-                                 .filter(t => t && t !== 'null' && t !== 'undefined');
+                                 .filter(t => t);
                 }
             } else {
-                // Split simples por vírgula
-                tags = rawTags.split(',')
+                tags = tagsBrutas.split(',')
                              .map(t => t.trim())
-                             .filter(t => t && t !== 'null' && t !== 'undefined');
-                console.log('   ✅ Tags parseadas com split:', tags);
+                             .filter(t => t);
             }
         } else if (Array.isArray(historia.tags)) {
-            // Se já for array
             tags = historia.tags.map(t => String(t).trim())
-                               .filter(t => t && t !== 'null' && t !== 'undefined');
-            console.log('   ✅ Tags como array processado:', tags);
-        } else {
-            console.log('   ❌ Tipo de tags não reconhecido:', typeof historia.tags);
+                               .filter(t => t);
         }
-    } else {
-        console.log('   📭 Nenhuma tag encontrada na história');
-    }
-    
-    console.log('   🎯 Tags finais:', tags);
-
-    const imagemData = historia.imagem_capa || historia.imagem;
-    let imageUrl = null;
-
-    if (imagemData) {
-        imageUrl = getImageUrl(imagemData);
     }
 
-    let imageHTML = '';
-    if (imageUrl) {
-        imageHTML = `
+    const dadosImagem = historia.imagem_capa || historia.imagem;
+    let urlImagem = null;
+
+    if (dadosImagem) {
+        urlImagem = obterUrlImagem(dadosImagem);
+    }
+
+    let htmlImagem = '';
+    if (urlImagem) {
+        htmlImagem = `
             <div class="story-image">
-                <img src="${imageUrl}" alt="Capa da história: ${historia.titulo}" />
+                <img src="${urlImagem}" alt="Capa da história: ${historia.titulo}" />
             </div>
         `;
     }
 
-    // ===== GERAR HTML DAS TAGS =====
-    let tagsHTML = '';
+    // Gerar HTML das tags
+    let htmlTags = '';
     if (tags && tags.length > 0) {
-        const tagsContent = tags.map(tag => {
-            // Limpar a tag - remover # duplicados e espaços
-            const cleanTag = tag.replace(/^#+/, '').trim();
-            if (!cleanTag) return '';
+        const conteudoTags = tags.map(tag => {
+            const tagLimpa = tag.replace(/^#+/, '').trim();
+            if (!tagLimpa) return '';
             
-            return `<span class="story-tag" data-tag="${cleanTag}">#${cleanTag}</span>`;
+            return `<span class="story-tag" data-tag="${tagLimpa}">#${tagLimpa}</span>`;
         }).filter(tag => tag !== '').join('');
         
-        if (tagsContent) {
-            tagsHTML = `
+        if (conteudoTags) {
+            htmlTags = `
                 <div class="story-tags">
-                    ${tagsContent}
+                    ${conteudoTags}
                 </div>
             `;
-            console.log('   ✅ HTML das tags gerado');
-        } else {
-            console.log('   📭 Nenhuma tag válida após limpeza');
         }
-    } else {
-        console.log('   📭 Nenhuma tag para exibir');
     }
 
-    // ===== HTML COMPLETO DA HISTÓRIA =====
-     storyElement.innerHTML = `
+    // HTML completo da história
+    elementoHistoria.innerHTML = `
         <div class="story-header">
             <div class="bubble-header">
                 <div class="user-info-group">
@@ -945,24 +815,24 @@ function createStoryElement(historia) {
                     </div>
                     <span class="username">${historia.autor || 'Usuário'}</span>
                 </div>
-                ${isAuthor ? '<button type="button" class="btn-deletar">🗑️ Deletar</button>' : ''}
+                ${ehAutor ? '<button type="button" class="btn-deletar">🗑️ Deletar</button>' : ''}
             </div>
             
             <div class="story-meta">
-                <span class="story-category ${category}">${getCategoryDisplayName(category)}</span>
+                <span class="story-category ${categoria}">${obterNomeExibicaoCategoria(categoria)}</span>
                 ${historia.tempo_leitura ? `<span class="reading-time">⏱️ ${historia.tempo_leitura} min</span>` : ''}
             </div>
         </div>
         
         <h3 class="story-title">${historia.titulo || 'História sem título'}</h3>
 
-        ${imageHTML}
+        ${htmlImagem}
         
         <div class="story-content">
             <p>${historia.conteudo || ''}</p>
         </div>
         
-        ${tagsHTML}
+        ${htmlTags}
         
         <div class="post-actions">
             <button type="button" class="action-btn like-btn" data-post-id="${historia.id_historia || historia.id}">
@@ -976,7 +846,6 @@ function createStoryElement(historia) {
             </button>
         </div>
         
-        <!-- 🎯 CORREÇÃO: Estrutura corrigida da seção de comentários -->
         <div class="comments-section" id="comments-${historia.id_historia || historia.id}" style="display: none;">
             <div class="comments-list">
                 <!-- Comentários serão carregados aqui -->
@@ -990,62 +859,32 @@ function createStoryElement(historia) {
         </div>
     `;
 
-    // DEBUG: Verificar se o HTML foi inserido
-    console.log('   📄 HTML gerado contém tags?', storyElement.innerHTML.includes('story-tags'));
-    console.log('   📄 Conteúdo das tags no HTML:', storyElement.querySelector('.story-tags')?.innerHTML || 'NÃO ENCONTRADO');
-
-    const avatarElement = storyElement.querySelector('.avatar');
-    renderSimpleAvatar(avatarElement, { 
+    const elementoAvatar = elementoHistoria.querySelector('.avatar');
+    renderizarAvatarSimples(elementoAvatar, { 
         id: historia.id_usuario, 
         nome: historia.autor,
         foto_perfil: historia.foto_perfil_autor 
     });
-    const likeBtn = storyElement.querySelector('.like-btn');
-    const commentBtn = storyElement.querySelector('.comment-btn');
-    const submitCommentBtn = storyElement.querySelector('.submit-comment');
     
-    if (likeBtn) likeBtn.dataset.postId = postId;
-    if (commentBtn) commentBtn.dataset.postId = postId;
-    if (submitCommentBtn) submitCommentBtn.dataset.postId = postId;
+    const botaoCurtir = elementoHistoria.querySelector('.like-btn');
+    const botaoComentar = elementoHistoria.querySelector('.comment-btn');
+    const botaoEnviarComentario = elementoHistoria.querySelector('.submit-comment');
+    
+    if (botaoCurtir) botaoCurtir.dataset.postId = postId;
+    if (botaoComentar) botaoComentar.dataset.postId = postId;
+    if (botaoEnviarComentario) botaoEnviarComentario.dataset.postId = postId;
 
-    return storyElement;
+    return elementoHistoria;
 }
 
-// Função de debug para verificar as histórias
-function debugStories(historias) {
-    console.log('🔍 DEBUG: Analisando estruturas das histórias:');
-    historias.forEach((historia, index) => {
-        console.log(`📖 História ${index + 1}:`, {
-            id: historia.id_historia || historia.id,
-            titulo: historia.titulo,
-            tags: historia.tags,
-            tipoTags: typeof historia.tags,
-            temTags: !!historia.tags,
-            tagsLength: historia.tags ? historia.tags.length : 0
-        });
-        
-        // Verificar se há tags e como estão formatadas
-        if (historia.tags) {
-            console.log('   📋 Conteúdo das tags:', historia.tags);
-            
-            if (typeof historia.tags === 'string') {
-                const parsedTags = historia.tags.split(',').map(t => t.trim()).filter(t => t);
-                console.log('   🎯 Tags parseadas:', parsedTags);
-            } else if (Array.isArray(historia.tags)) {
-                console.log('   🎯 Tags como array:', historia.tags);
-            }
-        }
-    });
-}
+function criarElementoPost(post) {
+    const elementoPost = document.createElement('div');
+    elementoPost.className = 'post chat-item message-bubble';
+    elementoPost.dataset.postId = post.id_historia;
 
-function createPostElement(post) {
-    const postElement = document.createElement('div');
-    postElement.className = 'post chat-item message-bubble';
-    postElement.dataset.postId = post.id_historia;
+    const ehAutor = usuarioAtual && usuarioAtual.id == post.id_usuario;
 
-    const isAuthor = currentUser && currentUser.id == post.id_usuario;
-
-    postElement.innerHTML = `
+    elementoPost.innerHTML = `
         <div class="bubble-header">
             <div class="user-info-group">
                 <div class="avatar" data-user-id="${post.id_usuario}">
@@ -1053,7 +892,7 @@ function createPostElement(post) {
                 </div>
                 <span class="username">${post.autor || 'Usuário'}</span>
             </div>
-            ${isAuthor ? '<button type="button" class="btn-deletar">🗑️ Deletar</button>' : ''}
+            ${ehAutor ? '<button type="button" class="btn-deletar">🗑️ Deletar</button>' : ''}
         </div>
         
         <p class="message-text">${post.conteudo || ''}</p>
@@ -1087,192 +926,146 @@ function createPostElement(post) {
         </div>
     `;
 
-    const avatarElement = postElement.querySelector('.avatar');
-    renderSimpleAvatar(avatarElement, { 
+    const elementoAvatar = elementoPost.querySelector('.avatar');
+    renderizarAvatarSimples(elementoAvatar, { 
         id: post.id_usuario, 
         nome: post.autor,
         foto_perfil: post.foto_perfil_autor 
     });
 
-    return postElement;
+    return elementoPost;
 }
 
-// ===== CORREÇÃO DOS AVATARES =====
-function renderSimpleAvatar(element, user, size = 'normal') {
-    if (!element) {
+// Função de debug para verificar as histórias
+function depurarHistorias(historias) {
+    console.log('🔍 DEBUG: Analisando estruturas das histórias:');
+    historias.forEach((historia, index) => {
+        console.log(`📖 História ${index + 1}:`, {
+            id: historia.id_historia || historia.id,
+            titulo: historia.titulo,
+            tags: historia.tags,
+            tipoTags: typeof historia.tags,
+            temTags: !!historia.tags
+        });
+    });
+}
+
+// ===== AVATARES =====
+function renderizarAvatarSimples(elemento, usuario, tamanho = 'normal') {
+    if (!elemento) {
         console.error('❌ Elemento do avatar não existe');
         return;
     }
     
-    console.log('🖼️ Renderizando avatar:', {
-        user: user,
-        temNome: !!user?.nome,
-        temFoto: !!user?.foto_perfil,
-        size: size
-    });
+    const urlImagem = obterImagemPerfil(usuario);
     
-    // 🎯 CORREÇÃO: Buscar a imagem de forma mais agressiva
-    const imageUrl = getProfileImage(user);
-    
-    if (imageUrl) {
-        console.log('✅ Carregando imagem do avatar:', imageUrl.substring(0, 50) + '...');
-        element.innerHTML = `<img src="${imageUrl}" alt="${user.nome || 'Usuário'}" 
+    if (urlImagem) {
+        elemento.innerHTML = `<img src="${urlImagem}" alt="${usuario.nome || 'Usuário'}" 
                              style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" 
                              onerror="this.style.display='none'" />`;
     } else {
-        // 🎯 CORREÇÃO: Avatar padrão MELHORADO
-        const initials = user?.nome ? user.nome.charAt(0).toUpperCase() : 'U';
-        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
-        const colorIndex = user?.id ? user.id % colors.length : 0;
+        const iniciais = usuario?.nome ? usuario.nome.charAt(0).toUpperCase() : 'U';
+        const cores = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7', '#DDA0DD', '#98D8C8'];
+        const indiceCor = usuario?.id ? usuario.id % cores.length : 0;
         
-        element.innerHTML = `
+        elemento.innerHTML = `
             <div style="
                 width: 100%; 
                 height: 100%; 
                 border-radius: 50%; 
-                background: ${colors[colorIndex]}; 
+                background: ${cores[indiceCor]}; 
                 display: flex; 
                 align-items: center; 
                 justify-content: center; 
                 color: white; 
                 font-weight: bold;
-                font-size: ${size === 'x-small' ? '10px' : size === 'small' ? '12px' : '14px'};
+                font-size: ${tamanho === 'x-small' ? '10px' : tamanho === 'small' ? '12px' : '14px'};
             ">
-                ${initials}
+                ${iniciais}
             </div>
         `;
-        console.log('✅ Avatar padrão criado com iniciais:', initials);
     }
 }
 
-function renderAllCommentAvatars() {
-    console.log('🔄 Renderizando todos os avatares dos comentários...');
-    
-    const avatarElements = document.querySelectorAll('[data-comment-avatar="true"]');
-    console.log(`🔍 Encontrados ${avatarElements.length} avatares para renderizar`);
-    
-    avatarElements.forEach((avatarElement, index) => {
-        const userId = avatarElement.dataset.userId;
-        const commentElement = avatarElement.closest('.comment-item');
-        
-        if (commentElement) {
-            // 🎯 CORREÇÃO: Tentar obter dados do usuário do elemento de comentário
-            const authorElement = commentElement.querySelector('.comment-author');
-            const authorName = authorElement ? authorElement.textContent.trim() : 'Usuário';
-            
-            const userData = {
-                id: userId,
-                nome: authorName,
-                // 🎯 CORREÇÃO: Buscar foto de perfil de atributos data
-                foto_perfil: commentElement.dataset.userAvatar || null
-            };
-            
-            // 🎯 CORREÇÃO: Determinar tamanho baseado na classe
-            const sizeClass = avatarElement.className.includes('x-small') ? 'x-small' : 
-                            avatarElement.className.includes('small') ? 'small' : 'normal';
-            
-            console.log(`🖼️ Renderizando avatar ${index + 1}:`, {
-                userId: userId,
-                author: authorName,
-                size: sizeClass
-            });
-            
-            renderSimpleAvatar(avatarElement, userData, sizeClass);
-        }
-    });
-    
-    console.log('✅ Todos os avatares dos comentários renderizados');
-}
-
-function getProfileImage(user) {
-    if (!user) {
-        console.log('❌ Usuário não definido em getProfileImage');
+function obterImagemPerfil(usuario) {
+    if (!usuario) {
         return null;
     }
     
-    console.log('🔍 Buscando imagem para:', user.nome);
-    
-    // Tentar em ordem de prioridade
-    const foto = user.foto_perfil || user.foto_perfil_autor || user.ft_perfil || user.imagem_perfil;
+    const foto = usuario.foto_perfil || usuario.foto_perfil_autor || usuario.ft_perfil || usuario.imagem_perfil;
     
     if (!foto) {
-        console.log('📭 Nenhuma foto encontrada para o usuário');
         return null;
     }
     
     if (foto.startsWith('http') || foto.startsWith('data:')) {
-        console.log('✅ Imagem URL encontrada');
         return foto;
     }
     
     if (foto.length > 100) {
-        console.log('✅ Imagem base64 encontrada');
         return `data:image/jpeg;base64,${foto}`;
     }
     
-    console.log('❌ Formato de imagem não reconhecido:', foto.substring(0, 50));
     return null;
 }
 
-function getImageUrl(imageData) {
-    if (!imageData) {
+function obterUrlImagem(dadosImagem) {
+    if (!dadosImagem) {
         return null;
     }
 
-    if (imageData.startsWith('http')) {
-        return imageData;
+    if (dadosImagem.startsWith('http')) {
+        return dadosImagem;
     }
 
-    if (imageData.startsWith('data:')) {
-        return imageData;
+    if (dadosImagem.startsWith('data:')) {
+        return dadosImagem;
     }
 
-    if (imageData.length > 100) {
-        return `data:image/jpeg;base64,${imageData}`;
+    if (dadosImagem.length > 100) {
+        return `data:image/jpeg;base64,${dadosImagem}`;
     }
 
     return null;
 }
 
-// ===== CORREÇÃO DO FILTRO POR CATEGORIA =====
-function setupCategoryFilter() {
-    const filterToggle = document.getElementById('categoryFilterToggle');
-    const filterOptions = document.getElementById('categoryFilterOptions');
-    const applyFilterBtn = document.getElementById('applyFilterBtn');
+// ===== FILTRO POR CATEGORIA =====
+function configurarFiltroCategorias() {
+    const alternarFiltro = document.getElementById('categoryFilterToggle');
+    const opcoesFiltro = document.getElementById('categoryFilterOptions');
+    const botaoAplicarFiltro = document.getElementById('applyFilterBtn');
 
-    if (filterToggle && filterOptions) {
-        loadCategories();
+    if (alternarFiltro && opcoesFiltro) {
+        carregarCategorias();
         
-        filterToggle.addEventListener('click', function(e) {
-            e.preventDefault(); // ✅ ADICIONAR
+        alternarFiltro.addEventListener('click', function(e) {
+            e.preventDefault();
             e.stopPropagation();
-            filterOptions.classList.toggle('hidden');
+            opcoesFiltro.classList.toggle('hidden');
         });
 
-        // Event listener para aplicar filtro
-        if (applyFilterBtn) {
-            applyFilterBtn.addEventListener('click', function(e) {
-                e.preventDefault(); // ✅ ADICIONAR
+        if (botaoAplicarFiltro) {
+            botaoAplicarFiltro.addEventListener('click', function(e) {
+                e.preventDefault();
                 e.stopPropagation();
-                applyCategoryFilters();
+                aplicarFiltrosCategoria();
             });
         }
 
-        // Event listener para checkboxes
         setTimeout(() => {
-            const categoryCheckboxes = document.getElementById('categoryCheckboxes');
-            if (categoryCheckboxes) {
-                categoryCheckboxes.addEventListener('change', function(e) {
+            const caixasCategoria = document.getElementById('categoryCheckboxes');
+            if (caixasCategoria) {
+                caixasCategoria.addEventListener('change', function(e) {
                     if (e.target.type === 'checkbox') {
-                        const category = e.target.value;
-                        const isChecked = e.target.checked;
+                        const categoria = e.target.value;
+                        const estaMarcado = e.target.checked;
                         
-                        if (isChecked) {
-                            if (!selectedCategories.includes(category)) {
-                                selectedCategories.push(category);
+                        if (estaMarcado) {
+                            if (!categoriasSelecionadas.includes(categoria)) {
+                                categoriasSelecionadas.push(categoria);
                             }
                         } else {
-                            selectedCategories = selectedCategories.filter(cat => cat !== category);
+                            categoriasSelecionadas = categoriasSelecionadas.filter(cat => cat !== categoria);
                         }
                         
                         atualizarExibicaoCategoriasAtivas();
@@ -1286,10 +1079,10 @@ function setupCategoryFilter() {
     }
 }
 
-function loadCategories() {
+function carregarCategorias() {
     console.log('📂 Carregando categorias...');
     
-    allCategories = [
+    todasCategorias = [
         { id: 1, nome: 'criaturas', icone: '📖', cor: '#4CAF50' },
         { id: 2, nome: 'festas', icone: '🎉', cor: '#9C27B0' },
         { id: 3, nome: 'conhecimentos', icone: '🧠', cor: '#2196F3' },
@@ -1300,11 +1093,11 @@ function loadCategories() {
         { id: 8, nome: 'outros', icone: '📌', cor: '#607D8B' }
     ];
     
-    renderCategoryCheckboxes();
-    console.log(`✅ ${allCategories.length} categorias carregadas`);
+    renderizarCaixasCategoria();
+    console.log(`✅ ${todasCategorias.length} categorias carregadas`);
 }
 
-function renderCategoryCheckboxes() {
+function renderizarCaixasCategoria() {
     const container = document.getElementById('categoryCheckboxes');
     
     if (!container) {
@@ -1312,102 +1105,100 @@ function renderCategoryCheckboxes() {
         return;
     }
     
-    if (!allCategories || allCategories.length === 0) {
+    if (!todasCategorias || todasCategorias.length === 0) {
         container.innerHTML = '<div class="no-categories">Nenhuma categoria disponível</div>';
         return;
     }
     
-    const checkboxesHTML = allCategories.map(categoria => {
+    const htmlCaixas = todasCategorias.map(categoria => {
         const nome = categoria.nome || 'unknown';
         const icone = categoria.icone || '📁';
-        const displayName = getCategoryDisplayName(nome);
+        const nomeExibicao = obterNomeExibicaoCategoria(nome);
         
         return `
             <label class="category-checkbox">
-                <input type="checkbox" value="${nome}" ${selectedCategories.includes(nome) ? 'checked' : ''}>
+                <input type="checkbox" value="${nome}" ${categoriasSelecionadas.includes(nome) ? 'checked' : ''}>
                 <span class="category-icon">${icone}</span>
-                <span class="category-name">${displayName}</span>
+                <span class="category-name">${nomeExibicao}</span>
             </label>
         `;
     }).join('');
     
-    container.innerHTML = checkboxesHTML;
+    container.innerHTML = htmlCaixas;
     
-    // Adicionar event listeners para as checkboxes
-    const checkboxes = container.querySelectorAll('input[type="checkbox"]');
-    checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const category = this.value;
+    const caixas = container.querySelectorAll('input[type="checkbox"]');
+    caixas.forEach(caixa => {
+        caixa.addEventListener('change', function() {
+            const categoria = this.value;
             if (this.checked) {
-                if (!selectedCategories.includes(category)) {
-                    selectedCategories.push(category);
+                if (!categoriasSelecionadas.includes(categoria)) {
+                    categoriasSelecionadas.push(categoria);
                 }
             } else {
-                selectedCategories = selectedCategories.filter(cat => cat !== category);
+                categoriasSelecionadas = categoriasSelecionadas.filter(cat => cat !== categoria);
             }
         });
     });
 }
 
-function applyCategoryFilters() {
-    const filterOptions = document.getElementById('categoryFilterOptions');
-    if (filterOptions) {
-        filterOptions.classList.add('hidden');
+function aplicarFiltrosCategoria() {
+    const opcoesFiltro = document.getElementById('categoryFilterOptions');
+    if (opcoesFiltro) {
+        opcoesFiltro.classList.add('hidden');
     }
     
-    console.log('🔍 Aplicando filtros para categorias:', selectedCategories);
+    console.log('🔍 Aplicando filtros para categorias:', categoriasSelecionadas);
     
-    // Atualizar display antes de aplicar filtros
     atualizarExibicaoCategoriasAtivas();
     
-    if (selectedCategories.length === 0) {
-        renderPosts(allPosts);
-        showNotification('📚 Mostrando todas as categorias', 'success');
+    if (categoriasSelecionadas.length === 0) {
+        renderizarPostagens(todasPostagens);
+        mostrarNotificacao('📚 Mostrando todas as categorias', 'success');
     } else {
-        filterPostsLocally();
+        filtrarPostsLocalmente();
     }
 }
 
-function filterPostsLocally() {
-    if (!allPosts || allPosts.length === 0) {
-        showNotification('Nenhuma história para filtrar', 'info');
+function filtrarPostsLocalmente() {
+    if (!todasPostagens || todasPostagens.length === 0) {
+        mostrarNotificacao('Nenhuma história para filtrar', 'info');
         return;
     }
     
-    const filtered = allPosts.filter(post => 
-        selectedCategories.includes(post.categoria)
+    const filtrados = todasPostagens.filter(post => 
+        categoriasSelecionadas.includes(post.categoria)
     );
     
-    console.log(`📊 Filtro local: ${filtered.length} de ${allPosts.length} histórias`);
+    console.log(`📊 Filtro local: ${filtrados.length} de ${todasPostagens.length} histórias`);
     
-    if (filtered.length === 0) {
-        showNotification('Nenhuma história encontrada nas categorias selecionadas', 'info');
+    if (filtrados.length === 0) {
+        mostrarNotificacao('Nenhuma história encontrada nas categorias selecionadas', 'info');
     } else {
-        showNotification(`📚 ${filtered.length} história(s) encontrada(s) em ${selectedCategories.length} categoria(s)`, 'success');
+        mostrarNotificacao(`📚 ${filtrados.length} história(s) encontrada(s) em ${categoriasSelecionadas.length} categoria(s)`, 'success');
     }
     
-    renderPosts(filtered);
+    renderizarPostagens(filtrados);
 }
 
-function removeCategory(category) {
-    selectedCategories = selectedCategories.filter(cat => cat !== category);
+function removerCategoria(categoria) {
+    categoriasSelecionadas = categoriasSelecionadas.filter(cat => cat !== categoria);
     
-    const checkbox = document.querySelector(`input[value="${category}"]`);
-    if (checkbox) {
-        checkbox.checked = false;
+    const caixa = document.querySelector(`input[value="${categoria}"]`);
+    if (caixa) {
+        caixa.checked = false;
     }
     
-    applyCategoryFilters();
+    aplicarFiltrosCategoria();
 }
 
-function getCategoryDisplayName(category) {
-    const categoria = allCategories.find(c => c.nome === category);
+function obterNomeExibicaoCategoria(categoria) {
+    const categoriaObj = todasCategorias.find(c => c.nome === categoria);
     
-    if (categoria && categoria.nome) {
-        return categoria.nome.charAt(0).toUpperCase() + categoria.nome.slice(1);
+    if (categoriaObj && categoriaObj.nome) {
+        return categoriaObj.nome.charAt(0).toUpperCase() + categoriaObj.nome.slice(1);
     }
     
-    const fallbackMap = {
+    const mapaFallback = {
         'criaturas': 'Criaturas',
         'festas': 'Festas', 
         'conhecimentos': 'Conhecimentos',
@@ -1418,277 +1209,231 @@ function getCategoryDisplayName(category) {
         'outros': 'Outros'
     };
     
-    return fallbackMap[category] || category;
+    return mapaFallback[categoria] || categoria;
 }
 
 // ===== FUNÇÕES PARA CATEGORIAS ATIVAS =====
 
 function atualizarExibicaoCategoriasAtivas() {
-    const activeCategoriesContainer = document.getElementById('activeCategories');
-    const filterToggle = document.getElementById('categoryFilterToggle');
+    const containerCategoriasAtivas = document.getElementById('activeCategories');
+    const alternarFiltro = document.getElementById('categoryFilterToggle');
     
-    if (!activeCategoriesContainer || !filterToggle) {
+    if (!containerCategoriasAtivas || !alternarFiltro) {
         console.log('❌ Elementos do display de categorias ativas não encontrados');
         return;
     }
     
-    // Limpar container
-    activeCategoriesContainer.innerHTML = '';
+    containerCategoriasAtivas.innerHTML = '';
     
-    if (selectedCategories.length === 0) {
-        // Mostrar texto padrão quando não há categorias selecionadas
-        activeCategoriesContainer.innerHTML = `
+    if (categoriasSelecionadas.length === 0) {
+        containerCategoriasAtivas.innerHTML = `
             <span class="filter-placeholder">Todas as categorias</span>
         `;
         
-        // Atualizar texto do botão de filtro
-        const filterText = filterToggle.querySelector('.filter-text');
-        if (filterText) {
-            filterText.textContent = 'Filtrar por Categoria';
+        const textoFiltro = alternarFiltro.querySelector('.filter-text');
+        if (textoFiltro) {
+            textoFiltro.textContent = 'Filtrar por Categoria';
         }
         
         return;
     }
     
-    // Adicionar badge para cada categoria selecionada
-    selectedCategories.forEach(category => {
-        const categoryBadge = document.createElement('span');
-        categoryBadge.className = 'active-category-badge';
-        categoryBadge.innerHTML = `
-            ${getCategoryDisplayName(category)}
-            <button type="button" class="remove-category-btn" onclick="removeCategory('${category}')">
+    categoriasSelecionadas.forEach(categoria => {
+        const crachaCategoria = document.createElement('span');
+        crachaCategoria.className = 'active-category-badge';
+        crachaCategoria.innerHTML = `
+            ${obterNomeExibicaoCategoria(categoria)}
+            <button type="button" class="remove-category-btn" onclick="removerCategoria('${categoria}')">
                 ✕
             </button>
         `;
-        activeCategoriesContainer.appendChild(categoryBadge);
+        containerCategoriasAtivas.appendChild(crachaCategoria);
     });
     
-    // Atualizar texto do botão de filtro
-    const filterText = filterToggle.querySelector('.filter-text');
-    if (filterText) {
-        filterText.textContent = `Filtrando (${selectedCategories.length})`;
+    const textoFiltro = alternarFiltro.querySelector('.filter-text');
+    if (textoFiltro) {
+        textoFiltro.textContent = `Filtrando (${categoriasSelecionadas.length})`;
     }
     
-    console.log('✅ Display de categorias atualizado:', selectedCategories);
+    console.log('✅ Display de categorias atualizado:', categoriasSelecionadas);
 }
 
-// ===== FUNÇÃO PARA CRIAR ELEMENTOS DE PESQUISA =====
+// ===== PESQUISA =====
+function configurarPesquisa() {
+    setTimeout(() => {
+        const inputPesquisa = document.getElementById('searchInput');
+        const botaoLimparPesquisa = document.getElementById('searchClearBtn');
+        const botaoAcaoPesquisa = document.getElementById('searchActionBtn');
 
-function createSearchElements() {
-    const header = document.querySelector('header, .header, .top-bar');
-    
-    if (!header) {
-        console.error('❌ Cabeçalho não encontrado para adicionar pesquisa');
-        return;
-    }
-    
-    const searchHTML = `
-        <div class="search-container" style="margin: 10px 0;">
-            <div class="search-box" style="display: flex; align-items: center; background: white; border-radius: 20px; padding: 5px 15px; border: 1px solid #ddd; max-width: 400px; margin: 0 auto;">
-                <input 
-                    type="text" 
-                    id="searchInput" 
-                    placeholder="Buscar histórias, autores, categorias..."
-                    style="flex: 1; border: none; outline: none; padding: 8px 0; font-size: 14px;"
-                >
-                <button type="button" id="searchClearBtn" class="hidden" style="background: none; border: none; cursor: pointer; padding: 5px; margin-right: 5px; color: #666;">
-                    ✕
-                </button>
-                <button type="button" id="searchActionBtn" style="background: none; border: none; cursor: pointer; padding: 5px; color: var(--primary-brown);">
-                    🔍
-                </button>
-            </div>
-        </div>
-    `;
-    
-    header.insertAdjacentHTML('beforeend', searchHTML);
-    console.log('✅ Elementos de pesquisa criados dinamicamente');
+        console.log('🔍 configurarPesquisa elementos:', {
+            inputPesquisa: !!inputPesquisa,
+            botaoLimparPesquisa: !!botaoLimparPesquisa,
+            botaoAcaoPesquisa: !!botaoAcaoPesquisa
+        });
+
+        if (!inputPesquisa) {
+            configurarPesquisaFallback();
+            return;
+        }
+
+        let timeoutPesquisa = null;
+
+        function atualizarVisibilidadeLimpar() {
+            if (!botaoLimparPesquisa) return;
+            if (inputPesquisa.value.trim().length > 0) botaoLimparPesquisa.classList.remove('hidden');
+            else botaoLimparPesquisa.classList.add('hidden');
+        }
+
+        inputPesquisa.addEventListener('input', function(e) {
+            const termo = e.target.value.trim();
+            atualizarVisibilidadeLimpar();
+
+            clearTimeout(timeoutPesquisa);
+            if (termo.length === 0) {
+                restaurarFeedCompleto();
+                return;
+            }
+            if (termo.length < 2) return;
+
+            timeoutPesquisa = setTimeout(() => realizarPesquisa(termo), 450);
+        });
+
+        if (botaoLimparPesquisa) {
+            botaoLimparPesquisa.addEventListener('click', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                inputPesquisa.value = '';
+                atualizarVisibilidadeLimpar();
+                inputPesquisa.focus();
+                restaurarFeedCompleto();
+            });
+        }
+
+        if (botaoAcaoPesquisa) {
+            botaoAcaoPesquisa.addEventListener('click', async function(e) {
+                e.preventDefault(); e.stopPropagation();
+                const termo = inputPesquisa.value.trim();
+                if (termo) await realizarPesquisa(termo);
+            });
+        }
+
+        inputPesquisa.addEventListener('keypress', async function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const termo = inputPesquisa.value.trim();
+                if (termo) await realizarPesquisa(termo);
+            }
+        });
+    }, 100);
 }
 
-// Removido bloco solto que causava ReferenceError (foi retirado)
-
-// ===== NOVA FUNÇÃO: setupSearch =====
-function setupSearch() {
-	// aguarda elementos que podem ser inseridos dinamicamente
-	setTimeout(() => {
-		const searchInput = document.getElementById('searchInput');
-		const searchClearBtn = document.getElementById('searchClearBtn');
-		const searchActionBtn = document.getElementById('searchActionBtn');
-
-		console.log('🔍 setupSearch elementos:', {
-			searchInput: !!searchInput,
-			searchClearBtn: !!searchClearBtn,
-			searchActionBtn: !!searchActionBtn
-		});
-
-		if (!searchInput) {
-			// fallback: tentar configurar via seletor alternativo depois
-			console.warn('⚠️ Input de pesquisa não encontrado no DOM. SetupSearch abortado.');
-			setupSearchFallback();
-			return;
-		}
-
-		let searchTimeout = null;
-
-		function updateClearVisibility() {
-			if (!searchClearBtn) return;
-			if (searchInput.value.trim().length > 0) searchClearBtn.classList.remove('hidden');
-			else searchClearBtn.classList.add('hidden');
-		}
-
-		searchInput.addEventListener('input', function (e) {
-			const term = e.target.value.trim();
-			updateClearVisibility();
-
-			clearTimeout(searchTimeout);
-			if (term.length === 0) {
-				restaurarFeedCompleto();
-				return;
-			}
-			if (term.length < 2) return;
-
-			searchTimeout = setTimeout(() => realizarPesquisa(term), 450);
-		});
-
-		if (searchClearBtn) {
-			searchClearBtn.addEventListener('click', function (e) {
-				e.preventDefault(); e.stopPropagation();
-				searchInput.value = '';
-				updateClearVisibility();
-				searchInput.focus();
-				restaurarFeedCompleto();
-			});
-		}
-
-		if (searchActionBtn) {
-			searchActionBtn.addEventListener('click', async function (e) {
-				e.preventDefault(); e.stopPropagation();
-				const term = searchInput.value.trim();
-				if (term) await realizarPesquisa(term);
-			});
-		}
-
-		searchInput.addEventListener('keypress', async function (e) {
-			if (e.key === 'Enter') {
-				e.preventDefault();
-				const term = searchInput.value.trim();
-				if (term) await realizarPesquisa(term);
-			}
-		});
-	}, 100);
-}
-
-// Fallback caso os elementos não sejam encontrados pelos IDs
-function setupSearchFallback() {
+function configurarPesquisaFallback() {
     console.log('🔄 Tentando configuração alternativa de pesquisa...');
     
-    // Tentar encontrar elementos por classe ou outros atributos
-    const searchInput = document.querySelector('input[type="text"]');
-    const searchClearBtn = document.querySelector('.search-clear-btn, .clear-btn');
-    const searchActionBtn = document.querySelector('.search-action-btn, .search-btn');
+    const inputPesquisa = document.querySelector('input[type="text"]');
+    const botaoLimparPesquisa = document.querySelector('.search-clear-btn, .clear-btn');
+    const botaoAcaoPesquisa = document.querySelector('.search-action-btn, .search-btn');
     
-    if (searchInput) {
+    if (inputPesquisa) {
         console.log('✅ Input de pesquisa encontrado via seletor alternativo');
         
-        let searchTimeout;
+        let timeoutPesquisa;
         
-        searchInput.addEventListener('input', function(e) {
-            const term = e.target.value.trim();
+        inputPesquisa.addEventListener('input', function(e) {
+            const termo = e.target.value.trim();
             
-            clearTimeout(searchTimeout);
+            clearTimeout(timeoutPesquisa);
             
-            if (term.length < 2) {
-                if (term.length === 0) {
+            if (termo.length < 2) {
+                if (termo.length === 0) {
                     restaurarFeedCompleto();
                 }
                 return;
             }
             
-            searchTimeout = setTimeout(() => {
-                realizarPesquisa(term);
+            timeoutPesquisa = setTimeout(() => {
+                realizarPesquisa(termo);
             }, 500);
         });
         
-        searchInput.addEventListener('keypress', async function(e) {
+        inputPesquisa.addEventListener('keypress', async function(e) {
             if (e.key === 'Enter') {
-                const term = searchInput.value.trim();
-                if (term) {
-                    await realizarPesquisa(term);
+                const termo = inputPesquisa.value.trim();
+                if (termo) {
+                    await realizarPesquisa(termo);
                 }
             }
         });
         
-        // Se encontrou o botão de ação, adicionar evento
-        if (searchActionBtn) {
-            searchActionBtn.addEventListener('click', async function() {
-                const term = searchInput.value.trim();
-                if (term) {
-                    await realizarPesquisa(term);
+        if (botaoAcaoPesquisa) {
+            botaoAcaoPesquisa.addEventListener('click', async function() {
+                const termo = inputPesquisa.value.trim();
+                if (termo) {
+                    await realizarPesquisa(termo);
                 }
             });
         }
         
     } else {
         console.warn('⚠️ Sistema de pesquisa não pôde ser configurado');
-        showNotification('⚠️ Funcionalidade de pesquisa não disponível', 'info');
+        mostrarNotificacao('⚠️ Funcionalidade de pesquisa não disponível', 'info');
     }
 }
 
-async function realizarPesquisa(searchTerm) {
-    console.log('🔍 Executando pesquisa:', searchTerm);
+async function realizarPesquisa(termoPesquisa) {
+    console.log('🔍 Executando pesquisa:', termoPesquisa);
     
     try {
-        if (!allPosts || allPosts.length === 0) {
+        if (!todasPostagens || todasPostagens.length === 0) {
             console.log('📭 Nenhuma história disponível para pesquisa');
-            showNotification('📭 Nenhuma história disponível para pesquisa', 'info');
+            mostrarNotificacao('📭 Nenhuma história disponível para pesquisa', 'info');
             return;
         }
         
-         const contentArea = document.querySelector('.content');
-        if (contentArea) {
-            contentArea.innerHTML = `
+         const areaConteudo = document.querySelector('.content');
+        if (areaConteudo) {
+            areaConteudo.innerHTML = `
                 <div class="search-loading" style="text-align: center; padding: 60px 20px;">
-                    <p style="color: var(--text-muted); font-size: 16px;">Buscando por "<strong>${searchTerm}</strong>"...</p>
+                    <p style="color: var(--text-muted); font-size: 16px;">Buscando por "<strong>${termoPesquisa}</strong>"...</p>
                 </div>
             `;
         }
         
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolver => setTimeout(resolver, 300));
         
-        console.log('📊 Total de posts para pesquisar:', allPosts.length);
+        console.log('📊 Total de posts para pesquisar:', todasPostagens.length);
         
-        const resultados = allPosts.filter(post => {
-            const searchLower = searchTerm.toLowerCase();
-            const temTitulo = post.titulo && post.titulo.toLowerCase().includes(searchLower);
-            const temConteudo = post.conteudo && post.conteudo.toLowerCase().includes(searchLower);
-            const temAutor = post.autor && post.autor.toLowerCase().includes(searchLower);
-            const temCategoria = post.categoria && post.categoria.toLowerCase().includes(searchLower);
+        const resultados = todasPostagens.filter(post => {
+            const termoMinusculo = termoPesquisa.toLowerCase();
+            const temTitulo = post.titulo && post.titulo.toLowerCase().includes(termoMinusculo);
+            const temConteudo = post.conteudo && post.conteudo.toLowerCase().includes(termoMinusculo);
+            const temAutor = post.autor && post.autor.toLowerCase().includes(termoMinusculo);
+            const temCategoria = post.categoria && post.categoria.toLowerCase().includes(termoMinusculo);
             
             return temTitulo || temConteudo || temAutor || temCategoria;
         });
         
         console.log(`✅ ${resultados.length} resultado(s) encontrado(s)`);
         
-        displaySearchResults(resultados, searchTerm);
+        exibirResultadosPesquisa(resultados, termoPesquisa);
         
-    } catch (error) {
-        console.error('❌ Erro na pesquisa:', error);
-        showNotification('❌ Erro ao realizar pesquisa: ' + error.message, 'error');
+    } catch (erro) {
+        console.error('❌ Erro na pesquisa:', erro);
+        mostrarNotificacao('❌ Erro ao realizar pesquisa: ' + erro.message, 'error');
         restaurarFeedCompleto();
     }
 }
 
-function displaySearchResults(resultados, searchTerm) {
-    const contentArea = document.querySelector('.content');
-    if (!contentArea) {
+function exibirResultadosPesquisa(resultados, termoPesquisa) {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) {
         console.error('❌ Área de conteúdo não encontrada');
         return;
     }
     
-    clearPostContent();
+    limparConteudoPosts();
     
     if (resultados.length === 0) {
-        contentArea.innerHTML = `
+        areaConteudo.innerHTML = `
             <div class="no-results-message">
                 <div style="text-align: center; padding: 60px 20px;">
                     <div style="font-size: 64px; margin-bottom: 20px; opacity: 0.5;">🔍</div>
@@ -1696,7 +1441,7 @@ function displaySearchResults(resultados, searchTerm) {
                         Nenhum resultado encontrado
                     </h3>
                     <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 16px;">
-                        Não encontramos nada para "<strong style="color: var(--primary-brown);">${searchTerm}</strong>"
+                        Não encontramos nada para "<strong style="color: var(--primary-brown);">${termoPesquisa}</strong>"
                     </p>
                     <button type="button" onclick="restaurarFeedCompleto()" class="clear-search-btn large">
                         <span style="margin-right: 8px;">↩️</span>
@@ -1706,11 +1451,11 @@ function displaySearchResults(resultados, searchTerm) {
             </div>
         `;
     } else {
-        const resultsHeader = document.createElement('div');
-        resultsHeader.className = 'search-results-header';
-        resultsHeader.innerHTML = `
+        const cabecalhoResultados = document.createElement('div');
+        cabecalhoResultados.className = 'search-results-header';
+        cabecalhoResultados.innerHTML = `
             <div class="results-info">
-                <h3>🔍 ${resultados.length} resultado(s) para "${searchTerm}"</h3>
+                <h3>🔍 ${resultados.length} resultado(s) para "${termoPesquisa}"</h3>
                 <p class="results-subtitle">Encontramos essas histórias relacionadas à sua pesquisa</p>
             </div>
             <button type="button" onclick="restaurarFeedCompleto()" class="clear-search-btn">
@@ -1718,297 +1463,279 @@ function displaySearchResults(resultados, searchTerm) {
                 Limpar pesquisa
             </button>
         `;
-        contentArea.appendChild(resultsHeader);
+        areaConteudo.appendChild(cabecalhoResultados);
         
         resultados.forEach(post => {
             try {
-                const postElement = post.titulo ? createStoryElement(post) : createPostElement(post);
-                highlightSearchTerms(postElement, searchTerm);
-                contentArea.appendChild(postElement);
-            } catch (error) {
-                console.error('❌ Erro ao renderizar post:', error);
+                const elementoPost = post.titulo ? criarElementoHistoria(post) : criarElementoPost(post);
+                destacarTermosPesquisa(elementoPost, termoPesquisa);
+                areaConteudo.appendChild(elementoPost);
+            } catch (erro) {
+                console.error('❌ Erro ao renderizar post:', erro);
             }
         });
         
-        showNotification(`✅ ${resultados.length} história(s) encontrada(s) para "${searchTerm}"`, 'success');
+        mostrarNotificacao(`✅ ${resultados.length} história(s) encontrada(s) para "${termoPesquisa}"`, 'success');
     }
     
     console.log('📊 Resultados exibidos com sucesso');
 }
 
-function highlightSearchTerms(element, searchTerm) {
-    if (!element || !searchTerm) return;
+function destacarTermosPesquisa(elemento, termoPesquisa) {
+    if (!elemento || !termoPesquisa) return;
     
-    const searchLower = searchTerm.toLowerCase();
-    const textElements = element.querySelectorAll('.story-title, .story-content, .message-text, .username');
+    const termoMinusculo = termoPesquisa.toLowerCase();
+    const elementosTexto = elemento.querySelectorAll('.story-title, .story-content, .message-text, .username');
     
-    textElements.forEach(el => {
-        const originalHTML = el.innerHTML;
-        const regex = new RegExp(`(${ escaparRegex(searchTerm)})`, 'gi');
-        const highlighted = originalHTML.replace(regex, '<mark class="search-highlight">$1</mark>');
-        el.innerHTML = highlighted;
+    elementosTexto.forEach(el => {
+        const htmlOriginal = el.innerHTML;
+        const regex = new RegExp(`(${ escaparRegex(termoPesquisa)})`, 'gi');
+        const destacado = htmlOriginal.replace(regex, '<mark class="search-highlight">$1</mark>');
+        el.innerHTML = destacado;
     });
 }
 
-function  escaparRegex(string) {
+function escaparRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // ===== SISTEMA DE RESPOSTAS =====
 
-async function manipularAlternarResposta(event) {
-    event.preventDefault();
-    event.stopPropagation();
+async function manipularAlternarResposta(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
     
     console.log('🔍 manipularAlternarResposta chamado');
     
-    const replyBtn = event.target.closest('.reply-btn');
-    if (!replyBtn) {
+    const botaoResponder = evento.target.closest('.reply-btn');
+    if (!botaoResponder) {
         console.error('❌ Botão de resposta não encontrado');
         return;
     }
     
-    const commentId = replyBtn.dataset.commentId;
-    console.log('💬 Toggle resposta para comentário:', commentId);
+    const idComentario = botaoResponder.dataset.commentId;
+    console.log('💬 Toggle resposta para comentário:', idComentario);
     
-    if (!commentId) {
-        console.error('❌ commentId não encontrado');
+    if (!idComentario) {
+        console.error('❌ idComentario não encontrado');
         return;
     }
     
-    // 🎯 CORREÇÃO: Buscar a seção de resposta de forma mais robusta
-    let replySection = document.getElementById(`reply-${commentId}`);
+    let secaoResposta = document.getElementById(`reply-${idComentario}`);
     
-    if (!replySection) {
+    if (!secaoResposta) {
         console.log('🔄 Seção de resposta não encontrada pelo ID, tentando criar...');
         
-        // Tentar encontrar o comentário primeiro
-        const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
-        if (commentElement) {
-            // Verificar se já existe uma seção de resposta no comentário
-            replySection = commentElement.querySelector('.reply-section');
+        const elementoComentario = document.querySelector(`[data-comment-id="${idComentario}"]`);
+        if (elementoComentario) {
+            secaoResposta = elementoComentario.querySelector('.reply-section');
             
-            if (!replySection) {
+            if (!secaoResposta) {
                 console.log('📝 Criando seção de resposta dinamicamente...');
-                // Criar a seção de resposta dinamicamente
-                const newReplySection = document.createElement('div');
-                newReplySection.className = 'reply-section';
-                newReplySection.id = `reply-${commentId}`;
-                newReplySection.style.display = 'none';
+                const novaSecaoResposta = document.createElement('div');
+                novaSecaoResposta.className = 'reply-section';
+                novaSecaoResposta.id = `reply-${idComentario}`;
+                novaSecaoResposta.style.display = 'none';
                 
-                // 🎯 CORREÇÃO: Garantir que o botão tenha o data-comment-id correto
-                newReplySection.innerHTML = `
+                novaSecaoResposta.innerHTML = `
                     <div class="add-reply">
                         <textarea class="reply-input" placeholder="Escreva uma resposta..." rows="2"></textarea>
                         <div class="reply-buttons">
-                            <button type="button" class="submit-reply" data-comment-id="${commentId}">
+                            <button type="button" class="submit-reply" data-comment-id="${idComentario}">
                                 Responder
                             </button>
-                            <button type="button" class="cancel-reply" data-comment-id="${commentId}">
+                            <button type="button" class="cancel-reply" data-comment-id="${idComentario}">
                                 Cancelar
                             </button>
                         </div>
                     </div>
                 `;
                 
-                // Inserir após as ações do comentário
-                const commentActions = commentElement.querySelector('.comment-actions');
-                if (commentActions) {
-                    commentActions.parentNode.insertBefore(newReplySection, commentActions.nextSibling);
+                const acoesComentario = elementoComentario.querySelector('.comment-actions');
+                if (acoesComentario) {
+                    acoesComentario.parentNode.insertBefore(novaSecaoResposta, acoesComentario.nextSibling);
                 } else {
-                    // Fallback: inserir no final do comentário
-                    commentElement.appendChild(newReplySection);
+                    elementoComentario.appendChild(novaSecaoResposta);
                 }
                 
-                replySection = newReplySection;
+                secaoResposta = novaSecaoResposta;
                 console.log('✅ Seção de resposta criada dinamicamente');
             }
         }
     }
     
-    if (!replySection) {
+    if (!secaoResposta) {
         console.error('❌ Não foi possível encontrar ou criar a seção de resposta');
-        showNotification('❌ Erro: não foi possível acessar a seção de resposta', 'error');
+        mostrarNotificacao('❌ Erro: não foi possível acessar a seção de resposta', 'error');
         return;
     }
     
-    if (replySection.style.display === 'none') {
-        replySection.style.display = 'block';
-        const replyInput = replySection.querySelector('.reply-input');
-        if (replyInput) {
-            replyInput.focus();
-            // Auto-expand textarea
-            replyInput.style.height = 'auto';
-            replyInput.style.height = (replyInput.scrollHeight) + 'px';
+    if (secaoResposta.style.display === 'none') {
+        secaoResposta.style.display = 'block';
+        const inputResposta = secaoResposta.querySelector('.reply-input');
+        if (inputResposta) {
+            inputResposta.focus();
+            inputResposta.style.height = 'auto';
+            inputResposta.style.height = (inputResposta.scrollHeight) + 'px';
         }
         console.log('✅ Seção de resposta aberta');
     } else {
-        replySection.style.display = 'none';
+        secaoResposta.style.display = 'none';
         console.log('❌ Seção de resposta fechada');
     }
 }
 
-async function manipularEnviarResposta(event, commentId) {
-    event.preventDefault();
-    event.stopPropagation();
+async function manipularEnviarResposta(evento, idComentario) {
+    evento.preventDefault();
+    evento.stopPropagation();
     
-    console.log('🔍 manipularEnviarResposta chamado com commentId:', commentId);
+    console.log('🔍 manipularEnviarResposta chamado com idComentario:', idComentario);
     
-    if (!currentUser) {
-        showNotification('🔒 Faça login para responder', 'error');
+    if (!usuarioAtual) {
+        mostrarNotificacao('🔒 Faça login para responder', 'error');
         return;
     }
     
-    // 🎯 CORREÇÃO: Garantir que commentId existe
-    if (!commentId) {
-        console.error('❌ commentId é undefined no manipularEnviarResposta');
-        showNotification('❌ Erro: ID do comentário não encontrado', 'error');
+    if (!idComentario) {
+        console.error('❌ idComentario é undefined no manipularEnviarResposta');
+        mostrarNotificacao('❌ Erro: ID do comentário não encontrado', 'error');
         return;
     }
     
-    console.log('🎯 Processando resposta para comentário:', commentId);
+    console.log('🎯 Processando resposta para comentário:', idComentario);
     
-    // 🎯 CORREÇÃO: Buscar a seção de resposta de forma mais robusta
-    let replySection = document.getElementById(`reply-${commentId}`);
+    let secaoResposta = document.getElementById(`reply-${idComentario}`);
     
-    if (!replySection) {
+    if (!secaoResposta) {
         console.log('🔄 Seção de resposta não encontrada pelo ID, tentando buscar pelo DOM...');
         
-        // Tentar encontrar a seção de resposta de outras formas
-        const commentElement = document.querySelector(`[data-comment-id="${commentId}"][data-comment-type="main"]`);
-        if (commentElement) {
-            replySection = commentElement.querySelector('.reply-section');
-            console.log('🔍 Seção encontrada via querySelector:', !!replySection);
+        const elementoComentario = document.querySelector(`[data-comment-id="${idComentario}"][data-comment-type="main"]`);
+        if (elementoComentario) {
+            secaoResposta = elementoComentario.querySelector('.reply-section');
+            console.log('🔍 Seção encontrada via querySelector:', !!secaoResposta);
         }
         
-        if (!replySection) {
+        if (!secaoResposta) {
             console.error('❌ Seção de resposta não encontrada de nenhuma forma');
-            showNotification('❌ Erro: seção de resposta não encontrada', 'error');
+            mostrarNotificacao('❌ Erro: seção de resposta não encontrada', 'error');
             return;
         }
     }
     
-    const replyInput = replySection.querySelector('.reply-input');
-    if (!replyInput) {
+    const inputResposta = secaoResposta.querySelector('.reply-input');
+    if (!inputResposta) {
         console.error('❌ Campo de resposta não encontrado');
         return;
     }
     
-    const replyText = replyInput.value.trim();
+    const textoResposta = inputResposta.value.trim();
     
-    console.log('📝 Texto da resposta:', replyText);
+    console.log('📝 Texto da resposta:', textoResposta);
     
-    // Validações
-    if (!replyText) {
-        showNotification('📝 Digite uma resposta', 'error');
-        replyInput.focus();
+    if (!textoResposta) {
+        mostrarNotificacao('📝 Digite uma resposta', 'error');
+        inputResposta.focus();
         return;
     }
     
-    if (replyText.length < 2) {
-        showNotification('📝 A resposta precisa ter pelo menos 2 caracteres', 'error');
-        replyInput.focus();
+    if (textoResposta.length < 2) {
+        mostrarNotificacao('📝 A resposta precisa ter pelo menos 2 caracteres', 'error');
+        inputResposta.focus();
         return;
     }
     
     try {
-        // Encontrar postId de forma robusta
-        const commentElement = document.querySelector(`[data-comment-id="${commentId}"][data-comment-type="main"]`);
-        if (!commentElement) throw new Error('Comentário pai não encontrado');
+        const elementoComentario = document.querySelector(`[data-comment-id="${idComentario}"][data-comment-type="main"]`);
+        if (!elementoComentario) throw new Error('Comentário pai não encontrado');
         
-        const commentsSection = commentElement.closest('.comments-section');
-        if (!commentsSection) throw new Error('Seção de comentários não encontrada');
+        const secaoComentarios = elementoComentario.closest('.comments-section');
+        if (!secaoComentarios) throw new Error('Seção de comentários não encontrada');
         
-        const postId = commentsSection.id.replace('comments-', '');
+        const idPost = secaoComentarios.id.replace('comments-', '');
         
-        if (!postId) throw new Error('ID da história não encontrado');
+        if (!idPost) throw new Error('ID da história não encontrado');
         
         console.log('📤 Enviando resposta para o servidor:', {
-            postId: postId,
-            commentId: commentId,
-            replyText: replyText,
-            userId: currentUser.id
+            idPost: idPost,
+            idComentario: idComentario,
+            textoResposta: textoResposta,
+            idUsuario: usuarioAtual.id
         });
         
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/comentarios`, {
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const resposta = await fetch(`${urlBase}/comentarios`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                id_historia: parseInt(postId),
-                id_usuario: parseInt(currentUser.id),
-                conteudo: replyText,
-                id_comentario_pai: parseInt(commentId) // 🎯 ESSENCIAL: Marcar como resposta
+                id_historia: parseInt(idPost),
+                id_usuario: parseInt(usuarioAtual.id),
+                conteudo: textoResposta,
+                id_comentario_pai: parseInt(idComentario)
             })
         });
 
-        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Status da resposta:', resposta.status);
 
-        if (response.ok) {
-            const newReply = await response.json();
-            console.log('✅ Resposta criada pelo servidor:', newReply);
+        if (resposta.ok) {
+            const novaResposta = await resposta.json();
+            console.log('✅ Resposta criada pelo servidor:', novaResposta);
             
-            // 🎯 CORREÇÃO: Garantir que temos todos os dados necessários
-            const replyData = {
-                id_comentario: newReply.id,
-                id_comentario_pai: parseInt(commentId), // Garantir que está marcado como resposta
-                id_usuario: currentUser.id,
-                conteudo: replyText,
-                autor: currentUser.nome,
+            const dadosResposta = {
+                id_comentario: novaResposta.id,
+                id_comentario_pai: parseInt(idComentario),
+                id_usuario: usuarioAtual.id,
+                conteudo: textoResposta,
+                autor: usuarioAtual.nome,
                 data_comentario: new Date().toISOString(),
                 num_curtidas: 0,
                 isReply: true
             };
             
-            // Adicionar a resposta à UI
-            addNewReplyToUI(commentId, replyData);
+            adicionarNovaRespostaNaUI(idComentario, dadosResposta);
             
-            // Limpar e fechar
-            replyInput.value = '';
-            closeReplySection(commentId);
+            inputResposta.value = '';
+            fecharSecaoResposta(idComentario);
             
-            showNotification('💬 Resposta adicionada!', 'success');
+            mostrarNotificacao('💬 Resposta adicionada!', 'success');
             
         } else {
-            const errorText = await response.text();
-            console.error('❌ Erro do servidor:', errorText);
-            throw new Error(errorText || 'Erro ao enviar resposta');
+            const textoErro = await resposta.text();
+            console.error('❌ Erro do servidor:', textoErro);
+            throw new Error(textoErro || 'Erro ao enviar resposta');
         }
-    } catch (error) {
-        console.error('❌ Erro ao responder:', error);
-        showNotification('❌ Erro ao responder: ' + error.message, 'error');
+    } catch (erro) {
+        console.error('❌ Erro ao responder:', erro);
+        mostrarNotificacao('❌ Erro ao responder: ' + erro.message, 'error');
     }
 }
 
-
 // ===== FUNÇÕES UTILITÁRIAS =====
 
-function formatCommentDate(dateString) {
-    if (!dateString) return 'Agora';
+function formatarDataComentario(dataString) {
+    if (!dataString) return 'Agora';
     
     try {
-        const date = new Date(dateString);
-        const now = new Date();
-        const diffMs = now - date;
-        const diffMins = Math.floor(diffMs / 60000);
-        const diffHours = Math.floor(diffMs / 3600000);
-        const diffDays = Math.floor(diffMs / 86400000);
+        const data = new Date(dataString);
+        const agora = new Date();
+        const diffMs = agora - data;
+        const diffMinutos = Math.floor(diffMs / 60000);
+        const diffHoras = Math.floor(diffMs / 3600000);
+        const diffDias = Math.floor(diffMs / 86400000);
         
-        if (diffMins < 1) return 'Agora';
-        if (diffMins < 60) return `${diffMins} min`;
-        if (diffHours < 24) return `${diffHours} h`;
-        if (diffDays < 7) return `${diffDays} d`;
+        if (diffMinutos < 1) return 'Agora';
+        if (diffMinutos < 60) return `${diffMinutos} min`;
+        if (diffHoras < 24) return `${diffHoras} h`;
+        if (diffDias < 7) return `${diffDias} d`;
         
-        return date.toLocaleDateString('pt-BR');
-    } catch (error) {
+        return data.toLocaleDateString('pt-BR');
+    } catch (erro) {
         return 'Agora';
     }
 }
 
-function preventLinkReload() {
-    // Prevenir comportamento padrão em links que são botões
+function prevenirRecarregamentoLinks() {
     document.addEventListener('click', function(e) {
         const link = e.target.closest('a[href="#"], a[href="javascript:void(0)"]');
         if (link) {
@@ -2018,371 +1745,158 @@ function preventLinkReload() {
     });
 }
 
-function atualizacaoSuave(element, callback) {
-    element.style.transition = 'all 0.3s ease';
+function atualizacaoSuave(elemento, callback) {
+    elemento.style.transition = 'all 0.3s ease';
     callback();
 }
 
-function atualizarElementoComAnimacao(element, newContent) {
-    atualizacaoSuave(element, () => {
-        element.style.opacity = '0';
+function atualizarElementoComAnimacao(elemento, novoConteudo) {
+    atualizacaoSuave(elemento, () => {
+        elemento.style.opacity = '0';
         setTimeout(() => {
-            element.innerHTML = newContent;
-            element.style.opacity = '1';
+            elemento.innerHTML = novoConteudo;
+            elemento.style.opacity = '1';
         }, 300);
     });
 }
 
-function clearPostContent() {
-    const contentArea = document.querySelector('.content');
-    if (!contentArea) return;
+function limparConteudoPosts() {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) return;
     
-    const elementsToRemove = contentArea.querySelectorAll(
+    const elementosParaRemover = areaConteudo.querySelectorAll(
         '.post, .empty-feed-message, .search-results-header, .no-results-message, .empty-state, .search-loading'
     );
-    elementsToRemove.forEach(el => el.remove());
+    elementosParaRemover.forEach(el => el.remove());
 
-    if (contentArea.children.length === 0 && contentArea.innerHTML.includes('search-loading')) {
-        contentArea.innerHTML = '';
+    if (areaConteudo.children.length === 0 && areaConteudo.innerHTML.includes('search-loading')) {
+        areaConteudo.innerHTML = '';
     }
 }
 
 function restaurarFeedCompleto() {
     console.log('🔄 Restaurando feed completo...');
     
-    const searchInput = document.getElementById('searchInput');
-    const searchClearBtn = document.getElementById('searchClearBtn');
+    const inputPesquisa = document.getElementById('searchInput');
+    const botaoLimparPesquisa = document.getElementById('searchClearBtn');
     
-    if (searchInput) {
-        searchInput.value = '';
+    if (inputPesquisa) {
+        inputPesquisa.value = '';
     }
     
-    if (searchClearBtn) {
-        searchClearBtn.classList.add('hidden');
+    if (botaoLimparPesquisa) {
+        botaoLimparPesquisa.classList.add('hidden');
     }
     
-    selectedCategories = [];
+    categoriasSelecionadas = [];
     atualizarExibicaoCategoriasAtivas();
     
-    loadPosts();
+    carregarPostagens();
 }
 
-function showEmptyMessage() {
-    const contentArea = document.querySelector('.content');
-    if (!contentArea) return;
+function mostrarMensagemVazia() {
+    const areaConteudo = document.querySelector('.content');
+    if (!areaConteudo) return;
 
-    contentArea.innerHTML = '';
+    areaConteudo.innerHTML = '';
     
-    const emptyMessage = document.createElement('div');
-    emptyMessage.className = 'empty-feed-message';
-    emptyMessage.innerHTML = `
-        <div class="empty-state">
-            <h3>📭 Nenhuma história ainda</h3>
-            <p>Seja o primeiro a compartilhar algo!</p>
-            <button type="button" onclick="openModal()" class="test-button">
+    const mensagemVazia = document.createElement('div');
+    mensagemVazia.className = 'nenhuma-historia';
+    mensagemVazia.innerHTML = `
+        <div class="estado-vazio">
+            <h3>📭 Nenhuma história encontrada</h3>
+            <p>Seja o primeiro a compartilhar uma história!</p>
+            <button type="button" onclick="abrirModal()" class="botao-tentar-novamente">
                 ✍️ Criar Primeira História
             </button>
         </div>
     `;
     
-    contentArea.appendChild(emptyMessage);
+    areaConteudo.appendChild(mensagemVazia);
     
-    ensureFabButton();
+    garantirBotaoFab();
 }
 
-function ensureFabButton() {
-    const contentArea = document.querySelector('.content');
-    const fabButton = document.getElementById('fabButton');
+function garantirBotaoFab() {
+    const areaConteudo = document.querySelector('.content');
+    const botaoFab = document.getElementById('fabButton');
     
-    if (fabButton && !contentArea.contains(fabButton)) {
-        contentArea.appendChild(fabButton);
+    if (botaoFab && !areaConteudo.contains(botaoFab)) {
+        areaConteudo.appendChild(botaoFab);
     }
-}
-
-function handleButtonClick(button, originalEvent) {
-    console.log('🔄 Processando botão:', button.className, button.id, button.dataset);
-    
-    // Mapeamento de botões para suas funções
-    const buttonHandlers = {
-        // ===== DROPDOWN USUÁRIO =====
-        'userButton': () => {
-            console.log('👤 Toggle dropdown usuário');
-            alternarDropdown();
-        },
-        
-        // ===== LIKES =====
-        'like-btn': () => {
-            const postId = button.dataset.postId;
-            console.log('❤️ Curtida nuclear para post:', postId);
-            if (postId) {
-                manipularCurtirPost(button, postId);
-            } else {
-                console.error('❌ postId não encontrado no botão like');
-                showNotification('❌ Erro: ID da história não encontrado', 'error');
-            }
-        },
-        
-        // ===== COMENTÁRIOS =====
-        'comment-btn': () => {
-            const postId = button.dataset.postId;
-            console.log('💬 Toggle comentários:', postId);
-            if (postId) {
-                manipularAlternarComentario(postId);
-            } else {
-                console.error('❌ postId não encontrado no botão comment');
-            }
-        },
-        
-        'submit-comment': () => {
-            const postId = button.dataset.postId;
-            console.log('📝 Enviar comentário:', postId);
-            if (postId) {
-                manipularEnviarComentario(postId);
-            } else {
-                console.error('❌ postId não encontrado no botão submit-comment');
-                showNotification('❌ Erro: ID da história não encontrado', 'error');
-            }
-        },
-        
-        // ===== MODAL CRIAÇÃO =====
-        'fabButton': () => {
-            console.log('📖 Abrir modal de criação');
-            openModal();
-        },
-        
-        'cancelPostBtn': () => {
-            console.log('📖 Fechar modal de criação');
-            closeModal();
-        },
-        
-        // ===== CATEGORIAS =====
-        'categoryFilterToggle': () => {
-            console.log('🏷️ Toggle filtro de categorias');
-            const filterOptions = document.getElementById('categoryFilterOptions');
-            if (filterOptions) filterOptions.classList.toggle('hidden');
-        },
-        
-        'applyFilterBtn': () => {
-            console.log('🔍 Aplicar filtros de categoria');
-            applyCategoryFilters();
-        },
-        
-        // ===== LOGOUT =====
-        'logoutBtn': () => {
-            console.log('🚪 Logout usuário');
-            manipularLogout();
-        },
-        
-        // ===== PESQUISA =====
-        'searchActionBtn': () => {
-            console.log('🔍 Executar pesquisa');
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput?.value.trim()) {
-                realizarPesquisa(searchInput.value.trim());
-            } else {
-                showNotification('🔍 Digite algo para pesquisar', 'info');
-            }
-        },
-        
-        'searchClearBtn': () => {
-            console.log('🧹 Limpar pesquisa');
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.focus();
-            }
-            restaurarFeedCompleto();
-        },
-        
-        // ===== DELEÇÕES =====
-        'btn-deletar': () => {
-            console.log('🗑️ Deletar post');
-            const postElement = button.closest('.post');
-            const postId = postElement?.dataset.postId;
-            if (postId) {
-                manipularExcluirPost(postId);
-            } else {
-                console.error('❌ postId não encontrado para deleção');
-                showNotification('❌ Erro: ID da história não encontrado', 'error');
-            }
-        },
-        
-        'btn-deletar-comentario': () => {
-            console.log('🗑️ Deletar comentário');
-            const commentElement = button.closest('.comment, .comment-reply');
-            const commentId = commentElement?.dataset.commentId;
-            if (commentId) {
-                manipularExcluirComentario(commentId, commentElement);
-            } else {
-                console.error('❌ commentId não encontrado para deleção');
-                showNotification('❌ Erro: ID do comentário não encontrado', 'error');
-            }
-        },
-        
-        // ===== RESPOSTAS =====
-        'reply-btn': () => {
-            const commentId = button.dataset.commentId;
-            console.log('💬 Toggle resposta para comentário:', commentId);
-            if (commentId) {
-                manipularAlternarResposta(commentId);
-            } else {
-                console.error('❌ commentId não encontrado no botão reply');
-            }
-        },
-        
-        'submit-reply': () => {
-            const commentId = button.dataset.commentId;
-            console.log('📝 Enviar resposta para comentário:', commentId);
-            if (commentId) {
-                manipularEnviarResposta(commentId);
-            } else {
-                console.error('❌ commentId não encontrado no botão submit-reply');
-                showNotification('❌ Erro: ID do comentário não encontrado', 'error');
-            }
-        },
-        
-        'cancel-reply': () => {
-            const commentId = button.dataset.commentId;
-            console.log('❌ Cancelar resposta para comentário:', commentId);
-            if (commentId) {
-                const replySection = document.getElementById(`reply-${commentId}`);
-                if (replySection) {
-                    replySection.style.display = 'none';
-                    const replyInput = replySection.querySelector('.reply-input');
-                    if (replyInput) replyInput.value = '';
-                }
-            }
-        },
-        
-        // ===== BOTÕES DE INTERFACE =====
-        'test-button': () => {
-            console.log('✨ Botão de teste clicado');
-            openModal();
-        },
-        
-        'clear-search-btn': () => {
-            console.log('🧹 Limpar pesquisa (botão interno)');
-            restaurarFeedCompleto();
-        },
-        
-        // ===== CATEGORIAS ATIVAS =====
-        'remove-category-btn': () => {
-            console.log('🏷️ Remover categoria ativa');
-            const categoryBadge = button.closest('.active-category-badge');
-            const categoryName = categoryBadge?.textContent?.trim().replace('✕', '').trim();
-            if (categoryName) {
-                removeCategory(categoryName);
-            }
-        }
-    };
-    
-    // Encontrar handler pelo className ou ID
-    for (const [key, handler] of Object.entries(buttonHandlers)) {
-        if (button.classList.contains(key) || button.id === key) {
-            console.log(`✅ Handler encontrado: ${key}`);
-            handler();
-            return;
-        }
-    }
-    
-    // Fallback para botões com data attributes
-    if (button.dataset.postId) {
-        if (button.classList.contains('like-btn')) {
-            console.log('🔄 Fallback like:', button.dataset.postId);
-            manipularCurtirPost(button, button.dataset.postId);
-        } else if (button.classList.contains('comment-btn')) {
-            console.log('🔄 Fallback comment toggle:', button.dataset.postId);
-            manipularAlternarComentario(button.dataset.postId);
-        } else if (button.classList.contains('submit-comment')) {
-            console.log('🔄 Fallback comment submit:', button.dataset.postId);
-            manipularEnviarComentario(button.dataset.postId);
-        }
-    }
-    
-    if (button.dataset.commentId) {
-        if (button.classList.contains('reply-btn')) {
-            console.log('🔄 Fallback reply toggle:', button.dataset.commentId);
-            manipularAlternarResposta(button.dataset.commentId);
-        } else if (button.classList.contains('submit-reply')) {
-            console.log('🔄 Fallback reply submit:', button.dataset.commentId);
-            manipularEnviarResposta(button.dataset.commentId);
-        }
-    }
-    
-    console.log('❌ Nenhum handler encontrado para o botão:', button.className, button.id);
 }
 
 // ===== SISTEMA DE IMAGENS =====
-function setupImagePreview() {
-    const imageInput = document.getElementById('postImage');
-    const imagePreview = document.getElementById('imagePreview');
-    const imageLabel = document.querySelector('.image-upload-btn');
+function configurarPreviaImagem() {
+    const inputImagem = document.getElementById('postImage');
+    const previaImagem = document.getElementById('imagePreview');
+    const rotuloImagem = document.querySelector('.image-upload-btn');
 
-    if (imageLabel && imageInput) {
-        imageLabel.addEventListener('click', (e) => {
+    if (rotuloImagem && inputImagem) {
+        rotuloImagem.addEventListener('click', (e) => {
             e.preventDefault();
-            imageInput.click();
+            inputImagem.click();
         });
     }
 
-    if (imageInput && imagePreview) {
-        imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file && file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.innerHTML = `
+    if (inputImagem && previaImagem) {
+        inputImagem.addEventListener('change', function(e) {
+            const arquivo = e.target.files[0];
+            if (arquivo && arquivo.type.startsWith('image/')) {
+                const leitor = new FileReader();
+                leitor.onload = function(e) {
+                    previaImagem.innerHTML = `
                         <div class="preview-container">
                             <img src="${e.target.result}" alt="Preview da imagem">
-                            <button type="button" class="remove-image-btn" onclick="removeImage()">
+                            <button type="button" class="remove-image-btn" onclick="removerImagem()">
                                 ✕
                             </button>
                         </div>
                     `;
-                    imagePreview.style.display = 'block';
+                    previaImagem.style.display = 'block';
                     
-                    const uploadText = document.querySelector('.upload-text');
-                    if (uploadText) {
-                        uploadText.textContent = 'Alterar Imagem';
+                    const textoUpload = document.querySelector('.upload-text');
+                    if (textoUpload) {
+                        textoUpload.textContent = 'Alterar Imagem';
                     }
                 };
-                reader.readAsDataURL(file);
-            } else if (file) {
-                showNotification(' Por favor, selecione uma imagem válida', 'error');
-                removeImage();
+                leitor.readAsDataURL(arquivo);
+            } else if (arquivo) {
+                mostrarNotificacao(' Por favor, selecione uma imagem válida', 'error');
+                removerImagem();
             }
         });
     }
 }
 
-function removeImage() {
-    const imageInput = document.getElementById('postImage');
-    const imagePreview = document.getElementById('imagePreview');
-    const uploadText = document.querySelector('.upload-text');
+function removerImagem() {
+    const inputImagem = document.getElementById('postImage');
+    const previaImagem = document.getElementById('imagePreview');
+    const textoUpload = document.querySelector('.upload-text');
     
-    if (imageInput) imageInput.value = '';
-    if (imagePreview) {
-        imagePreview.innerHTML = '';
-        imagePreview.style.display = 'none';
+    if (inputImagem) inputImagem.value = '';
+    if (previaImagem) {
+        previaImagem.innerHTML = '';
+        previaImagem.style.display = 'none';
     }
-    if (uploadText) {
-        uploadText.textContent = 'Escolher Imagem';
+    if (textoUpload) {
+        textoUpload.textContent = 'Escolher Imagem';
     }
 }
 
 // ===== NOTIFICAÇÕES =====
-function showNotification(message, type = 'success') {
-    const oldNotifications = document.querySelectorAll('.notification');
-    oldNotifications.forEach(n => n.remove());
+function mostrarNotificacao(mensagem, tipo = 'success') {
+    const notificacoesAntigas = document.querySelectorAll('.notification');
+    notificacoesAntigas.forEach(n => n.remove());
 
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
+    const notificacao = document.createElement('div');
+    notificacao.className = `notification ${tipo}`;
+    notificacao.textContent = mensagem;
+    notificacao.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#4CAF50' : type === 'error' ? '#f44336' : '#2196F3'};
+        background: ${tipo === 'success' ? '#4CAF50' : tipo === 'error' ? '#f44336' : '#2196F3'};
         color: white;
         padding: 12px 20px;
         border-radius: 4px;
@@ -2391,100 +1905,97 @@ function showNotification(message, type = 'success') {
         box-shadow: 0 2px 10px rgba(0,0,0,0.2);
     `;
     
-    document.body.appendChild(notification);
+    document.body.appendChild(notificacao);
     
     setTimeout(() => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
+        if (notificacao.parentNode) {
+            notificacao.parentNode.removeChild(notificacao);
         }
     }, 3000);
 }
 
 // ===== EVENT LISTENERS GLOBAIS =====
-function setupGlobalEventListeners() {
+function configurarOuvintesEventosGlobais() {
     console.log('🔧 Configurando event listeners globais...');
     
-    // Listener global para TODAS as interações - SEM PREVENÇÃO GLOBAL
     document.addEventListener('click', function(e) {
-        const target = e.target;
+        const alvo = e.target;
         
-        console.log('🎯 Click global capturado:', target);
+        console.log('🎯 Click global capturado:', alvo);
         
         // Deleção de posts
-        if (target.closest('.btn-deletar')) {
+        if (alvo.closest('.btn-deletar')) {
             e.preventDefault();
             e.stopPropagation();
-            const postElement = target.closest('.post');
-            const postId = postElement.dataset.postId;
-            console.log('🗑️ Deletar post:', postId);
+            const elementoPost = alvo.closest('.post');
+            const idPost = elementoPost.dataset.postId;
+            console.log('🗑️ Deletar post:', idPost);
             manipularExcluirPost(e);
             return;
         }
         
         // Curtir posts
-        if (target.closest('.like-btn')) {
+        if (alvo.closest('.like-btn')) {
             e.preventDefault();
             e.stopPropagation();
-            const likeBtn = target.closest('.like-btn');
-            const postId = likeBtn.dataset.postId;
-            console.log('❤️ Curtir post:', postId);
-            manipularCurtirPost(likeBtn, postId, e);
+            const botaoCurtir = alvo.closest('.like-btn');
+            const idPost = botaoCurtir.dataset.postId;
+            console.log('❤️ Curtir post:', idPost);
+            manipularCurtirPost(botaoCurtir, idPost, e);
             return;
         }
         
         // Comentários
-        if (target.closest('.comment-btn')) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const commentBtn = target.closest('.comment-btn');
-    let postId = commentBtn.dataset.postId;
-    
-    console.log('💬 Botão de comentário clicado, postId:', postId);
-    
-    // 🎯 CORREÇÃO: Se não tem postId, tentar encontrar do elemento pai
-        if (!postId) {
-            const postElement = commentBtn.closest('.post, .story-item');
-            if (postElement) {
-                postId = postElement.dataset.postId;
-                console.log('🔄 PostId recuperado do elemento pai:', postId);
+        if (alvo.closest('.comment-btn')) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const botaoComentar = alvo.closest('.comment-btn');
+            let idPost = botaoComentar.dataset.postId;
+            
+            console.log('💬 Botão de comentário clicado, idPost:', idPost);
+            
+            if (!idPost) {
+                const elementoPost = botaoComentar.closest('.post, .story-item');
+                if (elementoPost) {
+                    idPost = elementoPost.dataset.postId;
+                    console.log('🔄 PostId recuperado do elemento pai:', idPost);
+                }
             }
-        }
-        
-        if (postId) {
-            manipularAlternarComentario(e);
-        } else {
-            console.error('❌ Não foi possível encontrar postId para comentário');
-            showNotification('❌ Erro: Não foi possível carregar comentários', 'error');
-        }
-        return;
+            
+            if (idPost) {
+                manipularAlternarComentario(e);
+            } else {
+                console.error('❌ Não foi possível encontrar idPost para comentário');
+                mostrarNotificacao('❌ Erro: Não foi possível carregar comentários', 'error');
+            }
+            return;
         }
         
         // Enviar comentários
-
-        if (target.closest('.submit-comment')) {
+        if (alvo.closest('.submit-comment')) {
             e.preventDefault();
             e.stopPropagation();
-            const submitBtn = target.closest('.submit-comment');
-            const postId = submitBtn.dataset.postId;
-            console.log('📝 Enviar comentário:', postId);
-            manipularEnviarComentario(postId);
+            const botaoEnviar = alvo.closest('.submit-comment');
+            const idPost = botaoEnviar.dataset.postId;
+            console.log('📝 Enviar comentário:', idPost);
+            manipularEnviarComentario(idPost);
             return;
         }
         
         // Curtir comentários
-        if (target.closest('.comment-like-btn')) {
+        if (alvo.closest('.comment-like-btn')) {
             e.preventDefault();
             e.stopPropagation();
-            const likeBtn = target.closest('.comment-like-btn');
-            const commentId = likeBtn.dataset.commentId;
-            console.log('💖 Curtir comentário:', commentId);
+            const botaoCurtirComentario = alvo.closest('.comment-like-btn');
+            const idComentario = botaoCurtirComentario.dataset.commentId;
+            console.log('💖 Curtir comentário:', idComentario);
             manipularCurtirComentario(e);
             return;
         }
         
         // Deleção de comentários
-        if (target.closest('.btn-deletar-comentario')) {
+        if (alvo.closest('.btn-deletar-comentario')) {
             e.preventDefault();
             e.stopPropagation();
             console.log('🗑️ Deletar comentário detectado');
@@ -2493,104 +2004,101 @@ function setupGlobalEventListeners() {
         }
         
         // Respostas
-        if (target.closest('.reply-btn')) {
+        if (alvo.closest('.reply-btn')) {
             e.preventDefault();
             e.stopPropagation();
             console.log('↩️ Toggle resposta');
-            manipularAlternarResposta(e); // 🎯 USAR manipularAlternarResposta
+            manipularAlternarResposta(e);
             return;
         }
 
-        if (target.closest('.submit-reply')) {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('📝 Enviar resposta - evento capturado');
-    
-    const submitBtn = target.closest('.submit-reply');
-    const commentId = submitBtn.dataset.commentId;
-    
-    console.log('🔍 Dados do botão submit-reply:', {
-        commentId: commentId,
-        dataset: submitBtn.dataset,
-        html: submitBtn.outerHTML
-    });
-    
-    if (commentId) {
-        manipularEnviarResposta(e, commentId);
-    } else {
-        console.error('❌ commentId não encontrado no botão submit-reply');
-        
-        // 🎯 CORREÇÃO: Tentar recuperar o commentId do contexto
-        const replySection = submitBtn.closest('.reply-section');
-        if (replySection) {
-            const idFromSection = replySection.id.replace('reply-', '');
-            if (idFromSection) {
-                console.log('🔄 Recuperando commentId da seção:', idFromSection);
-                manipularEnviarResposta(e, idFromSection);
-                return;
-            }
-        }
-        
-        showNotification('❌ Erro: ID do comentário não encontrado', 'error');
-        }
-        return;
-    }
-
-        if (target.closest('.cancel-reply')) {
+        if (alvo.closest('.submit-reply')) {
             e.preventDefault();
             e.stopPropagation();
-            const cancelBtn = target.closest('.cancel-reply');
-            const commentId = cancelBtn.dataset.commentId;
-            console.log('❌ Cancelar resposta para comentário:', commentId);
+            console.log('📝 Enviar resposta - evento capturado');
             
-            // 🎯 CORREÇÃO: BUSCAR A SEÇÃO DE RESPOSTA DE FORMA ROBUSTA
-            let replySection = document.getElementById(`reply-${commentId}`);
-            if (!replySection) {
-                const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
-                if (commentElement) {
-                    replySection = commentElement.querySelector('.reply-section');
+            const botaoEnviar = alvo.closest('.submit-reply');
+            const idComentario = botaoEnviar.dataset.commentId;
+            
+            console.log('🔍 Dados do botão submit-reply:', {
+                idComentario: idComentario,
+                dataset: botaoEnviar.dataset
+            });
+            
+            if (idComentario) {
+                manipularEnviarResposta(e, idComentario);
+            } else {
+                console.error('❌ idComentario não encontrado no botão submit-reply');
+                
+                const secaoResposta = botaoEnviar.closest('.reply-section');
+                if (secaoResposta) {
+                    const idDaSecao = secaoResposta.id.replace('reply-', '');
+                    if (idDaSecao) {
+                        console.log('🔄 Recuperando idComentario da seção:', idDaSecao);
+                        manipularEnviarResposta(e, idDaSecao);
+                        return;
+                    }
+                }
+                
+                mostrarNotificacao('❌ Erro: ID do comentário não encontrado', 'error');
+            }
+            return;
+        }
+
+        if (alvo.closest('.cancel-reply')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const botaoCancelar = alvo.closest('.cancel-reply');
+            const idComentario = botaoCancelar.dataset.commentId;
+            console.log('❌ Cancelar resposta para comentário:', idComentario);
+            
+            let secaoResposta = document.getElementById(`reply-${idComentario}`);
+            if (!secaoResposta) {
+                const elementoComentario = document.querySelector(`[data-comment-id="${idComentario}"]`);
+                if (elementoComentario) {
+                    secaoResposta = elementoComentario.querySelector('.reply-section');
                 }
             }
             
-            if (replySection) {
-                replySection.style.display = 'none';
-                const replyInput = replySection.querySelector('.reply-input');
-                if (replyInput) replyInput.value = '';
+            if (secaoResposta) {
+                secaoResposta.style.display = 'none';
+                const inputResposta = secaoResposta.querySelector('.reply-input');
+                if (inputResposta) inputResposta.value = '';
                 console.log('✅ Resposta cancelada');
             }
             return;
         }
         
         // FAB Button
-        if (target.closest('#fabButton')) {
+        if (alvo.closest('#fabButton')) {
             e.preventDefault();
             e.stopPropagation();
             console.log('📖 Abrir modal de criação');
-            openModal();
+            abrirModal();
             return;
         }
         
         // Filtro de categorias
-        if (target.closest('#categoryFilterToggle')) {
+        if (alvo.closest('#categoryFilterToggle')) {
             e.preventDefault();
             e.stopPropagation();
-            const filterOptions = document.getElementById('categoryFilterOptions');
-            if (filterOptions) {
-                filterOptions.classList.toggle('hidden');
+            const opcoesFiltro = document.getElementById('categoryFilterOptions');
+            if (opcoesFiltro) {
+                opcoesFiltro.classList.toggle('hidden');
             }
             return;
         }
         
-        if (target.closest('#applyFilterBtn')) {
+        if (alvo.closest('#applyFilterBtn')) {
             e.preventDefault();
             e.stopPropagation();
             console.log('🔍 Aplicar filtros');
-            applyCategoryFilters();
+            aplicarFiltrosCategoria();
             return;
         }
         
         // Logout
-        if (target.closest('#logoutBtn')) {
+        if (alvo.closest('#logoutBtn')) {
             e.preventDefault();
             e.stopPropagation();
             console.log('🚪 Logout');
@@ -2599,57 +2107,57 @@ function setupGlobalEventListeners() {
         }
         
         // Limpar pesquisa
-        if (target.closest('#searchClearBtn')) {
+        if (alvo.closest('#searchClearBtn')) {
             e.preventDefault();
             e.stopPropagation();
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.focus();
+            const inputPesquisa = document.getElementById('searchInput');
+            if (inputPesquisa) {
+                inputPesquisa.value = '';
+                inputPesquisa.focus();
             }
             restaurarFeedCompleto();
             return;
         }
         
         // Botão de pesquisa
-        if (target.closest('#searchActionBtn')) {
+        if (alvo.closest('#searchActionBtn')) {
             e.preventDefault();
             e.stopPropagation();
-            const searchInput = document.getElementById('searchInput');
-            if (searchInput && searchInput.value.trim()) {
-                realizarPesquisa(searchInput.value.trim());
+            const inputPesquisa = document.getElementById('searchInput');
+            if (inputPesquisa && inputPesquisa.value.trim()) {
+                realizarPesquisa(inputPesquisa.value.trim());
             }
             return;
         }
         
         // Botão de cancelar no modal
-        if (target.closest('#cancelPostBtn')) {
+        if (alvo.closest('#cancelPostBtn')) {
             e.preventDefault();
             e.stopPropagation();
             console.log('❌ Fechar modal');
-            closeModal();
+            fecharModal();
             return;
         }
         
         // Remover imagem
-        if (target.closest('.remove-image-btn')) {
+        if (alvo.closest('.remove-image-btn')) {
             e.preventDefault();
             e.stopPropagation();
-            removeImage();
+            removerImagem();
             return;
         }
         
         // Remover categoria
-        if (target.closest('.remove-category-btn')) {
+        if (alvo.closest('.remove-category-btn')) {
             e.preventDefault();
             e.stopPropagation();
-            const badge = target.closest('.active-category-badge');
-            const categoryName = badge.textContent.trim().replace('✕', '').trim();
-            const category = allCategories.find(cat => 
-                getCategoryDisplayName(cat.nome) === categoryName
+            const cracha = alvo.closest('.active-category-badge');
+            const nomeCategoria = cracha.textContent.trim().replace('✕', '').trim();
+            const categoria = todasCategorias.find(cat => 
+                obterNomeExibicaoCategoria(cat.nome) === nomeCategoria
             );
-            if (category) {
-                removeCategory(category.nome);
+            if (categoria) {
+                removerCategoria(categoria.nome);
             }
             return;
         }
@@ -2657,15 +2165,15 @@ function setupGlobalEventListeners() {
 
     // Prevenir submit apenas em formulários de comentário/resposta
     document.addEventListener('submit', function(e) {
-        const form = e.target;
+        const formulario = e.target;
         
         // Permitir formulário de criação de post
-        if (form.id === 'postForm') {
+        if (formulario.id === 'postForm') {
             return;
         }
         
         // Prevenir apenas em formulários de comentário/resposta
-        if (form.closest('.add-comment') || form.closest('.add-reply')) {
+        if (formulario.closest('.add-comment') || formulario.closest('.add-reply')) {
             e.preventDefault();
             e.stopPropagation();
             console.log('🚫 Submit de comentário/resposta prevenido');
@@ -2675,9 +2183,9 @@ function setupGlobalEventListeners() {
     // Prevenir enter em inputs de comentário/resposta
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
-            const target = e.target;
-            if (target.classList.contains('comment-input') || 
-                target.classList.contains('reply-input')) {
+            const alvo = e.target;
+            if (alvo.classList.contains('comment-input') || 
+                alvo.classList.contains('reply-input')) {
                 e.preventDefault();
                 e.stopPropagation();
             }
@@ -2685,533 +2193,349 @@ function setupGlobalEventListeners() {
     });
 }
 
-function setupClickCapturePrevention() {
-    // Se já foi instalado, não reinstala
-    if (setupClickCapturePrevention._installed) return;
-    setupClickCapturePrevention._installed = true;
-
-    document.addEventListener('click', function capturePrevent(e) {
-        try {
-            const target = e.target;
-            const clickable = target.closest('button, a, input[type="submit"]');
-            
-            if (!clickable) return;
-
-            // Apenas prevenir em links vazios que podem causar recarregamento
-            if (clickable.tagName === 'A') {
-                const href = clickable.getAttribute('href');
-                if (!href || href === '#' || href === 'javascript:void(0)') {
-                    e.preventDefault();
-                }
-            }
-            
-            // NÃO prevenir em botões normais - deixar os event handlers funcionarem
-            // A prevenção será feita apenas nos handlers específicos quando necessário
-            
-        } catch (err) {
-            console.error('setupClickCapturePrevention error:', err);
-        }
-    }, true); // capture phase
-}
-
-// ===== FUNÇÕES DE INTERAÇÃO (mantidas para compatibilidade) =====
-async function manipularExcluirPost(event) {
-    event.preventDefault();
-    event.stopPropagation();
+// ===== FUNÇÕES DE INTERAÇÃO =====
+async function manipularExcluirPost(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
     
-    const postElement = event.target.closest('.post');
-    const postId = postElement.dataset.postId;
+    const elementoPost = evento.target.closest('.post');
+    const idPost = elementoPost.dataset.postId;
 
     if (!confirm('Tem certeza que deseja deletar esta história?')) {
         return;
     }
     
     try {
-        // CORREÇÃO: Usar fetch diretamente para melhor controle
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/historias/${postId}`, {
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const resposta = await fetch(`${urlBase}/historias/${idPost}`, {
             method: 'DELETE'
         });
 
-        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Status da resposta:', resposta.status);
 
-        if (response.ok) {
-            showNotification('✅ História deletada com sucesso!', 'success');
+        if (resposta.ok) {
+            mostrarNotificacao('✅ História deletada com sucesso!', 'success');
             
             // Remover da UI imediatamente
-            postElement.style.opacity = '0';
-            postElement.style.transform = 'translateX(-100%)';
-            postElement.style.transition = 'all 0.3s ease';
+            elementoPost.style.opacity = '0';
+            elementoPost.style.transform = 'translateX(-100%)';
+            elementoPost.style.transition = 'all 0.3s ease';
             
             setTimeout(() => {
-                if (postElement.parentNode) {
-                    postElement.parentNode.removeChild(postElement);
+                if (elementoPost.parentNode) {
+                    elementoPost.parentNode.removeChild(elementoPost);
                 }
                 
                 // Atualizar array local
-                allPosts = allPosts.filter(post => 
-                    (post.id_historia || post.id) != postId
+                todasPostagens = todasPostagens.filter(post => 
+                    (post.id_historia || post.id) != idPost
                 );
                 
                 // Se não há mais posts, mostrar mensagem
-                const remainingPosts = document.querySelectorAll('.post');
-                if (remainingPosts.length === 0) {
-                    showEmptyMessage();
+                const postsRestantes = document.querySelectorAll('.post');
+                if (postsRestantes.length === 0) {
+                    mostrarMensagemVazia();
                 }
             }, 300);
             
         } else {
-            const errorText = await response.text();
-            console.error('❌ Erro do servidor:', errorText);
-            throw new Error(errorText || 'Erro ao deletar história');
+            const textoErro = await resposta.text();
+            console.error('❌ Erro do servidor:', textoErro);
+            throw new Error(textoErro || 'Erro ao deletar história');
         }
-    } catch (error) {
-        console.error('❌ Erro ao deletar história:', error);
-        showNotification('❌ Erro ao deletar história: ' + error.message, 'error');
+    } catch (erro) {
+        console.error('❌ Erro ao deletar história:', erro);
+        mostrarNotificacao('❌ Erro ao deletar história: ' + erro.message, 'error');
     }
 }
 
-async function manipularCurtirPost(likeBtn, postId) {
-    console.log('❤️ DEBUG: Iniciando curtida...', postId);
+async function manipularCurtirPost(botaoCurtir, idPost) {
+    console.log('❤️ DEBUG: Iniciando curtida...', idPost);
 
-    // Se postId não veio como parâmetro, tentar obter do dataset do botão
-    if (!postId) {
-        postId = likeBtn.dataset.postId;
-        console.log('🔍 PostId obtido do dataset:', postId);
+    if (!idPost) {
+        idPost = botaoCurtir.dataset.postId;
+        console.log('🔍 PostId obtido do dataset:', idPost);
     }
     
-    if (!currentUser) {
-        showNotification('🔒 Faça login para curtir', 'error');
+    if (!usuarioAtual) {
+        mostrarNotificacao('🔒 Faça login para curtir', 'error');
         return;
     }
 
-    // VERIFICAR SE OS IDs EXISTEM
-    if (!postId || !currentUser.id) {
-        console.error('❌ IDs faltando:', { postId, userId: currentUser.id });
-        showNotification('❌ Erro: IDs não encontrados', 'error');
+    if (!idPost || !usuarioAtual.id) {
+        console.error('❌ IDs faltando:', { idPost, idUsuario: usuarioAtual.id });
+        mostrarNotificacao('❌ Erro: IDs não encontrados', 'error');
         return;
     }
     
     try {
-        const baseUrl = ApiConfig.getBaseUrl();
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
         
         // 1. Verificar estado atual
-        const checkResponse = await fetch(`${baseUrl}/curtidas/${postId}/${currentUser.id}`);
-        if (!checkResponse.ok) {
-            throw new Error(`HTTP ${checkResponse.status}: ${await checkResponse.text()}`);
+        const respostaVerificacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
+        if (!respostaVerificacao.ok) {
+            throw new Error(`HTTP ${respostaVerificacao.status}: ${await respostaVerificacao.text()}`);
         }
-        const estadoReal = await checkResponse.json();
+        const estadoReal = await respostaVerificacao.json();
         
         // 2. Executar ação contrária
         const acao = estadoReal.curtiu ? 'DELETE' : 'POST';
-        const response = await fetch(`${baseUrl}/curtidas`, {
+        const resposta = await fetch(`${urlBase}/curtidas`, {
             method: acao,
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                id_historia: parseInt(postId), 
-                id_usuario: parseInt(currentUser.id)
+                id_historia: parseInt(idPost), 
+                id_usuario: parseInt(usuarioAtual.id)
             })
         });
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        if (!resposta.ok) {
+            const textoErro = await resposta.text();
+            throw new Error(`HTTP ${resposta.status}: ${textoErro}`);
         }
         
         // 3. Atualizar UI
-        const likeIcon = likeBtn.querySelector('.like-icon');
-        const likeCount = likeBtn.querySelector('.like-count');
-        let currentCount = parseInt(likeCount.textContent) || 0;
+        const iconeCurtir = botaoCurtir.querySelector('.like-icon');
+        const contadorCurtidas = botaoCurtir.querySelector('.like-count');
+        let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
         
         if (acao === 'POST') {
-            likeIcon.textContent = '❤️';
-            likeCount.textContent = currentCount + 1;
-            likeBtn.classList.add('liked');
-            showNotification('❤️ Curtida adicionada!', 'success');
+            iconeCurtir.textContent = '❤️';
+            contadorCurtidas.textContent = contagemAtual + 1;
+            botaoCurtir.classList.add('liked');
+            mostrarNotificacao('❤️ Curtida adicionada!', 'success');
         } else {
-            likeIcon.textContent = '🤍';
-            likeCount.textContent = Math.max(0, currentCount - 1);
-            likeBtn.classList.remove('liked');
-            showNotification('💔 Curtida removida', 'success');
+            iconeCurtir.textContent = '🤍';
+            contadorCurtidas.textContent = Math.max(0, contagemAtual - 1);
+            botaoCurtir.classList.remove('liked');
+            mostrarNotificacao('💔 Curtida removida', 'success');
         }
         
         console.log('❤️ DEBUG: Curtida processada com sucesso');
         
-    } catch (error) {
-        console.error('❌ Erro ao curtir:', error);
-        showNotification('❌ Erro ao curtir: ' + error.message, 'error');
+    } catch (erro) {
+        console.error('❌ Erro ao curtir:', erro);
+        mostrarNotificacao('❌ Erro ao curtir: ' + erro.message, 'error');
     }
 }
 
-function atualizarPostNoArray(postId, liked) {
-    const postIndex = allPosts.findIndex(post => 
-        (post.id_historia || post.id) == postId
-    );
-    
-    if (postIndex !== -1) {
-        const currentLikes = allPosts[postIndex].num_curtidas || 0;
-        allPosts[postIndex].num_curtidas = liked ? currentLikes + 1 : Math.max(0, currentLikes - 1);
-        console.log('📊 DEBUG: Array atualizado - novos likes:', allPosts[postIndex].num_curtidas);
-    }
-}
-
-
-function atualizarBotaoCurtida(likeBtn, liked) {
-    const likeIcon = likeBtn.querySelector('.like-icon');
-    const likeCount = likeBtn.querySelector('.like-count');
-    let currentCount = parseInt(likeCount.textContent) || 0;
-    
-    if (liked) {
-        likeIcon.textContent = '❤️';
-        likeCount.textContent = currentCount + 1;
-        likeBtn.classList.add('liked');
-        likeBtn.dataset.liked = 'true';
-    } else {
-        likeIcon.textContent = '🤍';
-        likeCount.textContent = Math.max(0, currentCount - 1);
-        likeBtn.classList.remove('liked');
-        likeBtn.dataset.liked = 'false';
-    }
-}
-
-async function analisarRespostaSegura(response) {
-    try {
-        const text = await response;
-        if (!text) return {};
-        try {
-            return JSON.parse(text);
-        } catch (err) {
-            return { message: text };
-        }
-    } catch (err) {
-        return {};
-    }
-}
-
-async function manipularAlternarComentario(event) {
-    event.preventDefault();
-    event.stopPropagation();
+async function manipularAlternarComentario(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
     
     console.log('💬 DEBUG manipularAlternarComentario: Iniciando...');
     
-    const commentBtn = event.target.closest('.comment-btn');
-    if (!commentBtn) {
+    const botaoComentar = evento.target.closest('.comment-btn');
+    if (!botaoComentar) {
         console.error('❌ Botão de comentário não encontrado');
         return;
     }
     
-    // 🎯 CORREÇÃO: Obter postId de forma mais robusta
-    let postId = commentBtn.dataset.postId;
+    let idPost = botaoComentar.dataset.postId;
     
-    // Se não encontrou no dataset, tentar outras formas
-    if (!postId) {
+    if (!idPost) {
         console.log('🔄 PostId não encontrado no dataset, tentando alternativas...');
         
-        // Tentar encontrar pelo elemento pai mais próximo
-        const postElement = commentBtn.closest('.post, .story-item');
-        if (postElement) {
-            postId = postElement.dataset.postId;
-            console.log('✅ PostId encontrado no elemento pai:', postId);
+        const elementoPost = botaoComentar.closest('.post, .story-item');
+        if (elementoPost) {
+            idPost = elementoPost.dataset.postId;
+            console.log('✅ PostId encontrado no elemento pai:', idPost);
         }
         
-        // Se ainda não encontrou, tentar pelo ID do botão
-        if (!postId && commentBtn.id) {
-            const idFromButton = commentBtn.id.replace('comment-btn-', '');
-            if (idFromButton) {
-                postId = idFromButton;
-                console.log('✅ PostId encontrado no ID do botão:', postId);
+        if (!idPost && botaoComentar.id) {
+            const idDoBotao = botaoComentar.id.replace('comment-btn-', '');
+            if (idDoBotao) {
+                idPost = idDoBotao;
+                console.log('✅ PostId encontrado no ID do botão:', idPost);
             }
         }
     }
     
-    console.log('🎯 PostId final:', postId);
+    console.log('🎯 PostId final:', idPost);
     
-    if (!postId) {
+    if (!idPost) {
         console.error('❌ Não foi possível determinar o postId');
-        showNotification('❌ Erro: Não foi possível carregar comentários', 'error');
+        mostrarNotificacao('❌ Erro: Não foi possível carregar comentários', 'error');
         return;
     }
     
-    const commentsSection = document.getElementById(`comments-${postId}`);
+    const secaoComentarios = document.getElementById(`comments-${idPost}`);
     
-    if (!commentsSection) {
-        console.error('❌ Seção de comentários não encontrada para post:', postId);
+    if (!secaoComentarios) {
+        console.error('❌ Seção de comentários não encontrada para post:', idPost);
         return;
     }
     
-    if (commentsSection.style.display === 'none') {
-        commentsSection.style.display = 'block';
-        console.log('🔍 Carregando comentários hierárquicos para post:', postId);
-        await loadCommentsWithReplies(postId);
+    if (secaoComentarios.style.display === 'none') {
+        secaoComentarios.style.display = 'block';
+        console.log('🔍 Carregando comentários hierárquicos para post:', idPost);
+        await carregarComentariosComRespostas(idPost);
     } else {
-        commentsSection.style.display = 'none';
-        console.log('❌ Comentários fechados para post:', postId);
+        secaoComentarios.style.display = 'none';
+        console.log('❌ Comentários fechados para post:', idPost);
     }
 }
 
-async function manipularEnviarComentario(postId) {
-    console.log('💬 DEBUG: Iniciando comentário...', postId);
+async function manipularEnviarComentario(idPost) {
+    console.log('💬 DEBUG: Iniciando comentário...', idPost);
 
-    // Se postId não veio como parâmetro, tentar obter do botão que foi clicado
-     if (!postId || postId === 'undefined') {
+    if (!idPost || idPost === 'undefined') {
         console.log('🔄 PostId não fornecido, tentando obter do contexto...');
         
-        // Tentar encontrar o postId do comentário que está sendo enviado
-        const activeCommentSection = document.querySelector('.comments-section[style*="display: block"]');
-        if (activeCommentSection) {
-            postId = activeCommentSection.id.replace('comments-', '');
-            console.log('✅ PostId encontrado da seção ativa:', postId);
+        const secaoComentarioAtiva = document.querySelector('.comments-section[style*="display: block"]');
+        if (secaoComentarioAtiva) {
+            idPost = secaoComentarioAtiva.id.replace('comments-', '');
+            console.log('✅ PostId encontrado da seção ativa:', idPost);
         }
         
-        // Tentar do botão de submit
-        if (!postId) {
-            const submitBtn = document.querySelector('.submit-comment[data-post-id]');
-            if (submitBtn) {
-                postId = submitBtn.dataset.postId;
-                console.log('✅ PostId encontrado do botão submit:', postId);
+        if (!idPost) {
+            const botaoEnviar = document.querySelector('.submit-comment[data-post-id]');
+            if (botaoEnviar) {
+                idPost = botaoEnviar.dataset.postId;
+                console.log('✅ PostId encontrado do botão submit:', idPost);
             }
         }
     }
     
-    // 🎯 CORREÇÃO: Validação rigorosa do postId
-    if (!postId || postId === 'undefined' || postId === 'null') {
-        console.error('❌ PostId inválido após todas as tentativas:', postId);
-        showNotification('❌ Erro: Não foi possível identificar a história', 'error');
+    if (!idPost || idPost === 'undefined' || idPost === 'null') {
+        console.error('❌ PostId inválido após todas as tentativas:', idPost);
+        mostrarNotificacao('❌ Erro: Não foi possível identificar a história', 'error');
         return;
     }
     
-    if (!currentUser) {
-        showNotification('🔒 Faça login para comentar', 'error');
+    if (!usuarioAtual) {
+        mostrarNotificacao('🔒 Faça login para comentar', 'error');
         return;
     }
 
-    // VERIFICAR SE OS IDs EXISTEM
-    if (!postId || !currentUser.id) {
-        console.error('❌ IDs faltando:', { postId, userId: currentUser.id });
-        showNotification('❌ Erro: IDs não encontrados', 'error');
+    if (!idPost || !usuarioAtual.id) {
+        console.error('❌ IDs faltando:', { idPost, idUsuario: usuarioAtual.id });
+        mostrarNotificacao('❌ Erro: IDs não encontrados', 'error');
         return;
     }
     
-    // CORREÇÃO: Buscar o input de forma mais robusta
-    const commentsSection = document.getElementById(`comments-${postId}`);
-    if (!commentsSection) {
-        console.error('❌ Seção de comentários não encontrada para post:', postId);
-        showNotification('❌ Erro: seção de comentários não encontrada', 'error');
+    const secaoComentarios = document.getElementById(`comments-${idPost}`);
+    if (!secaoComentarios) {
+        console.error('❌ Seção de comentários não encontrada para post:', idPost);
+        mostrarNotificacao('❌ Erro: seção de comentários não encontrada', 'error');
         return;
     }
     
-    const commentInput = commentsSection.querySelector('.comment-input');
-    if (!commentInput) {
+    const inputComentario = secaoComentarios.querySelector('.comment-input');
+    if (!inputComentario) {
         console.error('❌ Campo de comentário não encontrado');
-        showNotification('❌ Erro: campo de comentário não encontrado', 'error');
+        mostrarNotificacao('❌ Erro: campo de comentário não encontrado', 'error');
         return;
     }
     
-    const commentText = commentInput.value.trim();
+    const textoComentario = inputComentario.value.trim();
     
-    if (!commentText) {
-        showNotification('📝 Digite um comentário', 'error');
-        commentInput.focus();
+    if (!textoComentario) {
+        mostrarNotificacao('📝 Digite um comentário', 'error');
+        inputComentario.focus();
         return;
     }
     
     try {
-        console.log('📤 Enviando comentário:', commentText);
+        console.log('📤 Enviando comentário:', textoComentario);
         
-        //Usar fetch diretamente
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/comentarios`, {
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const resposta = await fetch(`${urlBase}/comentarios`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                id_historia: parseInt(postId),
-                id_usuario: parseInt(currentUser.id),
-                conteudo: commentText
+                id_historia: parseInt(idPost),
+                id_usuario: parseInt(usuarioAtual.id),
+                conteudo: textoComentario
             })
         });
 
-        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Status da resposta:', resposta.status);
 
-        if (response.ok) {
-            const newComment = await response.json();
-            console.log('✅ Comentário criado:', newComment);
-            addNewCommentToUI(postId, newComment);
-            commentInput.value = ''; // Limpar o input
-            showNotification('💬 Comentário adicionado!', 'success');
+        if (resposta.ok) {
+            const novoComentario = await resposta.json();
+            console.log('✅ Comentário criado:', novoComentario);
+            adicionarNovoComentarioNaUI(idPost, novoComentario);
+            inputComentario.value = '';
+            mostrarNotificacao('💬 Comentário adicionado!', 'success');
         } else {
-            const errorText = await response.text();
-            console.error('❌ Erro do servidor:', errorText);
-            throw new Error(errorText || 'Erro ao enviar comentário');
+            const textoErro = await resposta.text();
+            console.error('❌ Erro do servidor:', textoErro);
+            throw new Error(textoErro || 'Erro ao enviar comentário');
         }
-    } catch (error) {
-        console.error('❌ Erro ao comentar:', error);
-        showNotification('❌ Erro ao comentar: ' + error.message, 'error');
+    } catch (erro) {
+        console.error('❌ Erro ao comentar:', erro);
+        mostrarNotificacao('❌ Erro ao comentar: ' + erro.message, 'error');
     }
 }
 
-async function debugCommentHierarchy(postId) {
-    try {
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/historias/${postId}/comentarios`);
-        
-        if (response.ok) {
-            const todosComentarios = await response.json();
-            
-            console.log('🔍 DEBUG HIERARQUIA DE COMENTÁRIOS:');
-            console.log(`📊 Total de comentários: ${todosComentarios.length}`);
-            
-            const comentariosPrincipais = todosComentarios.filter(c => !c.id_comentario_pai);
-            const respostas = todosComentarios.filter(c => c.id_comentario_pai);
-            
-            console.log(`💬 Comentários principais: ${comentariosPrincipais.length}`);
-            console.log(`↪️ Respostas: ${respostas.length}`);
-            
-            // Verificar se as respostas têm pais válidos
-            respostas.forEach(resposta => {
-                const paiExiste = todosComentarios.some(c => c.id_comentario === resposta.id_comentario_pai);
-                console.log(`   Resposta ${resposta.id_comentario} → Pai ${resposta.id_comentario_pai}: ${paiExiste ? '✅' : '❌ NÃO ENCONTRADO'}`);
-            });
-        }
-    } catch (error) {
-        console.error('❌ Erro no debug:', error);
-    }
-}
-
-function displayOrganizedComments(postId, comments) {
-    const commentsList = document.querySelector(`#comments-${postId} .comments-list`);
-    if (!commentsList) {
-        console.error('❌ Lista de comentários não encontrada');
+async function carregarComentariosComRespostas(idPost) {
+    if (!idPost || idPost === 'undefined' || idPost === 'null') {
+        console.error('❌ PostId inválido:', idPost);
+        mostrarNotificacao('❌ Erro: ID da história inválido', 'error');
         return;
     }
     
-    commentsList.innerHTML = '';
-    
-    if (!comments || comments.length === 0) {
-        commentsList.innerHTML = '<p class="no-comments">Nenhum comentário ainda. Seja o primeiro a comentar!</p>';
-        return;
-    }
-    
-    comments.forEach(commentData => {
-        try {
-            const commentElement = createMainCommentElement(commentData);
-            commentsList.appendChild(commentElement);
-            
-            // Adicionar respostas se existirem
-            if (commentData.replies && commentData.replies.length > 0) {
-                const repliesContainer = commentElement.querySelector('.replies-container');
-                if (repliesContainer) {
-                    commentData.replies.forEach(reply => {
-                        const replyElement = createReplyElement(reply, commentData.autor);
-                        repliesContainer.appendChild(replyElement);
-                    });
-                }
-            }
-        } catch (error) {
-            console.error('❌ Erro ao criar comentário:', error);
-        }
-    });
-    
-}
-
-async function loadComments(postId) {
-    try {
-        console.log('💬 DEBUG FRONTEND: Carregando comentários para post:', postId);
-        
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/historias/${postId}/comentarios`);
-        
-        console.log('💬 DEBUG FRONTEND: Status da resposta:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-        }
-        
-        const comentarios = await response.json();
-        console.log(`💬 DEBUG FRONTEND: ${comentarios.length} comentários carregados`);
-        
-        displayComments(postId, comentarios);
-        
-    } catch (error) {
-        console.error('💬 DEBUG FRONTEND: Erro completo ao carregar comentários:', error);
-        displayComments(postId, []);
-    }
-}
-
-async function loadCommentsWithReplies(postId) {
-    // 🎯 CORREÇÃO: Validar postId
-    if (!postId || postId === 'undefined' || postId === 'null') {
-        console.error('❌ PostId inválido:', postId);
-        showNotification('❌ Erro: ID da história inválido', 'error');
-        return;
-    }
-    
-    console.log('💬 Carregando comentários hierárquicos para post:', postId);
+    console.log('💬 Carregando comentários hierárquicos para post:', idPost);
     
     try {
-        const baseUrl = ApiConfig.getBaseUrl();
-        console.log('🌐 URL base:', baseUrl);
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        console.log('🌐 URL base:', urlBase);
         
-        // 🎯 CORREÇÃO: Tentar a nova rota hierárquica primeiro
-        const response = await fetch(`${baseUrl}/historias/${postId}/comentarios-com-respostas`);
+        const resposta = await fetch(`${urlBase}/historias/${idPost}/comentarios-com-respostas`);
         
-        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Status da resposta:', resposta.status);
         
-        if (response.ok) {
-            const comentariosOrganizados = await response.json();
+        if (resposta.ok) {
+            const comentariosOrganizados = await resposta.json();
             console.log(`💬 ${comentariosOrganizados.length} comentários principais carregados com respostas`);
             
-            displayOrganizedComments(postId, comentariosOrganizados);
+            exibirComentariosOrganizados(idPost, comentariosOrganizados);
             
-        } else if (response.status === 404) {
-            // Se a rota nova não existe, usar a rota tradicional
+        } else if (resposta.status === 404) {
             console.log('🔄 Rota hierárquica não encontrada, usando rota tradicional...');
-            await loadCommentsWithRepliesFallback(postId);
+            await carregarComentariosComRespostasFallback(idPost);
         } else {
-            throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+            throw new Error(`HTTP ${resposta.status}: ${await resposta.text()}`);
         }
         
-    } catch (error) {
-        console.error('❌ Erro ao carregar comentários:', error);
+    } catch (erro) {
+        console.error('❌ Erro ao carregar comentários:', erro);
         
-        // Fallback: tentar carregar da forma antiga
         console.log('🔄 Tentando fallback para carregamento normal...');
-        await loadCommentsWithRepliesFallback(postId);
+        await carregarComentariosComRespostasFallback(idPost);
     }
 }
 
-// Fallback para compatibilidade
-async function loadCommentsWithRepliesFallback(postId) {
-    // 🎯 CORREÇÃO: Validar postId no fallback também
-    if (!postId || postId === 'undefined') {
-        console.error('❌ PostId inválido no fallback:', postId);
+async function carregarComentariosComRespostasFallback(idPost) {
+    if (!idPost || idPost === 'undefined') {
+        console.error('❌ PostId inválido no fallback:', idPost);
         return;
     }
     
     try {
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/historias/${postId}/comentarios`);
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const resposta = await fetch(`${urlBase}/historias/${idPost}/comentarios`);
         
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: Erro ao carregar comentários (fallback)`);
+        if (!resposta.ok) {
+            throw new Error(`HTTP ${resposta.status}: Erro ao carregar comentários (fallback)`);
         }
         
-        const todosComentarios = await response.json();
+        const todosComentarios = await resposta.json();
         console.log(`🔄 Fallback: ${todosComentarios.length} comentários carregados`);
         
-        // Separar manualmente comentários principais de respostas
-        const comentariosPrincipais = todosComentarios.filter(comment => 
-            !comment.id_comentario_pai || comment.id_comentario_pai === null
+        const comentariosPrincipais = todosComentarios.filter(comentario => 
+            !comentario.id_comentario_pai || comentario.id_comentario_pai === null
         );
         
-        const respostas = todosComentarios.filter(comment => 
-            comment.id_comentario_pai && comment.id_comentario_pai !== null
+        const respostas = todosComentarios.filter(comentario => 
+            comentario.id_comentario_pai && comentario.id_comentario_pai !== null
         );
 
         console.log(`📊 Fallback - Principais: ${comentariosPrincipais.length}, Respostas: ${respostas.length}`);
 
-        // Organizar respostas sob seus comentários pais
         const comentariosOrganizados = comentariosPrincipais.map(comentario => {
             const respostasDoComentario = respostas.filter(resposta => 
                 resposta.id_comentario_pai === comentario.id_comentario
@@ -3228,18 +2552,17 @@ async function loadCommentsWithRepliesFallback(postId) {
             };
         });
 
-        displayOrganizedComments(postId, comentariosOrganizados);
+        exibirComentariosOrganizados(idPost, comentariosOrganizados);
         
-    } catch (error) {
-        console.error('❌ Erro no fallback também:', error);
+    } catch (erro) {
+        console.error('❌ Erro no fallback também:', erro);
         
-        // Mostrar mensagem de erro na seção de comentários
-        const commentsList = document.querySelector(`#comments-${postId} .comments-list`);
-        if (commentsList) {
-            commentsList.innerHTML = `
+        const listaComentarios = document.querySelector(`#comments-${idPost} .comments-list`);
+        if (listaComentarios) {
+            listaComentarios.innerHTML = `
                 <div class="error-message">
-                    <p>❌ Erro ao carregar comentários: ${error.message}</p>
-                    <button onclick="loadCommentsWithReplies('${postId}')" class="retry-btn">
+                    <p>❌ Erro ao carregar comentários: ${erro.message}</p>
+                    <button onclick="carregarComentariosComRespostas('${idPost}')" class="retry-btn">
                         🔄 Tentar novamente
                     </button>
                 </div>
@@ -3248,23 +2571,59 @@ async function loadCommentsWithRepliesFallback(postId) {
     }
 }
 
-function createCommentElement(comentario) {
-    const commentDiv = document.createElement('div');
-    commentDiv.className = 'comment-item';
-    commentDiv.dataset.commentId = comentario.id_comentario;
+function exibirComentariosOrganizados(idPost, comentarios) {
+    const listaComentarios = document.querySelector(`#comments-${idPost} .comments-list`);
+    if (!listaComentarios) {
+        console.error('❌ Lista de comentários não encontrada');
+        return;
+    }
     
-    const isAuthor = currentUser && currentUser.id == comentario.id_usuario;
+    listaComentarios.innerHTML = '';
     
-    // 🎯 CORREÇÃO: Estrutura HTML corrigida para comentários principais
-    commentDiv.innerHTML = `
+    if (!comentarios || comentarios.length === 0) {
+        listaComentarios.innerHTML = '<p class="no-comments">Nenhum comentário ainda. Seja o primeiro a comentar!</p>';
+        return;
+    }
+    
+    comentarios.forEach(dadosComentario => {
+        try {
+            const elementoComentario = criarElementoComentarioPrincipal(dadosComentario);
+            listaComentarios.appendChild(elementoComentario);
+            
+            if (dadosComentario.replies && dadosComentario.replies.length > 0) {
+                const containerRespostas = elementoComentario.querySelector('.replies-container');
+                if (containerRespostas) {
+                    dadosComentario.replies.forEach(resposta => {
+                        const elementoResposta = criarElementoResposta(resposta, dadosComentario.autor);
+                        containerRespostas.appendChild(elementoResposta);
+                    });
+                }
+            }
+        } catch (erro) {
+            console.error('❌ Erro ao criar comentário:', erro);
+        }
+    });
+    
+}
+
+function criarElementoComentarioPrincipal(comentario) {
+    const divComentario = document.createElement('div');
+    divComentario.className = 'comment-item main-comment';
+    divComentario.dataset.commentId = comentario.id_comentario;
+    divComentario.dataset.commentType = 'main';
+    
+    const ehAutor = usuarioAtual && usuarioAtual.id == comentario.id_usuario;
+    const nomeAutor = comentario.autor || 'Usuário';
+    
+    divComentario.innerHTML = `
         <div class="comment-avatar">
             <div class="avatar small" data-user-id="${comentario.id_usuario}"></div>
         </div>
         <div class="comment-content">
             <div class="comment-header">
-                <span class="comment-author">${comentario.autor || 'Usuário'}</span>
-                <span class="comment-date">${formatCommentDate(comentario.data_criacao)}</span>
-                ${isAuthor ? '<button type="button" class="btn-deletar-comentario">🗑️</button>' : ''}
+                <span class="comment-author">${nomeAutor}</span>
+                <span class="comment-date">${formatarDataComentario(comentario.data_criacao)}</span>
+                ${ehAutor ? '<button type="button" class="btn-deletar-comentario">🗑️</button>' : ''}
             </div>
             <div class="comment-text">
                 <p>${comentario.conteudo || ''}</p>
@@ -3280,7 +2639,6 @@ function createCommentElement(comentario) {
                 </button>
             </div>
             
-            <!-- 🎯 CORREÇÃO: Seção de resposta SEMPRE incluída -->
             <div class="reply-section" id="reply-${comentario.id_comentario}" style="display: none;">
                 <div class="add-reply">
                     <textarea class="reply-input" placeholder="Escreva uma resposta..." rows="2"></textarea>
@@ -3295,523 +2653,286 @@ function createCommentElement(comentario) {
                 </div>
             </div>
             
-            <!-- 🎯 CORREÇÃO: Container para respostas -->
             <div class="replies-container" id="replies-${comentario.id_comentario}">
                 <!-- Respostas serão adicionadas aqui -->
             </div>
         </div>
     `;
     
-    // 🎯 CORREÇÃO: Renderizar avatar IMEDIATAMENTE
-    const avatarElement = commentDiv.querySelector('.avatar');
-    if (avatarElement) {
-        const userData = {
+    const elementoAvatar = divComentario.querySelector('.avatar');
+    if (elementoAvatar) {
+        const dadosUsuario = {
             id: comentario.id_usuario,
-            nome: comentario.autor,
+            nome: nomeAutor,
             foto_perfil: comentario.foto_perfil_autor
         };
-        renderSimpleAvatar(avatarElement, userData, 'small');
-    }
-    
-    return commentDiv;
-}
-
-function createMainCommentElement(comment) {
-    const commentDiv = document.createElement('div');
-    commentDiv.className = 'comment-item main-comment';
-    commentDiv.dataset.commentId = comment.id_comentario;
-    commentDiv.dataset.commentType = 'main';
-    
-    const isAuthor = currentUser && currentUser.id == comment.id_usuario;
-    
-    // 🎯 CORREÇÃO: Garantir que temos dados básicos
-    const authorName = comment.autor || 'Usuário';
-    
-    commentDiv.innerHTML = `
-        <div class="comment-avatar">
-            <div class="avatar small" data-user-id="${comment.id_usuario}"></div>
-        </div>
-        <div class="comment-content">
-            <div class="comment-header">
-                <span class="comment-author">${authorName}</span>
-                <span class="comment-date">${formatCommentDate(comment.data_criacao)}</span>
-                ${isAuthor ? '<button type="button" class="btn-deletar-comentario">🗑️</button>' : ''}
-            </div>
-            <div class="comment-text">
-                <p>${comment.conteudo || ''}</p>
-            </div>
-            <div class="comment-actions">
-                <button type="button" class="comment-like-btn" data-comment-id="${comment.id_comentario}">
-                    <span class="comment-like-icon">🤍</span>
-                    <span class="comment-like-count">${comment.num_curtidas || 0}</span>
-                </button>
-                <button type="button" class="reply-btn" data-comment-id="${comment.id_comentario}">
-                    <span class="reply-icon">↩️</span>
-                    <span class="reply-text">Responder</span>
-                </button>
-            </div>
-            
-            <div class="reply-section" id="reply-${comment.id_comentario}" style="display: none;">
-                <div class="add-reply">
-                    <textarea class="reply-input" placeholder="Escreva uma resposta..." rows="2"></textarea>
-                    <div class="reply-buttons">
-                        <button type="button" class="submit-reply" data-comment-id="${comment.id_comentario}">
-                            Responder
-                        </button>
-                        <button type="button" class="cancel-reply" data-comment-id="${comment.id_comentario}">
-                            Cancelar
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="replies-container" id="replies-${comment.id_comentario}">
-                <!-- Respostas serão adicionadas aqui -->
-            </div>
-        </div>
-    `;
-    
-    // 🎯 CORREÇÃO: Renderizar avatar IMEDIATAMENTE com dados SIMPLES
-    const avatarElement = commentDiv.querySelector('.avatar');
-    if (avatarElement) {
-        const userData = {
-            id: comment.id_usuario,
-            nome: authorName,
-            foto_perfil: comment.foto_perfil_autor
-        };
-        renderSimpleAvatar(avatarElement, userData, 'small');
+        renderizarAvatarSimples(elementoAvatar, dadosUsuario, 'small');
     } else {
-        console.error('❌ Avatar element not found in comment');
+        console.error('❌ Elemento do avatar não encontrado no comentário');
     }
     
-    return commentDiv;
+    return divComentario;
 }
 
-// CORREÇÃO: Função garantida para criar respostas
-function createReplyElement(reply, parentAuthorName = '') {
-    const replyDiv = document.createElement('div');
-    replyDiv.className = 'comment-item reply-comment';
-    replyDiv.dataset.commentId = reply.id_comentario;
-    replyDiv.dataset.commentType = 'reply';
-    replyDiv.dataset.parentCommentId = reply.id_comentario_pai || 'unknown';
+function criarElementoResposta(resposta, nomeAutorPai = '') {
+    const divResposta = document.createElement('div');
+    divResposta.className = 'comment-item reply-comment';
+    divResposta.dataset.commentId = resposta.id_comentario;
+    divResposta.dataset.commentType = 'reply';
+    divResposta.dataset.parentCommentId = resposta.id_comentario_pai || 'unknown';
     
-    const isAuthor = currentUser && currentUser.id == reply.id_usuario;
+    const ehAutor = usuarioAtual && usuarioAtual.id == resposta.id_usuario;
+    const nomeAutor = resposta.autor || 'Usuário';
+    const menciona = nomeAutorPai ? `@${nomeAutorPai} ` : '';
     
-    // 🎯 CORREÇÃO: Garantir dados básicos
-    const authorName = reply.autor || 'Usuário';
-    const mention = parentAuthorName ? `@${parentAuthorName} ` : '';
-    
-    replyDiv.innerHTML = `
+    divResposta.innerHTML = `
         <div class="comment-avatar">
-            <div class="avatar x-small" data-user-id="${reply.id_usuario}"></div>
+            <div class="avatar x-small" data-user-id="${resposta.id_usuario}"></div>
         </div>
         <div class="comment-content">
             <div class="comment-header">
-                <span class="comment-author">${authorName}</span>
-                <span class="comment-date">${formatCommentDate(reply.data_criacao)}</span>
-                ${isAuthor ? '<button type="button" class="btn-deletar-comentario">🗑️</button>' : ''}
+                <span class="comment-author">${nomeAutor}</span>
+                <span class="comment-date">${formatarDataComentario(resposta.data_criacao)}</span>
+                ${ehAutor ? '<button type="button" class="btn-deletar-comentario">🗑️</button>' : ''}
             </div>
             <div class="comment-text">
-                <p>${mention}${reply.conteudo || ''}</p>
+                <p>${menciona}${resposta.conteudo || ''}</p>
             </div>
             <div class="comment-actions">
-                <button type="button" class="comment-like-btn" data-comment-id="${reply.id_comentario}">
+                <button type="button" class="comment-like-btn" data-comment-id="${resposta.id_comentario}">
                     <span class="comment-like-icon">🤍</span>
-                    <span class="comment-like-count">${reply.num_curtidas || 0}</span>
+                    <span class="comment-like-count">${resposta.num_curtidas || 0}</span>
                 </button>
             </div>
         </div>
     `;
     
-    // 🎯 CORREÇÃO: Renderizar avatar IMEDIATAMENTE com dados SIMPLES
-    const avatarElement = replyDiv.querySelector('.avatar');
-    if (avatarElement) {
-        const userData = {
-            id: reply.id_usuario,
-            nome: authorName,
-            foto_perfil: reply.foto_perfil_autor
+    const elementoAvatar = divResposta.querySelector('.avatar');
+    if (elementoAvatar) {
+        const dadosUsuario = {
+            id: resposta.id_usuario,
+            nome: nomeAutor,
+            foto_perfil: resposta.foto_perfil_autor
         };
-        renderSimpleAvatar(avatarElement, userData, 'x-small');
+        renderizarAvatarSimples(elementoAvatar, dadosUsuario, 'x-small');
     }
     
-    return replyDiv;
+    return divResposta;
 }
 
-async function manipularExcluirComentario(event) {
-    event.preventDefault();
-    event.stopPropagation();
+async function manipularExcluirComentario(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
     
     console.log('🗑️ Iniciando deleção de comentário/resposta');
     
-    const deleteBtn = event.target.closest('.btn-deletar-comentario');
-    if (!deleteBtn) {
+    const botaoDeletar = evento.target.closest('.btn-deletar-comentario');
+    if (!botaoDeletar) {
         console.log('❌ Botão de deletar não encontrado');
         return;
     }
     
-    // 🎯 CORREÇÃO: Encontrar o elemento correto
-    const commentElement = deleteBtn.closest('.comment-item');
-    if (!commentElement) {
+    const elementoComentario = botaoDeletar.closest('.comment-item');
+    if (!elementoComentario) {
         console.log('❌ Elemento do comentário não encontrado');
         return;
     }
     
-    const commentId = commentElement.dataset.commentId;
-    const commentType = commentElement.dataset.commentType; // 'main' ou 'reply'
+    const idComentario = elementoComentario.dataset.commentId;
+    const tipoComentario = elementoComentario.dataset.commentType;
     
     console.log('🔍 Dados do comentário:', {
-        commentId: commentId,
-        commentType: commentType,
-        element: commentElement
+        idComentario: idComentario,
+        tipoComentario: tipoComentario,
+        element: elementoComentario
     });
     
-    if (!commentId) {
+    if (!idComentario) {
         console.error('❌ ID do comentário não encontrado');
-        showNotification('❌ Erro: ID do comentário não encontrado', 'error');
+        mostrarNotificacao('❌ Erro: ID do comentário não encontrado', 'error');
         return;
     }
 
-    const message = commentType === 'reply' 
+    const mensagem = tipoComentario === 'reply' 
         ? 'Tem certeza que deseja deletar esta resposta?' 
         : 'Tem certeza que deseja deletar este comentário?';
 
-    if (confirm(message)) {
-        console.log(`🔄 Deletando ${commentType}...`);
+    if (confirm(mensagem)) {
+        console.log(`🔄 Deletando ${tipoComentario}...`);
         
         try {
-            const baseUrl = ApiConfig.getBaseUrl();
-            const response = await fetch(`${baseUrl}/comentarios/${commentId}`, {
+            const urlBase = ConfiguracaoAPI.obterUrlBase();
+            const resposta = await fetch(`${urlBase}/comentarios/${idComentario}`, {
                 method: 'DELETE'
             });
 
-            console.log('📡 Status da resposta:', response.status);
+            console.log('📡 Status da resposta:', resposta.status);
 
-            if (response.ok) {
-                console.log(`✅ ${commentType === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso`);
-                showNotification(`✅ ${commentType === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso!`, 'success');
+            if (resposta.ok) {
+                console.log(`✅ ${tipoComentario === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso`);
+                mostrarNotificacao(`✅ ${tipoComentario === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso!`, 'success');
                 
-                // 🎯 CORREÇÃO: Animação de remoção
-                commentElement.style.opacity = '0';
-                commentElement.style.transform = 'translateX(-100%)';
-                commentElement.style.transition = 'all 0.3s ease';
+                elementoComentario.style.opacity = '0';
+                elementoComentario.style.transform = 'translateX(-100%)';
+                elementoComentario.style.transition = 'all 0.3s ease';
                 
                 setTimeout(() => {
-                    if (commentElement.parentNode) {
-                        commentElement.parentNode.removeChild(commentElement);
+                    if (elementoComentario.parentNode) {
+                        elementoComentario.parentNode.removeChild(elementoComentario);
                     }
                     
-                    // 🎯 CORREÇÃO: Se era um comentário principal, verificar se a lista ficou vazia
-                    if (commentType === 'main') {
-                        const commentsList = document.querySelector('.comments-list');
-                        if (commentsList && commentsList.children.length === 0) {
-                            commentsList.innerHTML = '<p class="no-comments">Nenhum comentário ainda. Seja o primeiro a comentar!</p>';
+                    if (tipoComentario === 'main') {
+                        const listaComentarios = document.querySelector('.comments-list');
+                        if (listaComentarios && listaComentarios.children.length === 0) {
+                            listaComentarios.innerHTML = '<p class="no-comments">Nenhum comentário ainda. Seja o primeiro a comentar!</p>';
                         }
                     }
                     
-                    // 🎯 CORREÇÃO: Se era uma resposta, verificar se o container de respostas ficou vazio
-                    if (commentType === 'reply') {
-                        const parentCommentId = commentElement.dataset.parentCommentId;
-                        const repliesContainer = document.getElementById(`replies-${parentCommentId}`);
-                        if (repliesContainer && repliesContainer.children.length === 0) {
-                            repliesContainer.style.display = 'none';
+                    if (tipoComentario === 'reply') {
+                        const idComentarioPai = elementoComentario.dataset.parentCommentId;
+                        const containerRespostas = document.getElementById(`replies-${idComentarioPai}`);
+                        if (containerRespostas && containerRespostas.children.length === 0) {
+                            containerRespostas.style.display = 'none';
                         }
                     }
                     
                 }, 300);
                 
             } else {
-                const errorText = await response.text();
-                console.error('❌ Erro na resposta:', errorText);
-                throw new Error(`Erro ${response.status}: ${errorText}`);
+                const textoErro = await resposta.text();
+                console.error('❌ Erro na resposta:', textoErro);
+                throw new Error(`Erro ${resposta.status}: ${textoErro}`);
             }
-        } catch (error) {
-            console.error(`❌ Erro ao deletar ${commentType}:`, error);
-            showNotification(`❌ Erro ao deletar ${commentType}: ` + error.message, 'error');
+        } catch (erro) {
+            console.error(`❌ Erro ao deletar ${tipoComentario}:`, erro);
+            mostrarNotificacao(`❌ Erro ao deletar ${tipoComentario}: ` + erro.message, 'error');
         }
     }
 }
 
-async function manipularExcluirResposta(event) {
-    event.preventDefault();
-    event.stopPropagation();
+async function manipularCurtirComentario(evento) {
+    evento.preventDefault();
+    evento.stopPropagation();
     
-    console.log('🗑️ Clique detectado no botão de deletar resposta');
-    
-    const deleteBtn = event.target.closest('.btn-deletar-resposta');
-    if (!deleteBtn) {
-        console.log('❌ Botão de deletar resposta não encontrado');
-        return;
-    }
-    
-    const replyElement = deleteBtn.closest('.comment-reply');
-    if (!replyElement) {
-        console.log('❌ Elemento da resposta não encontrado');
-        return;
-    }
-    
-    const replyId = replyElement.dataset.commentId;
-    console.log('🔍 ID da resposta:', replyId);
-    
-    if (!replyId) {
-        console.error('❌ ID da resposta não encontrado no dataset');
-        showNotification('❌ Erro: ID da resposta não encontrado', 'error');
+    if (!usuarioAtual) {
+        mostrarNotificacao('🔒 Faça login para curtir comentários', 'error');
         return;
     }
 
-    if (confirm('Tem certeza que deseja deletar esta resposta?')) {
-        console.log('🔄 Enviando requisição para deletar resposta...');
-        
-        try {
-            const response = await fetch(`${API_BASE_URL}/comentarios/${replyId}`, {
-                method: 'DELETE'
-            });
-
-            console.log('📡 Resposta do servidor:', response.status, response.statusText);
-
-            if (response.ok) {
-                const result = await response.json();
-                console.log('✅ Resposta deletada com sucesso:', result);
-                showNotification('✅ Resposta deletada com sucesso!', 'success');
-                
-                // Animação de remoção
-                replyElement.style.opacity = '0';
-                replyElement.style.transform = 'translateX(-100%)';
-                replyElement.style.transition = 'all 0.3s ease';
-                
-                setTimeout(() => {
-                    replyElement.remove();
-                    
-                    // Verificar se o comentário pai ficou sem respostas
-                    const parentComment = replyElement.closest('.comment');
-                    if (parentComment) {
-                        const repliesContainer = parentComment.querySelector('.comment-replies');
-                        if (repliesContainer && repliesContainer.children.length === 0) {
-                            repliesContainer.remove();
-                        }
-                    }
-                    
-                }, 300);
-                
-            } else {
-                const errorText = await response;
-                console.error('❌ Erro na resposta:', errorText);
-                throw new Error(`Erro ${response.status}: ${errorText}`);
-            }
-        } catch (error) {
-            console.error('❌ Erro ao deletar resposta:', error);
-            showNotification('❌ Erro ao deletar resposta: ' + error.message, 'error');
-        }
-    }
-}
-
-async function manipularCurtirComentario(event) {
-    event.preventDefault();
-    event.stopPropagation();
+    const botaoCurtir = evento.target.closest('.comment-like-btn');
+    const idComentario = botaoCurtir.dataset.commentId;
     
-    if (!currentUser) {
-        showNotification('🔒 Faça login para curtir comentários', 'error');
-        return;
-    }
-
-    const likeBtn = event.target.closest('.comment-like-btn');
-    const commentId = likeBtn.dataset.commentId;
+    console.log('💖 Curtindo comentário ID:', idComentario);
     
-    console.log('💖 Curtindo comentário ID:', commentId);
+    const iconeCurtir = botaoCurtir.querySelector('.like-icon');
+    const contadorCurtidas = botaoCurtir.querySelector('.like-count');
+    let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
     
-    const likeIcon = likeBtn.querySelector('.like-icon');
-    const likeCount = likeBtn.querySelector('.like-count');
-    let currentCount = parseInt(likeCount.textContent) || 0;
-    
-    if (likeIcon.textContent === '🤍') {
-        likeIcon.textContent = '❤️';
-        likeCount.textContent = currentCount + 1;
-        showNotification('💖 Comentário curtido!', 'success');
+    if (iconeCurtir.textContent === '🤍') {
+        iconeCurtir.textContent = '❤️';
+        contadorCurtidas.textContent = contagemAtual + 1;
+        mostrarNotificacao('💖 Comentário curtido!', 'success');
     } else {
-        likeIcon.textContent = '🤍';
-        likeCount.textContent = Math.max(0, currentCount - 1);
-        showNotification('💔 Curtida removida do comentário', 'success');
+        iconeCurtir.textContent = '🤍';
+        contadorCurtidas.textContent = Math.max(0, contagemAtual - 1);
+        mostrarNotificacao('💔 Curtida removida do comentário', 'success');
     }
 }
 
 // ===== FUNÇÕES DE ATUALIZAÇÃO EM TEMPO REAL =====
 
-function addNewStoryToFeed(newStory) {
+function adicionarNovaHistoriaAoFeed(novaHistoria) {
     console.log('🚀 SOLUÇÃO SIMPLES: Recarregar todo o feed');
     
-    // Solução mais garantida: recarregar tudo
-    loadPosts();
+    carregarPostagens();
     
-    // Mostrar mensagem de sucesso
-    showNotification('✅ História publicada com sucesso!', 'success');
+    mostrarNotificacao('✅ História publicada com sucesso!', 'success');
     
-    // Fechar modal
-    closeModal();
+    fecharModal();
 }
 
-function atualizarUICurtida(likeBtn, liked) {
-    const likeIcon = likeBtn.querySelector('.like-icon');
-    const likeCount = likeBtn.querySelector('.like-count');
-    let currentCount = parseInt(likeCount.textContent) || 0;
-    
-    if (liked) {
-        likeIcon.textContent = '❤️';
-        likeCount.textContent = currentCount + 1;
-        likeBtn.classList.add('liked');
-        likeBtn.dataset.liked = 'true';
-    } else {
-        likeIcon.textContent = '🤍';
-        likeCount.textContent = Math.max(0, currentCount - 1);
-        likeBtn.classList.remove('liked');
-        likeBtn.dataset.liked = 'false';
-    }
-}
-
-function addNewCommentToUI(postId, comment) {
+function adicionarNovoComentarioNaUI(idPost, comentario) {
     console.log('🚀 SOLUÇÃO NUCLEAR: Recarregando TODOS os comentários');
     
-    // 1. Limpar input
-    const commentInput = document.querySelector(`#comments-${postId} .comment-input`);
-    if (commentInput) commentInput.value = '';
+    const inputComentario = document.querySelector(`#comments-${idPost} .comment-input`);
+    if (inputComentario) inputComentario.value = '';
     
-    // 2. Recarregar comentários do servidor
-    loadCommentsWithReplies(postId);
+    carregarComentariosComRespostas(idPost);
     
-    // 3. Mostrar feedback
-    showNotification('💬 Comentário adicionado!', 'success');
+    mostrarNotificacao('💬 Comentário adicionado!', 'success');
 }
 
-
-// ===== VERSÃO OTIMIZADA PARA RESPOSTAS =====
-function addNewReplyToUI(commentId, reply) {
-    console.log('🎯 Adicionando nova resposta à UI:', { commentId, reply });
+function adicionarNovaRespostaNaUI(idComentario, resposta) {
+    console.log('🎯 Adicionando nova resposta à UI:', { idComentario, resposta });
     
-    // 🎯 CORREÇÃO: Garantir que temos todos os dados necessários
-    if (!reply.id_comentario_pai) {
-        reply.id_comentario_pai = parseInt(commentId);
+    if (!resposta.id_comentario_pai) {
+        resposta.id_comentario_pai = parseInt(idComentario);
     }
-    if (!reply.autor && currentUser) {
-        reply.autor = currentUser.nome;
+    if (!resposta.autor && usuarioAtual) {
+        resposta.autor = usuarioAtual.nome;
     }
-    if (!reply.id_usuario && currentUser) {
-        reply.id_usuario = currentUser.id;
+    if (!resposta.id_usuario && usuarioAtual) {
+        resposta.id_usuario = usuarioAtual.id;
     }
-    if (!reply.isReply) {
-        reply.isReply = true;
+    if (!resposta.isReply) {
+        resposta.isReply = true;
     }
     
-    console.log('📋 Dados da resposta processados:', reply);
+    console.log('📋 Dados da resposta processados:', resposta);
     
-    // 🎯 CORREÇÃO: Encontrar comentário pai de forma precisa
-    const parentComment = document.querySelector(`[data-comment-id="${commentId}"][data-comment-type="main"]`);
-    if (!parentComment) {
-        console.error('❌ Comentário pai não encontrado para ID:', commentId);
+    const comentarioPai = document.querySelector(`[data-comment-id="${idComentario}"][data-comment-type="main"]`);
+    if (!comentarioPai) {
+        console.error('❌ Comentário pai não encontrado para ID:', idComentario);
         
-        // Tentar fallback: recarregar todos os comentários
-        const commentsSection = document.querySelector('.comments-section');
-        if (commentsSection) {
-            const postId = commentsSection.id.replace('comments-', '');
-            loadCommentsWithReplies(postId);
+        const secaoComentarios = document.querySelector('.comments-section');
+        if (secaoComentarios) {
+            const idPost = secaoComentarios.id.replace('comments-', '');
+            carregarComentariosComRespostas(idPost);
         }
         return;
     }
     
-    // 🎯 CORREÇÃO: Buscar nome do autor pai
-    const parentAuthorElement = parentComment.querySelector('.comment-author');
-    const parentAuthorName = parentAuthorElement ? parentAuthorElement.textContent.trim() : '';
+    const elementoAutorPai = comentarioPai.querySelector('.comment-author');
+    const nomeAutorPai = elementoAutorPai ? elementoAutorPai.textContent.trim() : '';
     
-    // 🎯 CORREÇÃO: Encontrar ou criar container de respostas
-    let repliesContainer = document.getElementById(`replies-${commentId}`);
-    if (!repliesContainer) {
+    let containerRespostas = document.getElementById(`replies-${idComentario}`);
+    if (!containerRespostas) {
         console.log('📦 Criando container de respostas...');
-        repliesContainer = document.createElement('div');
-        repliesContainer.className = 'replies-container';
-        repliesContainer.id = `replies-${commentId}`;
+        containerRespostas = document.createElement('div');
+        containerRespostas.className = 'replies-container';
+        containerRespostas.id = `replies-${idComentario}`;
         
-        // Inserir após a seção de resposta
-        const replySection = parentComment.querySelector('.reply-section');
-        if (replySection) {
-            replySection.parentNode.insertBefore(repliesContainer, replySection.nextSibling);
+        const secaoResposta = comentarioPai.querySelector('.reply-section');
+        if (secaoResposta) {
+            secaoResposta.parentNode.insertBefore(containerRespostas, secaoResposta.nextSibling);
         } else {
-            // Fallback: inserir após as ações
-            const commentActions = parentComment.querySelector('.comment-actions');
-            if (commentActions) {
-                commentActions.parentNode.insertBefore(repliesContainer, commentActions.nextSibling);
+            const acoesComentario = comentarioPai.querySelector('.comment-actions');
+            if (acoesComentario) {
+                acoesComentario.parentNode.insertBefore(containerRespostas, acoesComentario.nextSibling);
             }
         }
     }
     
-    // 🎯 CORREÇÃO: Mostrar container se estava escondido
-    repliesContainer.style.display = 'block';
+    containerRespostas.style.display = 'block';
     
-    // 🎯 CORREÇÃO: Criar elemento de resposta com menção ao autor pai
-    const replyElement = createReplyElement(reply, parentAuthorName);
-    repliesContainer.appendChild(replyElement);
+    const elementoResposta = criarElementoResposta(resposta, nomeAutorPai);
+    containerRespostas.appendChild(elementoResposta);
     
-    // 🎯 CORREÇÃO: Fechar seção de resposta
-    closeReplySection(commentId);
+    fecharSecaoResposta(idComentario);
     
     console.log('✅ Resposta adicionada com sucesso à UI');
 }
 
-function addSingleReplyToContainer(container, reply, parentAuthorName) {
-    console.log('🎯 Adicionando resposta ao container:', {
-        autor: reply.autor,
-        parentAuthorName: parentAuthorName
-    });
+function fecharSecaoResposta(idComentario) {
+    console.log('🔒 Fechando seção de resposta para comentário:', idComentario);
     
-    // 🎯 CHAMAR createReplyElement com os dados GARANTIDOS
-    const replyHTML = createReplyElement(reply, parentAuthorName);
-    container.insertAdjacentHTML('beforeend', replyHTML);
-    
-    // 🎯 CORREÇÃO: RENDERIZAR O AVATAR IMEDIATAMENTE
-    const newReply = container.lastElementChild;
-    
-    // Encontrar o elemento do avatar
-    const avatarElement = newReply.querySelector('.avatar');
-    if (avatarElement) {
-        console.log('🖼️ Renderizando avatar para:', reply.autor);
-        
-        // 🎯 DADOS COMPLETOS DO USUÁRIO PARA O AVATAR
-        const userData = {
-            id: reply.id_usuario,
-            nome: reply.autor,
-            foto_perfil: reply.foto_perfil_autor || reply.foto_perfil || null
-        };
-        
-        renderSimpleAvatar(avatarElement, userData, 'x-small');
-    } else {
-        console.error('❌ Elemento do avatar não encontrado na resposta');
-    }
-    
-    // 🎯 VERIFICAR se o nome do usuário foi renderizado
-    const usernameElement = newReply.querySelector('.username');
-    if (usernameElement) {
-        console.log('✅ Nome de usuário renderizado:', usernameElement.textContent);
-    } else {
-        console.error('❌ Elemento do username não encontrado');
-    }
-    
-    // Animação
-    newReply.style.opacity = '0';
-    setTimeout(() => {
-        newReply.style.transition = 'opacity 0.3s ease';
-        newReply.style.opacity = '1';
-    }, 10);
-    
-    console.log('✅ Resposta adicionada com sucesso');
-}
-
-function closeReplySection(commentId) {
-    console.log('🔒 Fechando seção de resposta para comentário:', commentId);
-    
-    const replySection = document.getElementById(`reply-${commentId}`);
-    if (replySection) {
-        replySection.style.display = 'none';
-        const replyInput = replySection.querySelector('.reply-input');
-        if (replyInput) {
-            replyInput.value = '';
-            // Resetar altura do textarea
-            replyInput.style.height = 'auto';
+    const secaoResposta = document.getElementById(`reply-${idComentario}`);
+    if (secaoResposta) {
+        secaoResposta.style.display = 'none';
+        const inputResposta = secaoResposta.querySelector('.reply-input');
+        if (inputResposta) {
+            inputResposta.value = '';
+            inputResposta.style.height = 'auto';
         }
         console.log('✅ Seção de resposta fechada');
     } else {
@@ -3819,102 +2940,4 @@ function closeReplySection(commentId) {
     }
 }
 
-function addReplyToNewContainer(container, reply, commentElement) {
-    // Buscar nome do autor pai
-    const parentAuthorElement = commentElement.querySelector('.username');
-    const parentAuthorName = parentAuthorElement ? parentAuthorElement.textContent.trim() : '';
-    
-    // 🎯 CORREÇÃO: Usar a MESMA função de criação
-    const replyHTML = createReplyElement(reply, parentAuthorName);
-    container.innerHTML = replyHTML;
-    
-    // Renderizar avatar
-    const avatarElement = container.querySelector('.avatar');
-    if (avatarElement) {
-        renderSimpleAvatar(avatarElement, {
-            id: reply.id_usuario,
-            nome: reply.autor,
-            foto_perfil: reply.foto_perfil_autor
-        }, 'x-small');
-    }
-    
-    console.log('✅ Resposta adicionada em novo container');
-}
-
-function addReplyToExistingContainer(container, reply, commentId) {
-    // Buscar nome do autor pai
-    const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
-    const parentAuthorElement = commentElement ? commentElement.querySelector('.username') : null;
-    const parentAuthorName = parentAuthorElement ? parentAuthorElement.textContent.trim() : '';
-    
-    // 🎯 CORREÇÃO: Usar a MESMA função de criação
-    const replyHTML = createReplyElement(reply, parentAuthorName);
-    
-    // Adicionar ao final do container
-    container.insertAdjacentHTML('beforeend', replyHTML);
-    
-    // Renderizar avatar do novo elemento
-    const newReply = container.lastElementChild;
-    const avatarElement = newReply.querySelector('.avatar');
-    if (avatarElement) {
-        renderSimpleAvatar(avatarElement, {
-            id: reply.id_usuario,
-            nome: reply.autor,
-            foto_perfil: reply.foto_perfil_autor
-        }, 'x-small');
-    }
-    
-    // Animação
-    newReply.style.opacity = '0';
-    setTimeout(() => {
-        newReply.style.transition = 'opacity 0.3s ease';
-        newReply.style.opacity = '1';
-    }, 10);
-    
-    console.log('✅ Resposta adicionada em container existente');
-}
-
-function debugReplyCreation(commentId, reply, parentAuthorName) {
-    console.log('🔍 DEBUG REPLY CREATION:');
-    console.log('📍 commentId:', commentId);
-    
-    // 🎯 CORREÇÃO: Verificar se reply existe antes de acessar propriedades
-    if (!reply) {
-        console.error('❌ reply está undefined ou null');
-        return;
-    }
-    
-    console.log('📍 reply data:', {
-        id: reply.id_comentario || reply.id || 'N/A',
-        autor: reply.autor || 'N/A',
-        conteudo: reply.conteudo ? reply.conteudo.substring(0, 50) + '...' : 'N/A',
-        parent_autor_nome: reply.parent_autor_nome || 'N/A'
-    });
-    
-    console.log('📍 parentAuthorName parameter:', parentAuthorName || 'N/A');
-    
-    // Verificar elemento do comentário pai
-    const parentComment = document.querySelector(`[data-comment-id="${commentId}"]`);
-    if (parentComment) {
-        const parentAuthor = parentComment.querySelector('.username');
-        console.log('📍 parent author from DOM:', parentAuthor?.textContent || 'N/A');
-    } else {
-        console.log('📍 parent comment not found in DOM');
-    }
-    
-    // Testar a criação do elemento
-    try {
-        const testElement = createReplyElement(reply, parentAuthorName);
-        console.log('📍 generated HTML:', testElement);
-        console.log('📍 has @ mention:', testElement.includes('@'));
-    } catch (error) {
-        console.error('❌ Error generating test element:', error);
-    }
-}
-
-function alternarSidebar() {
-    const sidebar = document.querySelector('.sidebar');
-    sidebar.classList.toggle('mobile-open');
-}
-
-console.log('🎉 scripts.js carregado com sucesso!');
+console.log('🎉 inicio.js carregado com sucesso!');
