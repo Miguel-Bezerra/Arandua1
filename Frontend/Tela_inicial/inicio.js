@@ -4,12 +4,12 @@ console.log('🔧 inicio.js está carregando...');
 class ApiConfig {
     static obterUrlBase() {
         if (window.location.hostname.includes('netlify.app')) {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         } else if (window.location.hostname === 'localhost' || 
                   window.location.hostname === '127.0.0.1') {
             return 'http://localhost:3000';
         } else {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         }
     }
     

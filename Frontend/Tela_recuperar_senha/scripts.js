@@ -3,7 +3,7 @@ class ApiConfig {
     static obterUrlBase() {
         if (window.location.hostname.includes('railway') || 
             window.location.hostname !== 'localhost') {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         } else {
             return 'http://localhost:3000';
         }

@@ -6,7 +6,7 @@ class ApiConfig {
             window.location.hostname.includes('arandua1') ||
             window.location.hostname !== 'localhost' && 
             window.location.hostname !== '127.0.0.1') {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         }
         // Se estiver localmente
         else {

@@ -5,7 +5,7 @@ class ApiConfig {
     static obterUrlBase() {
         // Para desenvolvimento local (Live Server na porta 5500)
         if (window.location.hostname === '127.0.0.1' && window.location.port === '5500') {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         }
         // Para desenvolvimento local na porta 3000
         else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -13,7 +13,7 @@ class ApiConfig {
         }
         // Para produção
         else {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         }
     }
     

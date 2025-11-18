@@ -5,7 +5,7 @@ class ApiConfig {
         // Verificar se estamos em produção (Netlify)
         if (window.location.hostname.includes('netlify.app') || 
             window.location.hostname.includes('railway')) {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         } 
         // Verificar se estamos em desenvolvimento local
         else if (window.location.hostname === 'localhost' || 
@@ -14,7 +14,7 @@ class ApiConfig {
         }
         // Fallback para produção
         else {
-            return 'https://arandua1-production.up.railway.app';
+            return 'https://arandua1-production.up.railway.app/api';
         }
     }
     
