@@ -19,20 +19,63 @@ class ApiConfig {
         
         console.log(`🌐 Requisição API: ${opcoes.method || 'GET'} ${url}`);
         
+        // ✅ OTIMIZAÇÃO: Configurações de performance
+        const configsOtimizadas = {
+            // Prioridade baixa para requisições não críticas
+            priority: 'low',
+            // Timeout de 8 segundos
+            signal: AbortSignal.timeout(8000),
+            // Manter conexão viva
+            keepalive: true,
+            ...opcoes
+        };
+        
         try {
-            const resposta = await fetch(url, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...opcoes.headers
-                },
-                ...opcoes
-            });
+            const inicio = Date.now();
+            const resposta = await fetch(url, configsOtimizadas);
+            const duracao = Date.now() - inicio;
+            
+            console.log(`⏱️ Requisição concluída em ${duracao}ms: ${url}`);
+            
+            // Log de requisições lentas
+            if (duracao > 1000) {
+                console.warn(`🐌 Requisição lenta: ${duracao}ms para ${url}`);
+            }
             
             return resposta;
         } catch (erro) {
             console.error('❌ Erro na requisição:', erro);
             throw erro;
         }
+    }
+}
+
+class ApiCache {
+    static cache = new Map();
+    static timeout = 60000; // 1 minuto
+    
+    static set(key, data) {
+        this.cache.set(key, {
+            data,
+            timestamp: Date.now()
+        });
+    }
+    
+    static get(key) {
+        const item = this.cache.get(key);
+        if (!item) return null;
+        
+        // Verificar se expirou
+        if (Date.now() - item.timestamp > this.timeout) {
+            this.cache.delete(key);
+            return null;
+        }
+        
+        return item.data;
+    }
+    
+    static clear() {
+        this.cache.clear();
     }
 }
 
@@ -106,6 +149,7 @@ async function inicializarAplicacao() {
         configurarOuvintesEventosGlobais();
         atualizarExibicaoCategoriasAtivas();
         prevenirRecarregamentoLinks();
+        preCarregarRecursos();
         
         // Aguardar mais um pouco
         await new Promise(resolver => setTimeout(resolver, 100));
@@ -157,6 +201,24 @@ function configurarInterfaceBasica() {
     } else {
         console.error('❌ usuarioAtual não definido');
     }
+}
+
+async function preCarregarRecursos() {
+    const recursos = [
+        '/api/categorias',
+        '/api/usuario/perfil'
+    ];
+    
+    // Pré-carregar em segundo plano
+    recursos.forEach(url => {
+        fetch(url, { priority: 'low' })
+            .then(res => res.json())
+            .then(dados => {
+                ApiCache.set(url, dados);
+                console.log(`✅ Pré-carregado: ${url}`);
+            })
+            .catch(erro => console.log(`⚠️ Falha no pré-carregamento: ${url}`));
+    });
 }
 
 // ===== DROPDOWN =====
@@ -2231,7 +2293,6 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
 
     if (!idPost) {
         idPost = botaoCurtir.dataset.postId;
-        console.log('🔍 PostId obtido do dataset:', idPost);
     }
     
     if (!usuarioAtual) {
@@ -2241,21 +2302,48 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
 
     if (!idPost || !usuarioAtual.id) {
         console.error('❌ IDs faltando:', { idPost, idUsuario: usuarioAtual.id });
-        mostrarNotificacao('❌ Erro: IDs não encontrados', 'error');
         return;
+    }
+    
+    // ✅ OTIMIZAÇÃO: Atualização otimista da UI primeiro
+    const iconeCurtir = botaoCurtir.querySelector('.like-icon');
+    const contadorCurtidas = botaoCurtir.querySelector('.like-count');
+    let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
+    
+    const estavaCurtido = iconeCurtir.textContent === '❤️';
+    const novaContagem = estavaCurtido ? Math.max(0, contagemAtual - 1) : contagemAtual + 1;
+    
+    // Atualizar UI imediatamente
+    iconeCurtir.textContent = estavaCurtido ? '🤍' : '❤️';
+    contadorCurtidas.textContent = novaContagem;
+    
+    if (estavaCurtido) {
+        botaoCurtir.classList.remove('liked');
+    } else {
+        botaoCurtir.classList.add('liked');
     }
     
     try {
         const urlBase = ApiConfig.obterUrlBase();
         
-        // 1. Verificar estado atual
-        const respostaVerificacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
-        if (!respostaVerificacao.ok) {
-            throw new Error(`HTTP ${respostaVerificacao.status}: ${await respostaVerificacao.text()}`);
-        }
-        const estadoReal = await respostaVerificacao.json();
+        // ✅ OTIMIZAÇÃO: Cache para verificação de estado
+        const cacheKey = `curtida_${idPost}_${usuarioAtual.id}`;
+        const estadoCache = ApiCache.get(cacheKey);
         
-        // 2. Executar ação contrária
+        let estadoReal;
+        if (estadoCache) {
+            estadoReal = estadoCache;
+        } else {
+            const respostaVerificacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
+            if (!respostaVerificacao.ok) throw new Error('Erro ao verificar curtida');
+            estadoReal = await respostaVerificacao.json();
+            ApiCache.set(cacheKey, estadoReal);
+        }
+        
+        // ✅ OTIMIZAÇÃO: Timeout para evitar requisições lentas
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 segundos timeout
+        
         const acao = estadoReal.curtiu ? 'DELETE' : 'POST';
         const resposta = await fetch(`${urlBase}/curtidas`, {
             method: acao,
@@ -2263,35 +2351,34 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
             body: JSON.stringify({ 
                 id_historia: parseInt(idPost), 
                 id_usuario: parseInt(usuarioAtual.id)
-            })
+            }),
+            signal: controller.signal
         });
         
+        clearTimeout(timeoutId);
+        
         if (!resposta.ok) {
-            const textoErro = await resposta;
-            throw new Error(`HTTP ${resposta.status}: ${textoErro}`);
+            throw new Error(`HTTP ${resposta.status}`);
         }
         
-        // 3. Atualizar UI
-        const iconeCurtir = botaoCurtir.querySelector('.like-icon');
-        const contadorCurtidas = botaoCurtir.querySelector('.like-count');
-        let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
-        
-        if (acao === 'POST') {
-            iconeCurtir.textContent = '❤️';
-            contadorCurtidas.textContent = contagemAtual + 1;
-            botaoCurtir.classList.add('liked');
-            mostrarNotificacao('❤️ Curtida adicionada!', 'success');
-        } else {
-            iconeCurtir.textContent = '🤍';
-            contadorCurtidas.textContent = Math.max(0, contagemAtual - 1);
-            botaoCurtir.classList.remove('liked');
-            mostrarNotificacao('💔 Curtida removida', 'success');
-        }
+        // ✅ OTIMIZAÇÃO: Invalidar cache após ação bem-sucedida
+        ApiCache.delete(cacheKey);
         
         console.log('❤️ DEBUG: Curtida processada com sucesso');
         
     } catch (erro) {
         console.error('❌ Erro ao curtir:', erro);
+        
+        // ✅ OTIMIZAÇÃO: Reverter UI em caso de erro
+        iconeCurtir.textContent = estavaCurtido ? '❤️' : '🤍';
+        contadorCurtidas.textContent = contagemAtual;
+        
+        if (estavaCurtido) {
+            botaoCurtir.classList.add('liked');
+        } else {
+            botaoCurtir.classList.remove('liked');
+        }
+        
         mostrarNotificacao('❌ Erro ao curtir: ' + erro.message, 'error');
     }
 }
