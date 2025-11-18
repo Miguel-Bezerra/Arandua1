@@ -3099,7 +3099,7 @@ img {
 
 
 /* ===== EMPTY FEED MESSAGE ===== */
-.empty-feed-message {
+.nenhuma-historia {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3112,7 +3112,7 @@ img {
   overflow: hidden;
 }
 
-.empty-feed-message::before {
+.nenhuma-historia::before {
   content: '';
   position: absolute;
   top: -50%;
@@ -3125,7 +3125,7 @@ img {
   animation: float 6s ease-in-out infinite;
 }
 
-.empty-feed-message::after {
+.nenhuma-historia {
   content: '';
   position: absolute;
   bottom: -30%;
@@ -3203,7 +3203,7 @@ img {
 }
 
 /* Botão de ação no empty state */
-.test-button {
+.botao-tentar-novamente {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3225,7 +3225,7 @@ img {
   text-transform: uppercase;
 }
 
-.test-button::before {
+.botao-tentar-novamente::before {
   content: '';
   position: absolute;
   top: 0;
@@ -3237,21 +3237,21 @@ img {
   z-index: 1;
 }
 
-.test-button:hover::before {
+.botao-tentar-novamente:hover::before {
   left: 100%;
 }
 
-.test-button:hover {
+.botao-tentar-novamente:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 12px 35px rgba(122, 82, 48, 0.35);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.test-button:active {
+.botao-tentar-novamente:active {
   transform: translateY(-1px) scale(0.98);
 }
 
-.test-button span {
+.botao-tentar-novamente span {
   position: relative;
   z-index: 2;
   display: flex;
@@ -3260,13 +3260,13 @@ img {
 }
 
 /* Variação com ícone */
-.test-button::after {
+.botao-tentar-novamente::after {
   content: '→';
   font-size: 18px;
   transition: all 0.3s ease;
 }
 
-.test-button:hover::after {
+.botao-tentar-novamente:hover::after {
   transform: translateX(5px);
 }
 
