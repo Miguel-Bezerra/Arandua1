@@ -3,9 +3,10 @@ console.log('🔧 scripts.js está carregando...');
 
 class ApiConfig {
     static getBaseUrl() {
+        // Verificar se estamos no Netlify
         if (window.location.hostname.includes('netlify.app')) {
-            // Usar proxy do Netlify
-            return '/api';
+            // Testar se o proxy está funcionando
+            return window.location.origin + '/api';
         } else if (window.location.hostname === 'localhost' || 
                   window.location.hostname === '127.0.0.1') {
             return 'http://localhost:3000';
@@ -29,9 +30,27 @@ class ApiConfig {
                 ...options
             });
             
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             return response;
         } catch (error) {
             console.error('❌ Erro de fetch:', error);
+            
+            // Fallback: tentar diretamente no Railway se o proxy falhar
+            if (window.location.hostname.includes('netlify.app') && !url.includes('railway')) {
+                console.log('🔄 Tentando conexão direta com Railway...');
+                const directUrl = `https://arandua1-production.up.railway.app${endpoint}`;
+                return fetch(directUrl, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    },
+                    ...options
+                });
+            }
+            
             throw error;
         }
     }
@@ -584,14 +603,30 @@ async function loadPosts() {
         const baseUrl = ApiConfig.getBaseUrl();
         console.log('🌐 URL base:', baseUrl);
         
-        const response = await fetch(`${baseUrl}/historias`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Accept': 'application/json'
-            },
-            mode: 'cors'
-        });
+        let response;
+        
+        // Tentar via proxy primeiro
+        try {
+            response = await ApiConfig.fetch('/historias', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            });
+        } catch (proxyError) {
+            console.log('❌ Proxy falhou, tentando diretamente...', proxyError);
+            
+            // Fallback: tentar diretamente no Railway
+            response = await fetch('https://arandua1-production.up.railway.app/historias', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                mode: 'cors'
+            });
+        }
 
         console.log('📡 Status da resposta:', response.status);
         console.log('📡 Response ok?', response.ok);
@@ -599,6 +634,14 @@ async function loadPosts() {
         if (!response.ok) {
             const errorText = await response.text();
             console.error('❌ Erro HTTP:', response.status, errorText);
+            
+            // Se for 404, tentar carregar dados locais de exemplo
+            if (response.status === 404) {
+                console.log('🔄 404 detectado, carregando dados de exemplo...');
+                loadSampleData();
+                return;
+            }
+            
             throw new Error(`HTTP ${response.status}: ${response.statusText || 'Erro no servidor'}`);
         }
 
@@ -618,11 +661,44 @@ async function loadPosts() {
         });
         
         showNotification('Erro ao carregar histórias: ' + error.message, 'error');
-        showEmptyMessage();
         
-        // Retorna array vazio para não quebrar a aplicação
+        // Tentar carregar dados de exemplo como fallback
+        loadSampleData();
+        
         return [];
     }
+}
+
+// Função de fallback com dados de exemplo
+function loadSampleData() {
+    console.log('📝 Carregando dados de exemplo...');
+    
+    const samplePosts = [
+        {
+            id_historia: 1,
+            titulo: "Bem-vindo ao Aranduá!",
+            conteudo: "Esta é uma história de exemplo enquanto configuramos a conexão com o servidor. Em breve você verá as histórias reais aqui!",
+            categoria: "outros",
+            id_usuario: 1,
+            autor: "Sistema",
+            num_curtidas: 5,
+            data_criacao: new Date().toISOString()
+        },
+        {
+            id_historia: 2,
+            titulo: "Como usar a plataforma",
+            conteudo: "Clique no botão '+' para criar sua primeira história. Você pode filtrar por categorias e interagir com as histórias de outros usuários.",
+            categoria: "conhecimentos", 
+            id_usuario: 1,
+            autor: "Sistema",
+            num_curtidas: 3,
+            data_criacao: new Date().toISOString()
+        }
+    ];
+    
+    allPosts = samplePosts;
+    renderPosts(samplePosts);
+    showNotification('📝 Modo offline: dados de exemplo carregados', 'info');
 }
 
 // ===== RENDERIZAÇÃO =====
