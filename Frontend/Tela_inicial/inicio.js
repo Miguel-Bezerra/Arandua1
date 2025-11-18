@@ -2935,35 +2935,6 @@ async function manipularExcluirComentario(evento) {
     }
 }
 
-async function manipularCurtirComentario(evento) {
-    evento.preventDefault();
-    evento.stopPropagation();
-    
-    if (!usuarioAtual) {
-        mostrarNotificacao('🔒 Faça login para curtir comentários', 'error');
-        return;
-    }
-
-    const botaoCurtir = evento.target.closest('.comment-like-btn');
-    const idComentario = botaoCurtir.dataset.commentId;
-    
-    console.log('💖 Curtindo comentário ID:', idComentario);
-    
-    const iconeCurtir = botaoCurtir.querySelector('.like-icon');
-    const contadorCurtidas = botaoCurtir.querySelector('.like-count');
-    let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
-    
-    if (iconeCurtir.textContent === '🤍') {
-        iconeCurtir.textContent = '❤️';
-        contadorCurtidas.textContent = contagemAtual + 1;
-        mostrarNotificacao('💖 Comentário curtido!', 'success');
-    } else {
-        iconeCurtir.textContent = '🤍';
-        contadorCurtidas.textContent = Math.max(0, contagemAtual - 1);
-        mostrarNotificacao('💔 Curtida removida do comentário', 'success');
-    }
-}
-
 // ===== FUNÇÕES DE ATUALIZAÇÃO EM TEMPO REAL =====
 
 function adicionarNovaHistoriaAoFeed(novaHistoria) {
