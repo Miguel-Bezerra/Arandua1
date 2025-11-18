@@ -3225,7 +3225,7 @@ img {
   text-transform: uppercase;
 }
 
-.test-button::before {
+.botao-tentar-novamente::before {
   content: '';
   position: absolute;
   top: 0;
@@ -3237,21 +3237,21 @@ img {
   z-index: 1;
 }
 
-.test-button:hover::before {
+.botao-tentar-novamente:hover::before {
   left: 100%;
 }
 
-.test-button:hover {
+.botao-tentar-novamente:hover {
   transform: translateY(-3px) scale(1.02);
   box-shadow: 0 12px 35px rgba(122, 82, 48, 0.35);
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-.test-button:active {
+.botao-tentar-novamente:active {
   transform: translateY(-1px) scale(0.98);
 }
 
-.test-button span {
+.botao-tentar-novamente span {
   position: relative;
   z-index: 2;
   display: flex;
