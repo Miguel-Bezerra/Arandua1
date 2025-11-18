@@ -2361,9 +2361,6 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
             throw new Error(`HTTP ${resposta.status}`);
         }
         
-        // ✅ OTIMIZAÇÃO: Invalidar cache após ação bem-sucedida
-        ApiCache.delete(cacheKey);
-        
         console.log('❤️ DEBUG: Curtida processada com sucesso');
         
     } catch (erro) {
