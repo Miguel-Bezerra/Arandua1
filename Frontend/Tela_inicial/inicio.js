@@ -539,9 +539,6 @@ async function carregarPostagens() {
 
         const urlBase = ApiConfig.obterUrlBase();
         console.log('🌐 URL base:', urlBase);
-
-        const teste = await fetch(urlCompleta);
-        console.log('🧪 Teste de conexão:', teste.status, teste.statusText);
         
         console.log('🔄 Fazendo requisição para /historias...');
         const resposta = await fetch(`${urlBase}/historias`, {
