@@ -1,7 +1,7 @@
-// profile.js - CORRIGIDO para carregamento de imagem
+// profile.js - CORRIGIDO para carregamento de imagem - PORTUGUÊS
 
 class ApiConfig {
-    static getBaseUrl() {
+    static obterUrlBase() {
         // Verificar se estamos em produção (Netlify)
         if (window.location.hostname.includes('netlify.app') || 
             window.location.hostname.includes('railway')) {
@@ -18,311 +18,311 @@ class ApiConfig {
         }
     }
     
-    static async fetch(endpoint, options = {}) {
-        const baseUrl = this.getBaseUrl();
-        const url = `${baseUrl}${endpoint}`;
+    static async fazerRequisicao(endpoint, opcoes = {}) {
+        const urlBase = this.obterUrlBase();
+        const url = `${urlBase}${endpoint}`;
         
-        console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+        console.log(`🌐 Requisição API: ${opcoes.method || 'GET'} ${url}`);
         console.log(`📍 Ambiente: ${window.location.hostname}`);
         
         try {
-            const response = await fetch(url, {
+            const resposta = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...options.headers
+                    ...opcoes.headers
                 },
-                ...options
+                ...opcoes
             });
             
-            console.log(`📡 Response Status: ${response.status}`);
+            console.log(`📡 Status da Resposta: ${resposta.status}`);
             
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Erro HTTP:', response.status, errorText);
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            if (!resposta.ok) {
+                const textoErro = await resposta.text();
+                console.error('❌ Erro HTTP:', resposta.status, textoErro);
+                throw new Error(`HTTP ${resposta.status}: ${resposta.statusText}`);
             }
             
-            return response;
-        } catch (error) {
-            console.error('❌ Erro de fetch:', error);
-            throw error;
+            return resposta;
+        } catch (erro) {
+            console.error('❌ Erro de fetch:', erro);
+            throw erro;
         }
     }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar se o usuário está logado
-    const loggedInUser = getLoggedInUser();
+    const usuarioLogado = obterUsuarioLogado();
     
-    if (!loggedInUser) {
+    if (!usuarioLogado) {
         window.location.href = '../Tela_Login/tela_login.html';
         return;
     }
     // Verificar se estamos no mobile
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    console.log('📱 É mobile?', isMobile);
+    const ehMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    console.log('📱 É mobile?', ehMobile);
 
-    setupUserInterface(loggedInUser);
-    loadUserProfile(loggedInUser);
-    setupProfileFunctionality(loggedInUser);
-    setupBackButton();
+    configurarInterfaceUsuario(usuarioLogado);
+    carregarPerfilUsuario(usuarioLogado);
+    configurarFuncionalidadesPerfil(usuarioLogado);
+    configurarBotaoVoltar();
 });
 
 // Função para obter o usuário logado do sessionStorage
-function getLoggedInUser() {
-    const userInfo = sessionStorage.getItem('arandua_current_user');
-    if (userInfo) {
+function obterUsuarioLogado() {
+    const infoUsuario = sessionStorage.getItem('arandua_current_user');
+    if (infoUsuario) {
         try {
-            const user = JSON.parse(userInfo);
+            const usuario = JSON.parse(infoUsuario);
             // Verificar se tem a flag isLoggedIn OU se tem dados básicos do usuário
-            if (user.isLoggedIn || (user.id && user.nome)) {
-                return user;
+            if (usuario.isLoggedIn || (usuario.id && usuario.nome)) {
+                return usuario;
             }
-        } catch (error) {
-            console.error('Erro ao parsear usuário:', error);
+        } catch (erro) {
+            console.error('Erro ao analisar usuário:', erro);
         }
     }
     return null;
 }
 
 // Configurar a interface do usuário
-function setupUserInterface(user) {
-    const userButton = document.getElementById('userButton');
-    if (userButton) {
-        userButton.textContent = user.nome || user.username;
+function configurarInterfaceUsuario(usuario) {
+    const botaoUsuario = document.getElementById('userButton');
+    if (botaoUsuario) {
+        botaoUsuario.textContent = usuario.nome || usuario.username;
     }
-    setupUserDropdown();
+    configurarDropdownUsuario();
 }
 
 // Configurar botão de voltar
-function setupBackButton() {
-    const backButton = document.getElementById('backButton');
-    if (backButton) {
-        backButton.addEventListener('click', function() {
+function configurarBotaoVoltar() {
+    const botaoVoltar = document.getElementById('backButton');
+    if (botaoVoltar) {
+        botaoVoltar.addEventListener('click', function() {
             window.location.href = '../Tela_inicial/inicio.html';
         });
     }
 }
 
 // Carregar dados do perfil do usuário
-async function loadUserProfile(user) {
+async function carregarPerfilUsuario(usuario) {
     try {
-        console.log('Carregando perfil do usuário ID:', user.id);
+        console.log('Carregando perfil do usuário ID:', usuario.id);
         
-        const baseUrl = ApiConfig.getBaseUrl();
+        const urlBase = ApiConfig.obterUrlBase();
         
         // TIMEOUT para evitar espera longa
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 segundos
 
-        const response = await fetch(`${baseUrl}/usuarios/${user.id}`, {
+        const resposta = await fetch(`${urlBase}/usuarios/${usuario.id}`, {
             signal: controller.signal
         });
 
         clearTimeout(timeoutId);
         
-        if (!response.ok) {
-            throw new Error(`Erro ${response.status} ao carregar perfil`);
+        if (!resposta.ok) {
+            throw new Error(`Erro ${resposta.status} ao carregar perfil`);
         }
 
-        const userData = await response.json();
-        console.log('✅ Dados do usuário carregados:', userData);
-        populateProfileForm(userData);
+        const dadosUsuario = await resposta.json();
+        console.log('✅ Dados do usuário carregados:', dadosUsuario);
+        preencherFormularioPerfil(dadosUsuario);
         
-    } catch (error) {
-        console.error('❌ Erro ao carregar perfil:', error);
+    } catch (erro) {
+        console.error('❌ Erro ao carregar perfil:', erro);
         
-        if (error.name === 'AbortError') {
-            showNotification('⏰ Tempo de carregamento esgotado', 'error');
+        if (erro.name === 'AbortError') {
+            mostrarNotificacao('⏰ Tempo de carregamento esgotado', 'erro');
         } else {
-            showNotification('Erro ao carregar dados do perfil', 'error');
+            mostrarNotificacao('Erro ao carregar dados do perfil', 'erro');
         }
         
         // Usar dados do sessionStorage IMEDIATAMENTE como fallback
-        const fallbackUser = getLoggedInUser();
-        if (fallbackUser) {
+        const usuarioFallback = obterUsuarioLogado();
+        if (usuarioFallback) {
             console.log('🔄 Usando dados do sessionStorage como fallback');
-            populateProfileForm(fallbackUser);
+            preencherFormularioPerfil(usuarioFallback);
         }
     }
 }
 
 // Preencher formulário com dados do usuário
-function populateProfileForm(userData) {
+function preencherFormularioPerfil(dadosUsuario) {
     // Preencher campos básicos primeiro (mais rápido)
-    document.getElementById('profileName').value = userData.nome || '';
-    document.getElementById('profileEmail').value = userData.email || '';
+    document.getElementById('profileName').value = dadosUsuario.nome || '';
+    document.getElementById('profileEmail').value = dadosUsuario.email || '';
     
     // Carregar imagem em segundo plano (não bloquear a UI)
     setTimeout(() => {
-        if (userData.ft_perfil) {
-            loadProfileImagePreview(userData.ft_perfil);
+        if (dadosUsuario.ft_perfil) {
+            carregarPreviewImagemPerfil(dadosUsuario.ft_perfil);
         } else {
-            showDefaultProfileImage();
+            mostrarImagemPerfilPadrao();
         }
     }, 100);
 }
 
 // Mostrar imagem de perfil padrão
-function showDefaultProfileImage() {
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-    const imagePreview = document.getElementById('imagePreview');
+function mostrarImagemPerfilPadrao() {
+    const containerPreview = document.getElementById('imagePreviewContainer');
+    const previewImagem = document.getElementById('imagePreview');
     
-    if (imagePreview && imagePreviewContainer) {
+    if (previewImagem && containerPreview) {
         // Criar uma imagem padrão usando SVG com cor marrom do tema
-        const defaultImageSVG = `
+        const imagemPadraoSVG = `
             <svg xmlns="http://www.w3.org/2000/svg" width="150" height="150" viewBox="0 0 24 24" fill="#b36a1f">
                 <path d="M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-5.33 0-8 2.67-8 4v2h16v-2c0-1.33-2.67-4-8-4z"/>
             </svg>
         `;
         
         // Converter SVG para data URL
-        const svgBlob = new Blob([defaultImageSVG], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(svgBlob);
+        const blobSVG = new Blob([imagemPadraoSVG], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blobSVG);
         
-        imagePreview.src = url;
-        imagePreviewContainer.classList.remove('hidden');
+        previewImagem.src = url;
+        containerPreview.classList.remove('hidden');
         
         console.log('Imagem padrão carregada');
     }
 }
 
 // Carregar preview da imagem de perfil
-function loadProfileImagePreview(imageData) {
-    const imagePreview = document.getElementById('imagePreview');
-    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+function carregarPreviewImagemPerfil(dadosImagem) {
+    const previewImagem = document.getElementById('imagePreview');
+    const containerPreview = document.getElementById('imagePreviewContainer');
     
-    if (!imagePreview || !imagePreviewContainer) return;
+    if (!previewImagem || !containerPreview) return;
     
     // Se não há dados de imagem, mostrar padrão IMEDIATAMENTE
-    if (!imageData) {
-        showDefaultProfileImage();
+    if (!dadosImagem) {
+        mostrarImagemPerfilPadrao();
         return;
     }
     
     // Otimização: Se já for uma URL de data, usar diretamente
-    if (imageData.startsWith('data:')) {
-        imagePreview.src = imageData;
-        imagePreviewContainer.classList.remove('hidden');
+    if (dadosImagem.startsWith('data:')) {
+        previewImagem.src = dadosImagem;
+        containerPreview.classList.remove('hidden');
         return;
     }
     
     // Otimização: Se for URL externa, carregar com timeout
-    if (imageData.startsWith('http')) {
-        const img = new Image();
-        img.onload = function() {
-            imagePreview.src = imageData;
-            imagePreviewContainer.classList.remove('hidden');
+    if (dadosImagem.startsWith('http')) {
+        const imagem = new Image();
+        imagem.onload = function() {
+            previewImagem.src = dadosImagem;
+            containerPreview.classList.remove('hidden');
         };
-        img.onerror = function() {
-            showDefaultProfileImage();
+        imagem.onerror = function() {
+            mostrarImagemPerfilPadrao();
         };
-        img.src = imageData;
+        imagem.src = dadosImagem;
         
         // Timeout para imagem externa
         setTimeout(() => {
-            if (imagePreview.src !== imageData) {
-                showDefaultProfileImage();
+            if (previewImagem.src !== dadosImagem) {
+                mostrarImagemPerfilPadrao();
             }
         }, 3000);
         return;
     }
     
     // Para base64 sem prefixo, processar rapidamente
-    if (typeof imageData === 'string' && imageData.length > 100) {
+    if (typeof dadosImagem === 'string' && dadosImagem.length > 100) {
         // Tentar apenas JPEG e PNG (mais comuns)
-        const formats = ['image/jpeg', 'image/png'];
+        const formatos = ['image/jpeg', 'image/png'];
         
-        const tryFormat = (index) => {
-            if (index >= formats.length) {
-                showDefaultProfileImage();
+        const tentarFormato = (indice) => {
+            if (indice >= formatos.length) {
+                mostrarImagemPerfilPadrao();
                 return;
             }
             
-            const testUrl = `data:${formats[index]};base64,${imageData}`;
-            const testImage = new Image();
+            const urlTeste = `data:${formatos[indice]};base64,${dadosImagem}`;
+            const imagemTeste = new Image();
             
-            testImage.onload = function() {
-                imagePreview.src = testUrl;
-                imagePreviewContainer.classList.remove('hidden');
+            imagemTeste.onload = function() {
+                previewImagem.src = urlTeste;
+                containerPreview.classList.remove('hidden');
             };
             
-            testImage.onerror = function() {
-                tryFormat(index + 1);
+            imagemTeste.onerror = function() {
+                tentarFormato(indice + 1);
             };
             
-            testImage.src = testUrl;
+            imagemTeste.src = urlTeste;
         };
         
-        tryFormat(0);
+        tentarFormato(0);
         return;
     }
     
     // Fallback rápido
-    showDefaultProfileImage();
+    mostrarImagemPerfilPadrao();
 }
 
 // Configurar funcionalidades do perfil
-function setupProfileFunctionality(user) {
-    const profileForm = document.getElementById('profileForm');
-    const cancelProfileBtn = document.getElementById('cancelProfileBtn');
-    const profileImageUpload = document.getElementById('profileImageUpload');
-    const removeImageBtn = document.getElementById('removeImageBtn');
-    const imagePreview = document.getElementById('imagePreview');
-    const imageUploadLabel = document.querySelector('label[for="profileImageUpload"]');
+function configurarFuncionalidadesPerfil(usuario) {
+    const formularioPerfil = document.getElementById('profileForm');
+    const botaoCancelar = document.getElementById('cancelProfileBtn');
+    const uploadImagem = document.getElementById('profileImageUpload');
+    const botaoRemoverImagem = document.getElementById('removeImageBtn');
+    const previewImagem = document.getElementById('imagePreview');
+    const labelUpload = document.querySelector('label[for="profileImageUpload"]');
 
     console.log('Configurando funcionalidades do perfil...');
 
     // Submeter formulário
-    profileForm.addEventListener('submit', async (e) => {
+    formularioPerfil.addEventListener('submit', async (e) => {
         e.preventDefault();
-        await updateUserProfile(user);
+        await atualizarPerfilUsuario(usuario);
     });
 
     // Cancelar edição
-    cancelProfileBtn.addEventListener('click', () => {
+    botaoCancelar.addEventListener('click', () => {
         window.location.href = '../Tela_inicial/inicio.html';
     });
 
     // Upload de imagem
-    if (profileImageUpload && imageUploadLabel) {
+    if (uploadImagem && labelUpload) {
         console.log('Configurando upload de imagem...');
         
         // Clique no label para abrir o file input
-        imageUploadLabel.addEventListener('click', function(e) {
+        labelUpload.addEventListener('click', function(e) {
             e.preventDefault();
-            profileImageUpload.click();
+            uploadImagem.click();
         });
 
-        profileImageUpload.addEventListener('change', function(e) {
+        uploadImagem.addEventListener('change', function(e) {
             console.log('Arquivo selecionado:', e.target.files[0]);
-            const file = e.target.files[0];
-            if (file) {
+            const arquivo = e.target.files[0];
+            if (arquivo) {
                 // Validar tipo de arquivo
-                if (!file.type.startsWith('image/')) {
-                    showNotification('Por favor, selecione apenas imagens (JPG, PNG, GIF)', 'error');
+                if (!arquivo.type.startsWith('image/')) {
+                    mostrarNotificacao('Por favor, selecione apenas imagens (JPG, PNG, GIF)', 'erro');
                     return;
                 }
 
                 // Validar tamanho do arquivo (5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    showNotification('A imagem deve ter menos de 5MB', 'error');
+                if (arquivo.size > 5 * 1024 * 1024) {
+                    mostrarNotificacao('A imagem deve ter menos de 5MB', 'erro');
                     return;
                 }
 
-                const reader = new FileReader();
-                reader.onload = function(e) {
+                const leitor = new FileReader();
+                leitor.onload = function(e) {
                     console.log('Imagem carregada com sucesso');
-                    imagePreview.src = e.target.result;
+                    previewImagem.src = e.target.result;
                     document.getElementById('imagePreviewContainer').classList.remove('hidden');
                     // Resetar o flag de remoção se o usuário adicionar nova imagem
                     document.getElementById('removeProfileImage').value = 'false';
                 };
-                reader.onerror = function(error) {
-                    console.error('Erro ao ler arquivo:', error);
-                    showNotification('Erro ao carregar imagem', 'error');
+                leitor.onerror = function(erro) {
+                    console.error('Erro ao ler arquivo:', erro);
+                    mostrarNotificacao('Erro ao carregar imagem', 'erro');
                 };
-                reader.readAsDataURL(file);
+                leitor.readAsDataURL(arquivo);
             }
         });
     } else {
@@ -330,133 +330,133 @@ function setupProfileFunctionality(user) {
     }
 
     // Remover imagem
-    if (removeImageBtn) {
+    if (botaoRemoverImagem) {
         console.log('Configurando botão de remover imagem...');
-        removeImageBtn.addEventListener('click', function(e) {
+        botaoRemoverImagem.addEventListener('click', function(e) {
             e.preventDefault();
             console.log('Removendo imagem...');
-            showDefaultProfileImage();
-            profileImageUpload.value = '';
+            mostrarImagemPerfilPadrao();
+            uploadImagem.value = '';
             // Marcar para remover a imagem do perfil
             document.getElementById('removeProfileImage').value = 'true';
-            showNotification('Imagem removida - será salva ao confirmar', 'success');
+            mostrarNotificacao('Imagem removida - será salva ao confirmar', 'sucesso');
         });
     } else {
-        console.error('Elemento removeImageBtn não encontrado');
+        console.error('Elemento botaoRemoverImagem não encontrado');
     }
 }
 
 // Atualizar perfil do usuário
-async function updateUserProfile(user) {
+async function atualizarPerfilUsuario(usuario) {
     const nome = document.getElementById('profileName').value.trim();
     const email = document.getElementById('profileEmail').value.trim();
     const senha = document.getElementById('profilePassword').value;
     const confirmarSenha = document.getElementById('profileConfirmPassword').value;
-    const profileImageUpload = document.getElementById('profileImageUpload');
-    const removeProfileImage = document.getElementById('removeProfileImage').value === 'true';
+    const uploadImagem = document.getElementById('profileImageUpload');
+    const removerImagem = document.getElementById('removeProfileImage').value === 'true';
 
     // Validações RÁPIDAS
     if (!nome) {
-        showNotification('O nome é obrigatório', 'error');
+        mostrarNotificacao('O nome é obrigatório', 'erro');
         return;
     }
 
     if (senha || confirmarSenha) {
         if (!senha || !confirmarSenha || senha !== confirmarSenha || senha.length < 6) {
-            if (!senha) showNotification('Preencha a nova senha', 'error');
-            else if (!confirmarSenha) showNotification('Confirme a nova senha', 'error');
-            else if (senha !== confirmarSenha) showNotification('As senhas não coincidem', 'error');
-            else if (senha.length < 6) showNotification('A senha deve ter pelo menos 6 caracteres', 'error');
+            if (!senha) mostrarNotificacao('Preencha a nova senha', 'erro');
+            else if (!confirmarSenha) mostrarNotificacao('Confirme a nova senha', 'erro');
+            else if (senha !== confirmarSenha) mostrarNotificacao('As senhas não coincidem', 'erro');
+            else if (senha.length < 6) mostrarNotificacao('A senha deve ter pelo menos 6 caracteres', 'erro');
             return;
         }
     }
 
     // Preparar dados para atualização
-    const updateData = {
+    const dadosAtualizacao = {
         nome: nome,
         email: email || null
     };
 
     // Apenas incluir senha se for fornecida
     if (senha) {
-        updateData.senha = senha;
+        dadosAtualizacao.senha = senha;
     }
 
     // Processar imagem de perfil de forma ASSÍNCRONA e RÁPIDA
-    if (removeProfileImage) {
-        updateData.ft_perfil = null;
-    } else if (profileImageUpload.files[0]) {
+    if (removerImagem) {
+        dadosAtualizacao.ft_perfil = null;
+    } else if (uploadImagem.files[0]) {
         try {
             // Limitar tamanho da imagem ANTES de processar
-            const file = profileImageUpload.files[0];
-            if (file.size > 2 * 1024 * 1024) { // 2MB max
-                showNotification('Imagem muito grande. Máximo 2MB.', 'error');
+            const arquivo = uploadImagem.files[0];
+            if (arquivo.size > 2 * 1024 * 1024) { // 2MB max
+                mostrarNotificacao('Imagem muito grande. Máximo 2MB.', 'erro');
                 return;
             }
             
-            const imageBase64 = await convertImageToBase64(file);
-            if (imageBase64.startsWith('data:')) {
-                updateData.ft_perfil = imageBase64.split(',')[1];
+            const imagemBase64 = await converterImagemParaBase64(arquivo);
+            if (imagemBase64.startsWith('data:')) {
+                dadosAtualizacao.ft_perfil = imagemBase64.split(',')[1];
             }
-        } catch (error) {
-            console.error('❌ Erro ao processar imagem:', error);
-            showNotification('Erro ao processar imagem', 'error');
+        } catch (erro) {
+            console.error('❌ Erro ao processar imagem:', erro);
+            mostrarNotificacao('Erro ao processar imagem', 'erro');
             return;
         }
     }
 
     try {
-        const baseUrl = ApiConfig.getBaseUrl();
+        const urlBase = ApiConfig.obterUrlBase();
         
         // TIMEOUT para update
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        const response = await fetch(`${baseUrl}/usuarios/${user.id}`, {
+        const resposta = await fetch(`${urlBase}/usuarios/${usuario.id}`, {
             method: "PUT",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(updateData),
+            body: JSON.stringify(dadosAtualizacao),
             signal: controller.signal
         });
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        if (!resposta.ok) {
+            const textoErro = await resposta.text();
+            throw new Error(`HTTP ${resposta.status}: ${textoErro}`);
         }
 
-        const data = await response.json();
+        const dados = await resposta.json();
 
         // Atualizar session storage IMEDIATAMENTE
-        updateUserSession({
-            nome: updateData.nome,
-            email: updateData.email,
-            ft_perfil: updateData.ft_perfil
+        atualizarSessaoUsuario({
+            nome: dadosAtualizacao.nome,
+            email: dadosAtualizacao.email,
+            ft_perfil: dadosAtualizacao.ft_perfil
         });
 
-        showNotification('✅ Perfil atualizado com sucesso!', 'success');
+        mostrarNotificacao('✅ Perfil atualizado com sucesso!', 'sucesso');
 
         // Redirecionar mais rápido
         setTimeout(() => {
             window.location.href = '../Tela_inicial/inicio.html';
         }, 800); // Reduzido de 1500 para 800ms
 
-    } catch (error) {
-        console.error('❌ Erro na API:', error);
+    } catch (erro) {
+        console.error('❌ Erro na API:', erro);
         
-        if (error.name === 'AbortError') {
-            showNotification('⏰ Tempo de atualização esgotado', 'error');
+        if (erro.name === 'AbortError') {
+            mostrarNotificacao('⏰ Tempo de atualização esgotado', 'erro');
         } else {
             // Fallback rápido
-            updateUserSession({
-                nome: updateData.nome,
-                email: updateData.email,
-                ft_perfil: updateData.ft_perfil
+            atualizarSessaoUsuario({
+                nome: dadosAtualizacao.nome,
+                email: dadosAtualizacao.email,
+                ft_perfil: dadosAtualizacao.ft_perfil
             });
-            showNotification('✅ Alterações salvas localmente', 'success');
+            mostrarNotificacao('✅ Alterações salvas localmente', 'sucesso');
             setTimeout(() => {
                 window.location.href = '../Tela_inicial/inicio.html';
             }, 800);
@@ -464,60 +464,60 @@ async function updateUserProfile(user) {
     }
 }
 
-async function saveProfileLocally(user, updateData) {
+async function salvarPerfilLocalmente(usuario, dadosAtualizacao) {
     try {
         console.log('💾 Salvando perfil localmente (fallback)...');
         
         // Salvar no localStorage
-        const userProfile = {
-            ...updateData,
-            id: user.id,
-            lastUpdated: new Date().toISOString()
+        const perfilUsuario = {
+            ...dadosAtualizacao,
+            id: usuario.id,
+            ultimaAtualizacao: new Date().toISOString()
         };
         
-        localStorage.setItem(`user_profile_${user.id}`, JSON.stringify(userProfile));
+        localStorage.setItem(`perfil_usuario_${usuario.id}`, JSON.stringify(perfilUsuario));
         
         // Atualizar sessionStorage
-        const updatedUser = {
-            ...user,
-            nome: updateData.nome,
-            email: updateData.email,
-            ft_perfil: updateData.ft_perfil
+        const usuarioAtualizado = {
+            ...usuario,
+            nome: dadosAtualizacao.nome,
+            email: dadosAtualizacao.email,
+            ft_perfil: dadosAtualizacao.ft_perfil
         };
-        sessionStorage.setItem('arandua_current_user', JSON.stringify(updatedUser));
+        sessionStorage.setItem('arandua_current_user', JSON.stringify(usuarioAtualizado));
         
         console.log('✅ Perfil salvo localmente com sucesso');
-        return { success: true, message: 'Perfil salvo localmente' };
+        return { sucesso: true, mensagem: 'Perfil salvo localmente' };
         
-    } catch (error) {
-        console.error('❌ Erro ao salvar localmente:', error);
+    } catch (erro) {
+        console.error('❌ Erro ao salvar localmente:', erro);
         throw new Error('Não foi possível salvar o perfil');
     }
 }
 
 // Converter imagem para Base64
-function convertImageToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            resolve(e.target.result);
+function converterImagemParaBase64(arquivo) {
+    return new Promise((resolver, rejeitar) => {
+        const leitor = new FileReader();
+        leitor.onload = function(e) {
+            resolver(e.target.result);
         };
-        reader.onerror = function(error) {
-            reject(error);
+        leitor.onerror = function(erro) {
+            rejeitar(erro);
         };
-        reader.readAsDataURL(file);
+        leitor.readAsDataURL(arquivo);
     });
 }
 
 // Configurar dropdown do usuário
-function setupUserDropdown() {
-    const userButton = document.getElementById('userButton');
+function configurarDropdownUsuario() {
+    const botaoUsuario = document.getElementById('userButton');
     const dropdown = document.getElementById('userDropdown');
     
-    console.log('Configurando dropdown:', { userButton: !!userButton, dropdown: !!dropdown });
+    console.log('Configurando dropdown:', { botaoUsuario: !!botaoUsuario, dropdown: !!dropdown });
     
-    if (userButton && dropdown) {
-        userButton.addEventListener('click', function(e) {
+    if (botaoUsuario && dropdown) {
+        botaoUsuario.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             console.log('Botão de usuário clicado');
@@ -526,7 +526,7 @@ function setupUserDropdown() {
         
         // Fechar dropdown ao clicar fora
         document.addEventListener('click', function(e) {
-            if (!userButton.contains(e.target) && !dropdown.contains(e.target)) {
+            if (!botaoUsuario.contains(e.target) && !dropdown.contains(e.target)) {
                 console.log('Fechando dropdown (clique fora)');
                 dropdown.classList.add('hidden');
             }
@@ -538,63 +538,63 @@ function setupUserDropdown() {
         });
 
         // Configurar ações do dropdown
-        setupDropdownActions();
+        configurarAcoesDropdown();
     } else {
         console.error('Elementos do dropdown não encontrados');
     }
 }
 
 // Configurar ações do dropdown
-function setupDropdownActions() {
-    const dropdownLinks = document.querySelectorAll('#userDropdown a');
-    console.log('Links do dropdown encontrados:', dropdownLinks.length);
+function configurarAcoesDropdown() {
+    const linksDropdown = document.querySelectorAll('#userDropdown a');
+    console.log('Links do dropdown encontrados:', linksDropdown.length);
     
-    dropdownLinks.forEach(link => {
+    linksDropdown.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            const action = this.getAttribute('data-action');
-            console.log('Ação do dropdown:', action);
+            const acao = this.getAttribute('data-action');
+            console.log('Ação do dropdown:', acao);
             
             // Fechar dropdown
             document.getElementById('userDropdown').classList.add('hidden');
             
-            if (action === 'edit-profile') {
+            if (acao === 'edit-profile') {
                 // Já estamos na página de edição, não fazer nada
                 console.log('Já na página de edição');
-            } else if (action === 'about') {
+            } else if (acao === 'about') {
                 window.location.href = '../Tela_sobre/sobre.html';
-            } else if (action === 'logout') {
-                logoutUser();
+            } else if (acao === 'logout') {
+                fazerLogout();
             }
         });
     });
 }
 
 // Fazer logout
-function logoutUser() {
+function fazerLogout() {
     sessionStorage.removeItem('arandua_current_user');
     window.location.href = '../Tela_Login/tela_login.html';
 }
 
 // Mostrar notificação
-function showNotification(message, type = 'success') {
+function mostrarNotificacao(mensagem, tipo = 'sucesso') {
     // Remover notificações existentes
-    const existingNotifications = document.querySelectorAll('.notification');
-    existingNotifications.forEach(notification => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
+    const notificacoesExistentes = document.querySelectorAll('.notification');
+    notificacoesExistentes.forEach(notificacao => {
+        if (notificacao.parentNode) {
+            notificacao.parentNode.removeChild(notificacao);
         }
     });
 
     // Criar elemento de notificação
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
+    const notificacao = document.createElement('div');
+    notificacao.className = `notification ${tipo}`;
+    notificacao.textContent = mensagem;
+    notificacao.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        background: ${tipo === 'sucesso' ? '#4CAF50' : '#f44336'};
         color: white;
         padding: 12px 20px;
         border-radius: 4px;
@@ -605,28 +605,51 @@ function showNotification(message, type = 'success') {
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     `;
     
-    document.body.appendChild(notification);
+    document.body.appendChild(notificacao);
     
     // Animação de entrada
     setTimeout(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateY(0)';
+        notificacao.style.opacity = '1';
+        notificacao.style.transform = 'translateY(0)';
     }, 100);
     
     // Remover após 3 segundos
     setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateY(-20px)';
+        notificacao.style.opacity = '0';
+        notificacao.style.transform = 'translateY(-20px)';
         setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
+            if (notificacao.parentNode) {
+                notificacao.parentNode.removeChild(notificacao);
             }
         }, 300);
     }, 3000);
 }
 
+function atualizarSessaoUsuario(novosDadosUsuario) {
+    try {
+        // Atualizar sessionStorage
+        const usuarioAtual = obterUsuarioLogado();
+        const usuarioAtualizado = {
+            ...usuarioAtual,
+            ...novosDadosUsuario,
+            ft_perfil: novosDadosUsuario.ft_perfil // Garantir que a foto seja atualizada
+        };
+        
+        sessionStorage.setItem('arandua_current_user', JSON.stringify(usuarioAtualizado));
+        console.log('✅ SessionStorage atualizado com nova foto');
+        
+        // Disparar evento customizado para notificar outras páginas
+        window.dispatchEvent(new CustomEvent('userProfileUpdated', {
+            detail: usuarioAtualizado
+        }));
+        
+    } catch (erro) {
+        console.error('❌ Erro ao atualizar sessionStorage:', erro);
+    }
+}
+
 // Adicionar estilos dinâmicos
-const dynamicStyles = `
+const estilosDinamicos = `
     .profile-form {
         max-width: 500px;
         margin: 30px auto;
@@ -797,29 +820,6 @@ const dynamicStyles = `
     }
 `;
 
-function updateUserSession(newUserData) {
-    try {
-        // Atualizar sessionStorage
-        const currentUser = getLoggedInUser();
-        const updatedUser = {
-            ...currentUser,
-            ...newUserData,
-            ft_perfil: newUserData.ft_perfil // Garantir que a foto seja atualizada
-        };
-        
-        sessionStorage.setItem('arandua_current_user', JSON.stringify(updatedUser));
-        console.log('✅ SessionStorage atualizado com nova foto');
-        
-        // Disparar evento customizado para notificar outras páginas
-        window.dispatchEvent(new CustomEvent('userProfileUpdated', {
-            detail: updatedUser
-        }));
-        
-    } catch (error) {
-        console.error('❌ Erro ao atualizar sessionStorage:', error);
-    }
-}
-
-const styleSheet = document.createElement('style');
-styleSheet.textContent = dynamicStyles;
-document.head.appendChild(styleSheet);
+const folhaEstilo = document.createElement('style');
+folhaEstilo.textContent = estilosDinamicos;
+document.head.appendChild(folhaEstilo);

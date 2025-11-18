@@ -2,60 +2,75 @@
 
 // URL base da API - ajuste conforme sua configuração
 class ApiConfig {
-    static getBaseUrl() {
-        if (window.location.hostname.includes('railway') || 
-            window.location.hostname !== 'localhost') {
+    static obterUrlBase() {
+        // Para desenvolvimento local (Live Server na porta 5500)
+        if (window.location.hostname === '127.0.0.1' && window.location.port === '5500') {
             return 'https://arandua1-production.up.railway.app';
-        } else {
+        }
+        // Para desenvolvimento local na porta 3000
+        else if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
             return 'http://localhost:3000';
+        }
+        // Para produção
+        else {
+            return 'https://arandua1-production.up.railway.app';
         }
     }
     
-    static async fetch(endpoint, options = {}) {
-        const baseUrl = this.getBaseUrl();
+    static async fazerRequisicao(endpoint, opcoes = {}) {
+        const urlBase = this.obterUrlBase();
+        
+        console.log(`🌐 Fazendo requisição para: ${urlBase}${endpoint}`);
         
         try {
-            const response = await fetch(`${baseUrl}${endpoint}`, {
+            const resposta = await fetch(`${urlBase}${endpoint}`, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...options.headers
+                    ...opcoes.headers
                 },
-                ...options
+                ...opcoes,
+                // Adicionar modo 'cors' explicitamente
+                mode: 'cors',
+                credentials: 'include' // Se estiver usando cookies/sessions
             });
 
-            console.log(`🌐 ${options.method || 'GET'} ${endpoint}:`, response.status);
+            console.log(`📡 Status: ${resposta.status}, OK: ${resposta.ok}`);
 
-            // Detectar se o BD está reiniciando (erro 502/503/504)
-            if (response.status >= 500 && response.status <= 599) {
-                throw new Error(`DATABASE_UNAVAILABLE: Serviço temporariamente indisponível (${response.status})`);
+            if (!resposta.ok) {
+                // Tentar obter mensagem de erro do servidor
+                let mensagemErro = `Erro ${resposta.status}`;
+                try {
+                    const dadosErro = await resposta.json();
+                    mensagemErro = dadosErro.message || dadosErro.error || mensagemErro;
+                } catch {
+                    const textoErro = await resposta.text();
+                    mensagemErro = textoErro || mensagemErro;
+                }
+                
+                throw new Error(mensagemErro);
             }
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error(`❌ Erro na requisição ${endpoint}:`, error);
+            return await resposta.json();
+        } catch (erro) {
+            console.error(`❌ Erro na requisição ${endpoint}:`, erro);
             
-            // Se for erro de BD reiniciando, mostrar mensagem amigável
-            if (error.message.includes('DATABASE_UNAVAILABLE')) {
-                showDatabaseUnavailableMessage();
+            // Tratamento específico para erro de CORS
+            if (erro.message.includes('Failed to fetch') || erro.message.includes('CORS')) {
+                throw new Error('Erro de conexão. Verifique se o servidor está online e acessível.');
             }
             
-            throw error;
+            throw erro;
         }
     }
 }
 
-function showDatabaseUnavailableMessage() {
-    const existingMessage = document.getElementById('db-unavailable-message');
-    if (existingMessage) return;
+function mostrarMensagemBancoDadosIndisponivel() {
+    const mensagemExistente = document.getElementById('mensagem-banco-indisponivel');
+    if (mensagemExistente) return;
 
-    const message = document.createElement('div');
-    message.id = 'db-unavailable-message';
-    message.innerHTML = `
+    const mensagem = document.createElement('div');
+    mensagem.id = 'mensagem-banco-indisponivel';
+    mensagem.innerHTML = `
         <div style="
             position: fixed;
             top: 20px;
@@ -81,178 +96,218 @@ function showDatabaseUnavailableMessage() {
             </button>
         </div>
     `;
-    document.body.appendChild(message);
+    document.body.appendChild(mensagem);
 }
 
 document.addEventListener('DOMContentLoaded', function() {
     console.log('DOM carregado - configurando eventos...');
     
     // Configurar funcionalidade do olho para mostrar/esconder senha
-    setupPasswordVisibility();
+    configurarVisibilidadeSenha();
     
     // Configurar o evento de login
-    setupLoginFunctionality();
+    configurarFuncionalidadeLogin();
 });
 
 // Configurar mostrar/esconder senha
-function setupPasswordVisibility() {
-    const passwordInput = document.getElementById('senha');
-    const toggleButton = document.getElementById('togglePassword');
-    const eyeIcon = toggleButton.querySelector('i');
+function configurarVisibilidadeSenha() {
+    const inputSenha = document.getElementById('senha');
+    const botaoToggle = document.getElementById('togglePassword');
+    const iconeOlho = botaoToggle.querySelector('i');
 
     console.log('Configurando visibilidade da senha...');
 
-    if (toggleButton && passwordInput && eyeIcon) {
-        toggleButton.addEventListener('click', function(e) {
+    if (botaoToggle && inputSenha && iconeOlho) {
+        botaoToggle.addEventListener('click', function(e) {
             e.preventDefault();
             console.log('Botão do olho clicado');
             
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                eyeIcon.classList.remove('fa-eye');
-                eyeIcon.classList.add('fa-eye-slash');
+            if (inputSenha.type === 'password') {
+                inputSenha.type = 'text';
+                iconeOlho.classList.remove('fa-eye');
+                iconeOlho.classList.add('fa-eye-slash');
             } else {
-                passwordInput.type = 'password';
-                eyeIcon.classList.remove('fa-eye-slash');
-                eyeIcon.classList.add('fa-eye');
+                inputSenha.type = 'password';
+                iconeOlho.classList.remove('fa-eye-slash');
+                iconeOlho.classList.add('fa-eye');
             }
         });
     } else {
         console.error('Elementos não encontrados:', {
-            toggleButton: !!toggleButton,
-            passwordInput: !!passwordInput,
-            eyeIcon: !!eyeIcon
+            botaoToggle: !!botaoToggle,
+            inputSenha: !!inputSenha,
+            iconeOlho: !!iconeOlho
         });
     }
 }
 
 // Configurar funcionalidade de login
-function setupLoginFunctionality() {
-    const loginButton = document.getElementById('loginButton');
+function configurarFuncionalidadeLogin() {
+    const botaoLogin = document.getElementById('loginButton');
 
     console.log('Configurando funcionalidade de login...');
 
-    if (loginButton) {
-        loginButton.addEventListener('click', function(e) {
+    if (botaoLogin) {
+        botaoLogin.addEventListener('click', function(e) {
             e.preventDefault();
             console.log('Botão de login clicado');
-            handleLogin();
+            manipularLogin();
         });
     } else {
         console.error('Botão de login não encontrado');
     }
 
     // Permitir login pressionando Enter
-    const passwordInput = document.getElementById('senha');
-    const usuarioInput = document.getElementById('usuario');
+    const inputSenha = document.getElementById('senha');
+    const inputUsuario = document.getElementById('usuario');
 
-    if (passwordInput && usuarioInput) {
-        [usuarioInput, passwordInput].forEach(input => {
+    if (inputSenha && inputUsuario) {
+        [inputUsuario, inputSenha].forEach(input => {
             input.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     console.log('Enter pressionado');
-                    handleLogin();
+                    manipularLogin();
                 }
             });
+        });
+    } else {
+        console.error('Inputs não encontrados:', {
+            inputUsuario: !!inputUsuario,
+            inputSenha: !!inputSenha
         });
     }
 }
 
 // Função principal de login
-async function handleLogin() {
+async function manipularLogin() {
     console.log('🔐 Iniciando processo de login...');
 
-    // Pega os valores dos campos
-    const email = document.getElementById("email").value.trim();
+    // Pega os valores dos campos corretos
+    const usuario = document.getElementById("usuario").value.trim();
     const senha = document.getElementById("senha").value;
 
-    // Validação
-    if (!validateLoginInputs(email, senha)) {
+    // Usar a função de validação correta
+    if (!validarInputsLogin(usuario, senha)) {
         return;
     }
 
-    showLoading(true);
+    mostrarCarregamento(true);
 
     try {
-        const loginData = {
-            email: email,
+        const dadosLogin = {
+            usuario: usuario,
             senha: senha
         };
 
-        console.log('📤 Enviando dados para login:', { email: email, senha: '***' });
+        console.log('📤 Enviando dados para login:', { usuario: usuario, senha: '***' });
 
-        const baseUrl = ApiConfig.getBaseUrl();
-        console.log('🌐 URL base:', baseUrl);
+        const urlBase = ApiConfig.obterUrlBase();
+        console.log('🌐 URL base da API:', urlBase);
 
         // TIMEOUT para evitar espera infinita
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // Aumentei para 15s
 
-        const response = await fetch(`${baseUrl}/login`, {
+        const resposta = await fetch(`${urlBase}/login`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(loginData),
-            signal: controller.signal
+            body: JSON.stringify(dadosLogin),
+            signal: controller.signal,
+            mode: 'cors' // ← ADICIONE ESTA LINHA
         });
 
         clearTimeout(timeoutId);
 
-        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Status da resposta:', resposta.status);
+        console.log('🔗 URL completa:', `${urlBase}/login`);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('❌ Erro HTTP:', response.status, errorText);
+        if (!resposta.ok) {
+            let mensagemErro = `Erro ${resposta.status}`;
             
-            if (response.status === 401) {
-                throw new Error('Email ou senha incorretos');
-            } else if (response.status === 404) {
-                throw new Error('Usuário não encontrado');
+            try {
+                const dadosErro = await resposta.json();
+                mensagemErro = dadosErro.message || dadosErro.error || mensagemErro;
+            } catch {
+                // Se não conseguir parsear como JSON, pegar texto
+                const textoErro = await resposta.text();
+                mensagemErro = textoErro || mensagemErro;
+            }
+            
+            // Tratamento específico por status code
+            if (resposta.status === 401) {
+                throw new Error('Usuário ou senha incorretos');
+            } else if (resposta.status === 404) {
+                throw new Error('Serviço não encontrado. Verifique a URL.');
+            } else if (resposta.status >= 500) {
+                throw new Error('Erro interno do servidor. Tente novamente em alguns instantes.');
             } else {
-                throw new Error(`Erro ${response.status}: ${errorText}`);
+                throw new Error(mensagemErro);
             }
         }
 
-        // 🎯 CORREÇÃO: Processar resposta
-        const responseData = await response.json();
-        console.log('✅ Resposta do servidor:', responseData);
+        // Processar resposta
+        const dadosResposta = await resposta.json();
+        console.log('✅ Resposta do servidor:', dadosResposta);
         
-        // Chamar função de sucesso com os dados
-        await handleSuccessfulLogin(responseData, email, senha);
+        // Verificar estrutura da resposta
+        if (dadosResposta.success && dadosResposta.user) {
+            await manipularLoginSucesso(dadosResposta, usuario);
+        } else if (dadosResposta.message) {
+            // Resposta de sucesso mas com estrutura diferente
+            await manipularLoginSucesso({
+                success: true,
+                user: {
+                    id: dadosResposta.id,
+                    nome: usuario,
+                    email: dadosResposta.email,
+                    num_postagens: dadosResposta.num_postagens || 0,
+                    foto_perfil: dadosResposta.foto_perfil || null
+                }
+            }, usuario);
+        } else {
+            throw new Error('Resposta do servidor em formato inesperado');
+        }
 
     } catch (erro) {
         console.error("❌ Erro durante o login:", erro);
         
         if (erro.name === 'AbortError') {
-            showError("⏰ Tempo de conexão esgotado. Tente novamente.");
+            mostrarErro("⏰ Tempo de conexão esgotado. Verifique sua internet e tente novamente.");
+        } else if (erro.message.includes('CORS') || erro.message.includes('Failed to fetch')) {
+            mostrarErro("🌐 Erro de conexão. Verifique se o servidor está online e acessível.");
         } else {
-            showError(`❌ ${erro.message}`);
+            mostrarErro(`❌ ${erro.message}`);
         }
         
         // Limpar senha em caso de erro
         document.getElementById("senha").value = '';
         document.getElementById("senha").focus();
     } finally {
-        showLoading(false);
+        mostrarCarregamento(false);
     }
 }
 
-// Validar inputs
-function validateInputs(usuario, senha) {
-     if (!email || !senha) {
-        showError("⚠️ Email e senha são obrigatórios.");
+// Função de validação corrigida
+function validarInputsLogin(usuario, senha) {
+    if (!usuario || !senha) {
+        mostrarErro("⚠️ Usuário e senha são obrigatórios.");
         return false;
     }
 
-    if (!isValidEmail(email)) {
-        showError("❌ Por favor, insira um email válido.");
-        document.getElementById("email").focus();
-        return false;
+    // Remover validação de email, pois pode ser usuário ou email
+    if (usuario.includes('@')) {
+        // Se parece email, validar formato
+        if (!validarEmail(usuario)) {
+            mostrarErro("❌ Por favor, insira um email válido.");
+            document.getElementById("usuario").focus();
+            return false;
+        }
     }
 
     if (senha.length < 6) {
-        showError("❌ A senha deve ter pelo menos 6 caracteres.");
+        mostrarErro("❌ A senha deve ter pelo menos 6 caracteres.");
         document.getElementById("senha").focus();
         return false;
     }
@@ -260,20 +315,20 @@ function validateInputs(usuario, senha) {
     return true;
 }
 
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+function validarEmail(email) {
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regexEmail.test(email);
 }
 
-// Tentar fazer login via API - CORRIGIDO para suas rotas
-async function attemptLogin(usuario, senha) {
+// Tentar fazer login via API
+async function tentarLogin(usuario, senha) {
     try {
         console.log('🔐 Tentando fazer login via /login...');
         
-        const baseUrl = ApiConfig.getBaseUrl();
-        console.log('🔗 URL da API:', baseUrl);
+        const urlBase = ApiConfig.obterUrlBase();
+        console.log('🔗 URL da API:', urlBase);
         
-        const response = await fetch(`${baseUrl}/login`, {
+        const resposta = await fetch(`${urlBase}/login`, {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
@@ -281,76 +336,58 @@ async function attemptLogin(usuario, senha) {
             body: JSON.stringify({ usuario, senha })
         });
 
-        console.log('📡 Status da resposta:', response.status);
+        console.log('📡 Status da resposta:', resposta.status);
 
-        if (!response.ok) {
-            // Se der erro 500, pode ser o problema da variável senha
-            if (response.status === 500) {
+        if (!resposta.ok) {
+            if (resposta.status === 500) {
                 console.error('❌ Erro 500 - provavelmente problema na rota /login');
-                const errorText = await response.text();
-                console.error('❌ Detalhes do erro:', errorText);
+                const textoErro = await resposta.text();
+                console.error('❌ Detalhes do erro:', textoErro);
                 throw new Error('Erro interno no servidor - verifique o console do servidor');
             }
             
-            const errorData = await response.json();
+            const dadosErro = await resposta.json();
             return {
-                success: false,
-                message: errorData.message || `Erro ${response.status} no login`
+                sucesso: false,
+                mensagem: dadosErro.mensagem || `Erro ${resposta.status} no login`
             };
         }
 
-        const data = await response.json();
-        console.log('✅ Resposta do login:', data);
+        const dados = await resposta.json();
+        console.log('✅ Resposta do login:', dados);
 
-        if (data.success) {
+        if (dados.sucesso) {
             return {
-                success: true,
-                user: data.user
+                sucesso: true,
+                usuario: dados.usuario
             };
         } else {
             return {
-                success: false,
-                message: data.message || 'Erro no login'
+                sucesso: false,
+                mensagem: dados.mensagem || 'Erro no login'
             };
         }
 
-    } catch (error) {
-        console.error('❌ Erro na requisição de login:', error);
+    } catch (erro) {
+        console.error('❌ Erro na requisição de login:', erro);
         
         // Se for erro de rede, tentar método alternativo
-        if (error.message.includes('Failed to fetch') || error.message.includes('Network')) {
+        if (erro.message.includes('Failed to fetch') || erro.message.includes('Network')) {
             console.log('🔄 Tentando método alternativo devido a erro de rede...');
-            return await attemptLoginAlternative(usuario, senha);
+            return await tentarLoginAlternativo(usuario, senha);
         }
         
-        throw new Error('Não foi possível conectar com o servidor: ' + error.message);
-    }
-}
-
-async function testLogin() {
-    const loginData = {
-        email: "test@example.com",
-        senha: "senha123"
-    };
-
-    try {
-        const response = await ApiConfig.fetch('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify(loginData)
-        });
-        console.log('Login response:', response);
-    } catch (error) {
-        console.error('Login error:', error);
+        throw new Error('Não foi possível conectar com o servidor: ' + erro.message);
     }
 }
 
 // Método alternativo de login
-async function attemptLoginAlternative(usuario, senha) {
+async function tentarLoginAlternativo(usuario, senha) {
     try {
         console.log('Tentando método alternativo de login...');
         
-        const usuariosResponse = await ApiConfig.fetch('/usuarios');
-        const usuarios = await usuariosResponse.json();
+        const respostaUsuarios = await ApiConfig.fazerRequisicao('/usuarios');
+        const usuarios = await respostaUsuarios.json();
         
         // Tentar por nome
         const usuarioPorNome = usuarios.find(user => 
@@ -358,8 +395,8 @@ async function attemptLoginAlternative(usuario, senha) {
         );
         if (usuarioPorNome) {
             return {
-                success: true,
-                user: {
+                sucesso: true,
+                usuario: {
                     id: usuarioPorNome.id_usuario,
                     nome: usuarioPorNome.nome,
                     email: usuarioPorNome.email,
@@ -374,8 +411,8 @@ async function attemptLoginAlternative(usuario, senha) {
         );
         if (usuarioPorEmail) {
             return {
-                success: true,
-                user: {
+                sucesso: true,
+                usuario: {
                     id: usuarioPorEmail.id_usuario,
                     nome: usuarioPorEmail.nome,
                     email: usuarioPorEmail.email,
@@ -385,65 +422,66 @@ async function attemptLoginAlternative(usuario, senha) {
         }
 
         return {
-            success: false,
-            message: 'Usuário ou senha incorretos'
+            sucesso: false,
+            mensagem: 'Usuário ou senha incorretos'
         };
-    } catch (error) {
-        console.error('Erro no método alternativo de login:', error);
+    } catch (erro) {
+        console.error('Erro no método alternativo de login:', erro);
         throw new Error('Não foi possível conectar com o servidor');
     }
 }
 
 // Manipular login bem-sucedido
-async function handleSuccessfulLogin(response, email, senha) {
+async function manipularLoginSucesso(resposta, usuario, senha) {
     try {
         console.log('✅ Login bem-sucedido, processando resposta...');
         
-        // 🎯 CORREÇÃO: Verificar se a resposta tem dados
-        let userData;
+        // Verificar se a resposta tem dados
+        let dadosUsuario;
         
-        if (response && typeof response === 'object') {
+        if (resposta && typeof resposta === 'object') {
             // Se a resposta já é um objeto JSON
-            userData = response;
+            dadosUsuario = resposta;
         } else {
             // Tentar parsear se for string
-            userData = JSON.parse(response);
+            dadosUsuario = JSON.parse(resposta);
         }
         
-        console.log('📦 Dados do usuário recebidos:', userData);
+        console.log('📦 Dados do usuário recebidos:', dadosUsuario);
 
-        // 🎯 CORREÇÃO: Validar dados essenciais
-        if (!userData || (!userData.id && !userData.userId)) {
-            console.error('❌ Dados do usuário incompletos:', userData);
+        // Validar dados essenciais
+        if (!dadosUsuario || (!dadosUsuario.id && !dadosUsuario.userId)) {
+            console.error('❌ Dados do usuário incompletos:', dadosUsuario);
             throw new Error('Dados do usuário incompletos na resposta do servidor');
         }
 
-        // 🎯 CORREÇÃO: Garantir estrutura correta
-        const userInfo = {
-            id: userData.id || userData.userId || userData.ID,
-            nome: userData.nome || userData.username || userData.Nome || 'Usuário',
-            email: email || userData.email || null,
-            ft_perfil: userData.ft_perfil || userData.foto_perfil || null,
-            num_postagens: userData.num_postagens || 0,
+        // Garantir estrutura correta
+        const infoUsuario = {
+            id: dadosUsuario.id || dadosUsuario.userId || dadosUsuario.ID,
+            nome: dadosUsuario.nome || dadosUsuario.username || dadosUsuario.Nome || 'Usuário',
+            usuario: usuario || dadosUsuario.usuario || null,
+            email: dadosUsuario.email || null,
+            ft_perfil: dadosUsuario.ft_perfil || dadosUsuario.foto_perfil || null,
+            num_postagens: dadosUsuario.num_postagens || 0,
             isLoggedIn: true,
             loginTime: new Date().toISOString()
         };
 
-        console.log('💾 Salvando usuário no sessionStorage:', userInfo);
+        console.log('💾 Salvando usuário no sessionStorage:', infoUsuario);
         
         // Salvar no sessionStorage
-        sessionStorage.setItem('arandua_current_user', JSON.stringify(userInfo));
+        sessionStorage.setItem('arandua_current_user', JSON.stringify(infoUsuario));
         
         // Verificar se salvou corretamente
-        const saved = sessionStorage.getItem('arandua_current_user');
-        if (!saved) {
+        const salvo = sessionStorage.getItem('arandua_current_user');
+        if (!salvo) {
             throw new Error('Falha ao salvar dados do usuário');
         }
         
-        console.log('✅ Usuário salvo com sucesso:', JSON.parse(saved));
+        console.log('✅ Usuário salvo com sucesso:', JSON.parse(salvo));
         
         // Mostrar feedback
-        showSuccess("✅ Login realizado com sucesso! Redirecionando...");
+        mostrarSucesso("✅ Login realizado com sucesso! Redirecionando...");
         
         // Redirecionar após breve delay
         setTimeout(() => {
@@ -451,81 +489,81 @@ async function handleSuccessfulLogin(response, email, senha) {
             window.location.href = '../Tela_inicial/inicio.html';
         }, 1000);
         
-    } catch (error) {
-        console.error('❌ Erro ao processar login:', error);
-        showError(`❌ Erro ao processar login: ${error.message}`);
+    } catch (erro) {
+        console.error('❌ Erro ao processar login:', erro);
+        mostrarErro(`❌ Erro ao processar login: ${erro.message}`);
     }
 }
 
 // Manipular login falho
-function handleFailedLogin(message = 'Usuário ou senha incorretos. Tente novamente.') {
-    console.log('Login falhou:', message);
-    showError(message);
+function manipularLoginFalha(mensagem = 'Usuário ou senha incorretos. Tente novamente.') {
+    console.log('Login falhou:', mensagem);
+    mostrarErro(mensagem);
     
     // Limpar campo de senha
     document.getElementById('senha').value = '';
     document.getElementById('senha').focus();
     
     // Adicionar animação de shake nos inputs
-    shakeInputs();
+    tremerInputs();
 }
 
 // Mostrar/Esconder loading
-function showLoading(show) {
-    const loginButton = document.getElementById('loginButton');
+function mostrarCarregamento(mostrar) {
+    const botaoLogin = document.getElementById('loginButton');
     
-    if (loginButton) {
-        if (show) {
-            loginButton.innerHTML = '<div class="loading-spinner"></div> Entrando...';
-            loginButton.disabled = true;
+    if (botaoLogin) {
+        if (mostrar) {
+            botaoLogin.innerHTML = '<div class="loading-spinner"></div> Entrando...';
+            botaoLogin.disabled = true;
         } else {
-            loginButton.innerHTML = 'ENTRAR';
-            loginButton.disabled = false;
+            botaoLogin.innerHTML = 'ENTRAR';
+            botaoLogin.disabled = false;
         }
     }
 }
 
 // Mostrar mensagem de erro
-function showError(message) {
+function mostrarErro(mensagem) {
     // Remover mensagens anteriores
-    removeExistingMessages();
+    removerMensagensExistentes();
     
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message error-message';
-    errorDiv.textContent = message;
+    const divErro = document.createElement('div');
+    divErro.className = 'message error-message';
+    divErro.textContent = mensagem;
     
     // Inserir antes do botão de login
-    const loginButton = document.getElementById('loginButton');
-    if (loginButton && loginButton.parentNode) {
-        loginButton.parentNode.insertBefore(errorDiv, loginButton);
+    const botaoLogin = document.getElementById('loginButton');
+    if (botaoLogin && botaoLogin.parentNode) {
+        botaoLogin.parentNode.insertBefore(divErro, botaoLogin);
     }
     
     // Auto-remover após 5 segundos
     setTimeout(() => {
-        if (errorDiv.parentNode) {
-            errorDiv.parentNode.removeChild(errorDiv);
+        if (divErro.parentNode) {
+            divErro.parentNode.removeChild(divErro);
         }
     }, 5000);
 }
 
 // Mostrar mensagem de sucesso
-function showSuccess(message) {
-    removeExistingMessages();
+function mostrarSucesso(mensagem) {
+    removerMensagensExistentes();
     
-    const successDiv = document.createElement('div');
-    successDiv.className = 'message success-message';
-    successDiv.textContent = message;
+    const divSucesso = document.createElement('div');
+    divSucesso.className = 'message success-message';
+    divSucesso.textContent = mensagem;
     
-    const loginButton = document.getElementById('loginButton');
-    if (loginButton && loginButton.parentNode) {
-        loginButton.parentNode.insertBefore(successDiv, loginButton);
+    const botaoLogin = document.getElementById('loginButton');
+    if (botaoLogin && botaoLogin.parentNode) {
+        botaoLogin.parentNode.insertBefore(divSucesso, botaoLogin);
     }
 }
 
 // Remover mensagens existentes
-function removeExistingMessages() {
-    const existingMessages = document.querySelectorAll('.message');
-    existingMessages.forEach(msg => {
+function removerMensagensExistentes() {
+    const mensagensExistentes = document.querySelectorAll('.message');
+    mensagensExistentes.forEach(msg => {
         if (msg.parentNode) {
             msg.parentNode.removeChild(msg);
         }
@@ -533,7 +571,7 @@ function removeExistingMessages() {
 }
 
 // Animação de shake nos inputs
-function shakeInputs() {
+function tremerInputs() {
     const inputs = [
         document.getElementById('usuario'),
         document.getElementById('senha')
@@ -550,7 +588,7 @@ function shakeInputs() {
 }
 
 // Adicionar estilos dinâmicos
-const dynamicStyles = `
+const estilosDinamicos = `
     .password-container {
         position: relative;
         display: flex;
@@ -646,39 +684,39 @@ const dynamicStyles = `
 `;
 
 // Adicionar estilos ao documento
-const styleSheet = document.createElement('style');
-styleSheet.textContent = dynamicStyles;
-document.head.appendChild(styleSheet);
+const folhaEstilo = document.createElement('style');
+folhaEstilo.textContent = estilosDinamicos;
+document.head.appendChild(folhaEstilo);
 
 // ===== FUNÇÕES AUXILIARES PARA OUTRAS PÁGINAS =====
 
 // Verificar se usuário está logado
-function checkUserLoggedIn() {
-    const userInfo = sessionStorage.getItem('arandua_current_user');
-    if (!userInfo) {
+function verificarUsuarioLogado() {
+    const infoUsuario = sessionStorage.getItem('arandua_current_user');
+    if (!infoUsuario) {
         return false;
     }
     
     try {
-        const user = JSON.parse(userInfo);
-        return user.isLoggedIn === true;
+        const usuario = JSON.parse(infoUsuario);
+        return usuario.isLoggedIn === true;
     } catch {
         return false;
     }
 }
 
 // Fazer logout
-function logoutUser() {
+function fazerLogout() {
     sessionStorage.removeItem('arandua_current_user');
     window.location.href = '../Tela_Login/tela_login.html';
 }
 
 // Obter usuário atual
-function getCurrentUser() {
-    const userInfo = sessionStorage.getItem('arandua_current_user');
-    if (userInfo) {
+function obterUsuarioAtual() {
+    const infoUsuario = sessionStorage.getItem('arandua_current_user');
+    if (infoUsuario) {
         try {
-            return JSON.parse(userInfo);
+            return JSON.parse(infoUsuario);
         } catch {
             return null;
         }
@@ -687,8 +725,8 @@ function getCurrentUser() {
 }
 
 // Verificar autenticação e redirecionar se não estiver logado
-function requireAuth() {
-    if (!checkUserLoggedIn()) {
+function requererAutenticacao() {
+    if (!verificarUsuarioLogado()) {
         window.location.href = '../Tela_Login/tela_login.html';
         return false;
     }
@@ -696,46 +734,46 @@ function requireAuth() {
 }
 
 // Fazer requisições autenticadas
-async function makeAuthenticatedRequest(url, options = {}) {
-    const user = getCurrentUser();
-    if (!user) {
+async function fazerRequisicaoAutenticada(url, opcoes = {}) {
+    const usuario = obterUsuarioAtual();
+    if (!usuario) {
         throw new Error('Usuário não autenticado');
     }
 
-    const defaultOptions = {
+    const opcoesPadrao = {
         headers: {
             'Content-Type': 'application/json',
-            'User-Id': user.id
+            'User-Id': usuario.id
         },
-        ...options
+        ...opcoes
     };
 
-    const response = await fetch(url, defaultOptions);
-    return response;
+    const resposta = await fetch(url, opcoesPadrao);
+    return resposta;
 }
 
 // Debug da configuração
 console.log('🔧 Configuração carregada:');
 console.log('📍 URL atual:', window.location.href);
-console.log('🔗 URL da API:', ApiConfig.getBaseUrl());
+console.log('🔗 URL da API:', ApiConfig.obterUrlBase());
 console.log('👤 Classe ApiConfig disponível:', typeof ApiConfig);
 
 // Teste rápido da API
-async function testApiConnection() {
+async function testarConexaoAPI() {
     try {
-        const baseUrl = ApiConfig.getBaseUrl();
-        console.log('🧪 Testando conexão com:', baseUrl);
+        const urlBase = ApiConfig.obterUrlBase();
+        console.log('🧪 Testando conexão com:', urlBase);
         
-        const response = await fetch(baseUrl);
-        console.log('✅ API respondendo:', response.status);
+        const resposta = await fetch(urlBase);
+        console.log('✅ API respondendo:', resposta.status);
         return true;
-    } catch (error) {
-        console.error('❌ API não disponível:', error);
+    } catch (erro) {
+        console.error('❌ API não disponível:', erro);
         return false;
     }
 }
 
 // Executar teste quando a página carregar
 document.addEventListener('DOMContentLoaded', function() {
-    testApiConnection();
+    testarConexaoAPI();
 });

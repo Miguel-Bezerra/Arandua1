@@ -105,7 +105,7 @@ async function initializeApp() {
         setupSearch();
         setupCategoryFilter();
         setupGlobalEventListeners();
-        updateActiveCategoriesDisplay();
+        atualizarExibicaoCategoriasAtivas();
         preventLinkReload();
         
         // Aguardar mais um pouco
@@ -182,7 +182,7 @@ function setupUserInterface() {
 // ===== WEBSOCKET PARA ATUALIZAÇÕES EM TEMPO REAL =====
 
 
-function updateLikeCount(postId, likeCount) {
+function atualizarContadorCurtidas(postId, likeCount) {
     const likeBtn = document.querySelector(`.like-btn[data-post-id="${postId}"]`);
     if (likeBtn) {
         const likeCountElement = likeBtn.querySelector('.like-count');
@@ -192,7 +192,7 @@ function updateLikeCount(postId, likeCount) {
     }
 }
 
-function updateCommentCount(postId, increment = true) {
+function atualizarContadorComentarios(postId, increment = true) {
     const commentBtn = document.querySelector(`.comment-btn[data-post-id="${postId}"]`);
     if (commentBtn) {
         const commentText = commentBtn.querySelector('.comment-text');
@@ -245,7 +245,7 @@ function setupDropdown() {
     }
 }
 
-function toggleDropdown() {
+function alternarDropdown() {
     const dropdown = document.getElementById('userDropdown');
     const userArea = document.querySelector('.user-area');
     
@@ -262,7 +262,7 @@ function toggleDropdown() {
     }
 }
 
-function handleLogout() {
+function manipularLogout() {
     console.log('🚪 Fazendo logout...');
     sessionStorage.removeItem('arandua_current_user');
     window.location.href = '../Tela_Login/tela_login.html';
@@ -307,7 +307,7 @@ function setupModal() {
     }
 
     if (contentInput) {
-        contentInput.addEventListener('input', updateCharacterCount);
+        contentInput.addEventListener('input', atualizarContadorCaracteres);
     }
 
     setupImagePreview();
@@ -343,13 +343,13 @@ function closeModal() {
     if (modal) modal.classList.add('hidden');
     if (form) {
         form.reset();
-        updateCharacterCount();
+        atualizarContadorCaracteres();
     }
     
     removeImage();
 }
 
-function updateCharacterCount() {
+function atualizarContadorCaracteres() {
     const contentInput = document.getElementById('postContent');
     const charCount = document.getElementById('charCount');
     
@@ -1275,7 +1275,7 @@ function setupCategoryFilter() {
                             selectedCategories = selectedCategories.filter(cat => cat !== category);
                         }
                         
-                        updateActiveCategoriesDisplay();
+                        atualizarExibicaoCategoriasAtivas();
                     }
                 });
             }
@@ -1358,7 +1358,7 @@ function applyCategoryFilters() {
     console.log('🔍 Aplicando filtros para categorias:', selectedCategories);
     
     // Atualizar display antes de aplicar filtros
-    updateActiveCategoriesDisplay();
+    atualizarExibicaoCategoriasAtivas();
     
     if (selectedCategories.length === 0) {
         renderPosts(allPosts);
@@ -1423,7 +1423,7 @@ function getCategoryDisplayName(category) {
 
 // ===== FUNÇÕES PARA CATEGORIAS ATIVAS =====
 
-function updateActiveCategoriesDisplay() {
+function atualizarExibicaoCategoriasAtivas() {
     const activeCategoriesContainer = document.getElementById('activeCategories');
     const filterToggle = document.getElementById('categoryFilterToggle');
     
@@ -1542,12 +1542,12 @@ function setupSearch() {
 
 			clearTimeout(searchTimeout);
 			if (term.length === 0) {
-				restoreFullFeed();
+				restaurarFeedCompleto();
 				return;
 			}
 			if (term.length < 2) return;
 
-			searchTimeout = setTimeout(() => performSearch(term), 450);
+			searchTimeout = setTimeout(() => realizarPesquisa(term), 450);
 		});
 
 		if (searchClearBtn) {
@@ -1556,7 +1556,7 @@ function setupSearch() {
 				searchInput.value = '';
 				updateClearVisibility();
 				searchInput.focus();
-				restoreFullFeed();
+				restaurarFeedCompleto();
 			});
 		}
 
@@ -1564,7 +1564,7 @@ function setupSearch() {
 			searchActionBtn.addEventListener('click', async function (e) {
 				e.preventDefault(); e.stopPropagation();
 				const term = searchInput.value.trim();
-				if (term) await performSearch(term);
+				if (term) await realizarPesquisa(term);
 			});
 		}
 
@@ -1572,7 +1572,7 @@ function setupSearch() {
 			if (e.key === 'Enter') {
 				e.preventDefault();
 				const term = searchInput.value.trim();
-				if (term) await performSearch(term);
+				if (term) await realizarPesquisa(term);
 			}
 		});
 	}, 100);
@@ -1599,13 +1599,13 @@ function setupSearchFallback() {
             
             if (term.length < 2) {
                 if (term.length === 0) {
-                    restoreFullFeed();
+                    restaurarFeedCompleto();
                 }
                 return;
             }
             
             searchTimeout = setTimeout(() => {
-                performSearch(term);
+                realizarPesquisa(term);
             }, 500);
         });
         
@@ -1613,7 +1613,7 @@ function setupSearchFallback() {
             if (e.key === 'Enter') {
                 const term = searchInput.value.trim();
                 if (term) {
-                    await performSearch(term);
+                    await realizarPesquisa(term);
                 }
             }
         });
@@ -1623,7 +1623,7 @@ function setupSearchFallback() {
             searchActionBtn.addEventListener('click', async function() {
                 const term = searchInput.value.trim();
                 if (term) {
-                    await performSearch(term);
+                    await realizarPesquisa(term);
                 }
             });
         }
@@ -1634,7 +1634,7 @@ function setupSearchFallback() {
     }
 }
 
-async function performSearch(searchTerm) {
+async function realizarPesquisa(searchTerm) {
     console.log('🔍 Executando pesquisa:', searchTerm);
     
     try {
@@ -1674,7 +1674,7 @@ async function performSearch(searchTerm) {
     } catch (error) {
         console.error('❌ Erro na pesquisa:', error);
         showNotification('❌ Erro ao realizar pesquisa: ' + error.message, 'error');
-        restoreFullFeed();
+        restaurarFeedCompleto();
     }
 }
 
@@ -1698,7 +1698,7 @@ function displaySearchResults(resultados, searchTerm) {
                     <p style="color: var(--text-muted); margin-bottom: 25px; font-size: 16px;">
                         Não encontramos nada para "<strong style="color: var(--primary-brown);">${searchTerm}</strong>"
                     </p>
-                    <button type="button" onclick="restoreFullFeed()" class="clear-search-btn large">
+                    <button type="button" onclick="restaurarFeedCompleto()" class="clear-search-btn large">
                         <span style="margin-right: 8px;">↩️</span>
                         Voltar para todas as histórias
                     </button>
@@ -1713,7 +1713,7 @@ function displaySearchResults(resultados, searchTerm) {
                 <h3>🔍 ${resultados.length} resultado(s) para "${searchTerm}"</h3>
                 <p class="results-subtitle">Encontramos essas histórias relacionadas à sua pesquisa</p>
             </div>
-            <button type="button" onclick="restoreFullFeed()" class="clear-search-btn">
+            <button type="button" onclick="restaurarFeedCompleto()" class="clear-search-btn">
                 <span>✕</span>
                 Limpar pesquisa
             </button>
@@ -1744,23 +1744,23 @@ function highlightSearchTerms(element, searchTerm) {
     
     textElements.forEach(el => {
         const originalHTML = el.innerHTML;
-        const regex = new RegExp(`(${escapeRegExp(searchTerm)})`, 'gi');
+        const regex = new RegExp(`(${ escaparRegex(searchTerm)})`, 'gi');
         const highlighted = originalHTML.replace(regex, '<mark class="search-highlight">$1</mark>');
         el.innerHTML = highlighted;
     });
 }
 
-function escapeRegExp(string) {
+function  escaparRegex(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // ===== SISTEMA DE RESPOSTAS =====
 
-async function handleReplyToggle(event) {
+async function manipularAlternarResposta(event) {
     event.preventDefault();
     event.stopPropagation();
     
-    console.log('🔍 handleReplyToggle chamado');
+    console.log('🔍 manipularAlternarResposta chamado');
     
     const replyBtn = event.target.closest('.reply-btn');
     if (!replyBtn) {
@@ -1848,11 +1848,11 @@ async function handleReplyToggle(event) {
     }
 }
 
-async function handleReplySubmit(event, commentId) {
+async function manipularEnviarResposta(event, commentId) {
     event.preventDefault();
     event.stopPropagation();
     
-    console.log('🔍 handleReplySubmit chamado com commentId:', commentId);
+    console.log('🔍 manipularEnviarResposta chamado com commentId:', commentId);
     
     if (!currentUser) {
         showNotification('🔒 Faça login para responder', 'error');
@@ -1861,7 +1861,7 @@ async function handleReplySubmit(event, commentId) {
     
     // 🎯 CORREÇÃO: Garantir que commentId existe
     if (!commentId) {
-        console.error('❌ commentId é undefined no handleReplySubmit');
+        console.error('❌ commentId é undefined no manipularEnviarResposta');
         showNotification('❌ Erro: ID do comentário não encontrado', 'error');
         return;
     }
@@ -2018,13 +2018,13 @@ function preventLinkReload() {
     });
 }
 
-function smoothUpdate(element, callback) {
+function atualizacaoSuave(element, callback) {
     element.style.transition = 'all 0.3s ease';
     callback();
 }
 
-function updateElementWithAnimation(element, newContent) {
-    smoothUpdate(element, () => {
+function atualizarElementoComAnimacao(element, newContent) {
+    atualizacaoSuave(element, () => {
         element.style.opacity = '0';
         setTimeout(() => {
             element.innerHTML = newContent;
@@ -2047,7 +2047,7 @@ function clearPostContent() {
     }
 }
 
-function restoreFullFeed() {
+function restaurarFeedCompleto() {
     console.log('🔄 Restaurando feed completo...');
     
     const searchInput = document.getElementById('searchInput');
@@ -2062,7 +2062,7 @@ function restoreFullFeed() {
     }
     
     selectedCategories = [];
-    updateActiveCategoriesDisplay();
+    atualizarExibicaoCategoriasAtivas();
     
     loadPosts();
 }
@@ -2107,7 +2107,7 @@ function handleButtonClick(button, originalEvent) {
         // ===== DROPDOWN USUÁRIO =====
         'userButton': () => {
             console.log('👤 Toggle dropdown usuário');
-            toggleDropdown();
+            alternarDropdown();
         },
         
         // ===== LIKES =====
@@ -2115,7 +2115,7 @@ function handleButtonClick(button, originalEvent) {
             const postId = button.dataset.postId;
             console.log('❤️ Curtida nuclear para post:', postId);
             if (postId) {
-                handlePostLike(button, postId);
+                manipularCurtirPost(button, postId);
             } else {
                 console.error('❌ postId não encontrado no botão like');
                 showNotification('❌ Erro: ID da história não encontrado', 'error');
@@ -2127,7 +2127,7 @@ function handleButtonClick(button, originalEvent) {
             const postId = button.dataset.postId;
             console.log('💬 Toggle comentários:', postId);
             if (postId) {
-                handleCommentToggle(postId);
+                manipularAlternarComentario(postId);
             } else {
                 console.error('❌ postId não encontrado no botão comment');
             }
@@ -2137,7 +2137,7 @@ function handleButtonClick(button, originalEvent) {
             const postId = button.dataset.postId;
             console.log('📝 Enviar comentário:', postId);
             if (postId) {
-                handleCommentSubmit(postId);
+                manipularEnviarComentario(postId);
             } else {
                 console.error('❌ postId não encontrado no botão submit-comment');
                 showNotification('❌ Erro: ID da história não encontrado', 'error');
@@ -2170,7 +2170,7 @@ function handleButtonClick(button, originalEvent) {
         // ===== LOGOUT =====
         'logoutBtn': () => {
             console.log('🚪 Logout usuário');
-            handleLogout();
+            manipularLogout();
         },
         
         // ===== PESQUISA =====
@@ -2178,7 +2178,7 @@ function handleButtonClick(button, originalEvent) {
             console.log('🔍 Executar pesquisa');
             const searchInput = document.getElementById('searchInput');
             if (searchInput?.value.trim()) {
-                performSearch(searchInput.value.trim());
+                realizarPesquisa(searchInput.value.trim());
             } else {
                 showNotification('🔍 Digite algo para pesquisar', 'info');
             }
@@ -2191,7 +2191,7 @@ function handleButtonClick(button, originalEvent) {
                 searchInput.value = '';
                 searchInput.focus();
             }
-            restoreFullFeed();
+            restaurarFeedCompleto();
         },
         
         // ===== DELEÇÕES =====
@@ -2200,7 +2200,7 @@ function handleButtonClick(button, originalEvent) {
             const postElement = button.closest('.post');
             const postId = postElement?.dataset.postId;
             if (postId) {
-                handleDeletePost(postId);
+                manipularExcluirPost(postId);
             } else {
                 console.error('❌ postId não encontrado para deleção');
                 showNotification('❌ Erro: ID da história não encontrado', 'error');
@@ -2212,7 +2212,7 @@ function handleButtonClick(button, originalEvent) {
             const commentElement = button.closest('.comment, .comment-reply');
             const commentId = commentElement?.dataset.commentId;
             if (commentId) {
-                handleDeleteCommentNuclear(commentId, commentElement);
+                manipularExcluirComentario(commentId, commentElement);
             } else {
                 console.error('❌ commentId não encontrado para deleção');
                 showNotification('❌ Erro: ID do comentário não encontrado', 'error');
@@ -2224,7 +2224,7 @@ function handleButtonClick(button, originalEvent) {
             const commentId = button.dataset.commentId;
             console.log('💬 Toggle resposta para comentário:', commentId);
             if (commentId) {
-                handleReplyToggle(commentId);
+                manipularAlternarResposta(commentId);
             } else {
                 console.error('❌ commentId não encontrado no botão reply');
             }
@@ -2234,7 +2234,7 @@ function handleButtonClick(button, originalEvent) {
             const commentId = button.dataset.commentId;
             console.log('📝 Enviar resposta para comentário:', commentId);
             if (commentId) {
-                handleReplySubmit(commentId);
+                manipularEnviarResposta(commentId);
             } else {
                 console.error('❌ commentId não encontrado no botão submit-reply');
                 showNotification('❌ Erro: ID do comentário não encontrado', 'error');
@@ -2262,7 +2262,7 @@ function handleButtonClick(button, originalEvent) {
         
         'clear-search-btn': () => {
             console.log('🧹 Limpar pesquisa (botão interno)');
-            restoreFullFeed();
+            restaurarFeedCompleto();
         },
         
         // ===== CATEGORIAS ATIVAS =====
@@ -2289,23 +2289,23 @@ function handleButtonClick(button, originalEvent) {
     if (button.dataset.postId) {
         if (button.classList.contains('like-btn')) {
             console.log('🔄 Fallback like:', button.dataset.postId);
-            handlePostLike(button, button.dataset.postId);
+            manipularCurtirPost(button, button.dataset.postId);
         } else if (button.classList.contains('comment-btn')) {
             console.log('🔄 Fallback comment toggle:', button.dataset.postId);
-            handleCommentToggle(button.dataset.postId);
+            manipularAlternarComentario(button.dataset.postId);
         } else if (button.classList.contains('submit-comment')) {
             console.log('🔄 Fallback comment submit:', button.dataset.postId);
-            handleCommentSubmit(button.dataset.postId);
+            manipularEnviarComentario(button.dataset.postId);
         }
     }
     
     if (button.dataset.commentId) {
         if (button.classList.contains('reply-btn')) {
             console.log('🔄 Fallback reply toggle:', button.dataset.commentId);
-            handleReplyToggle(button.dataset.commentId);
+            manipularAlternarResposta(button.dataset.commentId);
         } else if (button.classList.contains('submit-reply')) {
             console.log('🔄 Fallback reply submit:', button.dataset.commentId);
-            handleReplySubmit(button.dataset.commentId);
+            manipularEnviarResposta(button.dataset.commentId);
         }
     }
     
@@ -2417,7 +2417,7 @@ function setupGlobalEventListeners() {
             const postElement = target.closest('.post');
             const postId = postElement.dataset.postId;
             console.log('🗑️ Deletar post:', postId);
-            handleDeletePost(e);
+            manipularExcluirPost(e);
             return;
         }
         
@@ -2428,7 +2428,7 @@ function setupGlobalEventListeners() {
             const likeBtn = target.closest('.like-btn');
             const postId = likeBtn.dataset.postId;
             console.log('❤️ Curtir post:', postId);
-            handlePostLike(likeBtn, postId, e);
+            manipularCurtirPost(likeBtn, postId, e);
             return;
         }
         
@@ -2452,7 +2452,7 @@ function setupGlobalEventListeners() {
         }
         
         if (postId) {
-            handleCommentToggle(e);
+            manipularAlternarComentario(e);
         } else {
             console.error('❌ Não foi possível encontrar postId para comentário');
             showNotification('❌ Erro: Não foi possível carregar comentários', 'error');
@@ -2468,7 +2468,7 @@ function setupGlobalEventListeners() {
             const submitBtn = target.closest('.submit-comment');
             const postId = submitBtn.dataset.postId;
             console.log('📝 Enviar comentário:', postId);
-            handleCommentSubmit(postId);
+            manipularEnviarComentario(postId);
             return;
         }
         
@@ -2479,7 +2479,7 @@ function setupGlobalEventListeners() {
             const likeBtn = target.closest('.comment-like-btn');
             const commentId = likeBtn.dataset.commentId;
             console.log('💖 Curtir comentário:', commentId);
-            handleCommentLike(e);
+            manipularCurtirComentario(e);
             return;
         }
         
@@ -2488,7 +2488,7 @@ function setupGlobalEventListeners() {
             e.preventDefault();
             e.stopPropagation();
             console.log('🗑️ Deletar comentário detectado');
-            handleDeleteComment(e);
+            manipularExcluirComentario(e);
             return;
         }
         
@@ -2497,7 +2497,7 @@ function setupGlobalEventListeners() {
             e.preventDefault();
             e.stopPropagation();
             console.log('↩️ Toggle resposta');
-            handleReplyToggle(e); // 🎯 USAR handleReplyToggle
+            manipularAlternarResposta(e); // 🎯 USAR manipularAlternarResposta
             return;
         }
 
@@ -2516,7 +2516,7 @@ function setupGlobalEventListeners() {
     });
     
     if (commentId) {
-        handleReplySubmit(e, commentId);
+        manipularEnviarResposta(e, commentId);
     } else {
         console.error('❌ commentId não encontrado no botão submit-reply');
         
@@ -2526,7 +2526,7 @@ function setupGlobalEventListeners() {
             const idFromSection = replySection.id.replace('reply-', '');
             if (idFromSection) {
                 console.log('🔄 Recuperando commentId da seção:', idFromSection);
-                handleReplySubmit(e, idFromSection);
+                manipularEnviarResposta(e, idFromSection);
                 return;
             }
         }
@@ -2594,7 +2594,7 @@ function setupGlobalEventListeners() {
             e.preventDefault();
             e.stopPropagation();
             console.log('🚪 Logout');
-            handleLogout();
+            manipularLogout();
             return;
         }
         
@@ -2607,7 +2607,7 @@ function setupGlobalEventListeners() {
                 searchInput.value = '';
                 searchInput.focus();
             }
-            restoreFullFeed();
+            restaurarFeedCompleto();
             return;
         }
         
@@ -2617,7 +2617,7 @@ function setupGlobalEventListeners() {
             e.stopPropagation();
             const searchInput = document.getElementById('searchInput');
             if (searchInput && searchInput.value.trim()) {
-                performSearch(searchInput.value.trim());
+                realizarPesquisa(searchInput.value.trim());
             }
             return;
         }
@@ -2715,7 +2715,7 @@ function setupClickCapturePrevention() {
 }
 
 // ===== FUNÇÕES DE INTERAÇÃO (mantidas para compatibilidade) =====
-async function handleDeletePost(event) {
+async function manipularExcluirPost(event) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -2771,7 +2771,7 @@ async function handleDeletePost(event) {
     }
 }
 
-async function handlePostLike(likeBtn, postId) {
+async function manipularCurtirPost(likeBtn, postId) {
     console.log('❤️ DEBUG: Iniciando curtida...', postId);
 
     // Se postId não veio como parâmetro, tentar obter do dataset do botão
@@ -2843,7 +2843,7 @@ async function handlePostLike(likeBtn, postId) {
     }
 }
 
-function updatePostInArray(postId, liked) {
+function atualizarPostNoArray(postId, liked) {
     const postIndex = allPosts.findIndex(post => 
         (post.id_historia || post.id) == postId
     );
@@ -2856,7 +2856,7 @@ function updatePostInArray(postId, liked) {
 }
 
 
-function updateLikeButton(likeBtn, liked) {
+function atualizarBotaoCurtida(likeBtn, liked) {
     const likeIcon = likeBtn.querySelector('.like-icon');
     const likeCount = likeBtn.querySelector('.like-count');
     let currentCount = parseInt(likeCount.textContent) || 0;
@@ -2874,7 +2874,7 @@ function updateLikeButton(likeBtn, liked) {
     }
 }
 
-async function safeParseResponse(response) {
+async function analisarRespostaSegura(response) {
     try {
         const text = await response;
         if (!text) return {};
@@ -2888,11 +2888,11 @@ async function safeParseResponse(response) {
     }
 }
 
-async function handleCommentToggle(event) {
+async function manipularAlternarComentario(event) {
     event.preventDefault();
     event.stopPropagation();
     
-    console.log('💬 DEBUG handleCommentToggle: Iniciando...');
+    console.log('💬 DEBUG manipularAlternarComentario: Iniciando...');
     
     const commentBtn = event.target.closest('.comment-btn');
     if (!commentBtn) {
@@ -2949,7 +2949,7 @@ async function handleCommentToggle(event) {
     }
 }
 
-async function handleCommentSubmit(postId) {
+async function manipularEnviarComentario(postId) {
     console.log('💬 DEBUG: Iniciando comentário...', postId);
 
     // Se postId não veio como parâmetro, tentar obter do botão que foi clicado
@@ -3437,7 +3437,7 @@ function createReplyElement(reply, parentAuthorName = '') {
     return replyDiv;
 }
 
-async function handleDeleteComment(event) {
+async function manipularExcluirComentario(event) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -3531,7 +3531,7 @@ async function handleDeleteComment(event) {
     }
 }
 
-async function handleDeleteReply(event) {
+async function manipularExcluirResposta(event) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -3604,7 +3604,7 @@ async function handleDeleteReply(event) {
     }
 }
 
-async function handleCommentLike(event) {
+async function manipularCurtirComentario(event) {
     event.preventDefault();
     event.stopPropagation();
     
@@ -3648,7 +3648,7 @@ function addNewStoryToFeed(newStory) {
     closeModal();
 }
 
-function updateLikeUI(likeBtn, liked) {
+function atualizarUICurtida(likeBtn, liked) {
     const likeIcon = likeBtn.querySelector('.like-icon');
     const likeCount = likeBtn.querySelector('.like-count');
     let currentCount = parseInt(likeCount.textContent) || 0;
@@ -3912,7 +3912,7 @@ function debugReplyCreation(commentId, reply, parentAuthorName) {
     }
 }
 
-function toggleSidebar() {
+function alternarSidebar() {
     const sidebar = document.querySelector('.sidebar');
     sidebar.classList.toggle('mobile-open');
 }

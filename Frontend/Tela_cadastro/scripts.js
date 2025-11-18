@@ -1,6 +1,6 @@
-// scripts.js - CORRIGIDO para cadastro - VERSÃO FINAL
+// scripts.js - CORRIGIDO para cadastro - VERSÃO FINAL - PORTUGUÊS
 class ApiConfig {
-    static getBaseUrl() {
+    static obterUrlBase() {
         // Se estiver no Railway (produção)
         if (window.location.hostname.includes('railway') || 
             window.location.hostname.includes('arandua1') ||
@@ -15,91 +15,91 @@ class ApiConfig {
     }
 
     // Método para fazer fetch automaticamente
-    static async fetch(endpoint, options = {}) {
-        const baseUrl = this.getBaseUrl();
-        const url = `${baseUrl}${endpoint}`;
+    static async fazerRequisicao(endpoint, opcoes = {}) {
+        const urlBase = this.obterUrlBase();
+        const url = `${urlBase}${endpoint}`;
         
-        console.log(`🌐 Fetching: ${url}`);
+        console.log(`🌐 Fazendo requisição: ${url}`);
         
         try {
-            const response = await fetch(url, {
+            const resposta = await fetch(url, {
                 headers: {
                     'Content-Type': 'application/json',
-                    ...options.headers
+                    ...opcoes.headers
                 },
-                ...options
+                ...opcoes
             });
             
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            if (!resposta.ok) {
+                throw new Error(`Erro HTTP! status: ${resposta.status}`);
             }
             
-            return await response.json();
-        } catch (error) {
-            console.error('❌ API Error:', error);
-            throw error;
+            return await resposta.json();
+        } catch (erro) {
+            console.error('❌ Erro na API:', erro);
+            throw erro;
         }
     }
 }
 
 document.addEventListener("DOMContentLoaded", () => {
     console.log('Página de cadastro carregada');
-    setupCadastroFunctionality();
+    configurarFuncionalidadeCadastro();
 });
 
-function setupCadastroFunctionality() {
+function configurarFuncionalidadeCadastro() {
     const botaoCadastrar = document.getElementById("cadastro_bt");
-    const form = document.querySelector('form');
+    const formulario = document.querySelector('form');
 
     // REMOVER TODOS OS EVENT LISTENERS EXISTENTES PRIMEIRO
-    if (form) {
-        const newForm = form.cloneNode(true);
-        form.parentNode.replaceChild(newForm, form);
+    if (formulario) {
+        const novoFormulario = formulario.cloneNode(true);
+        formulario.parentNode.replaceChild(novoFormulario, formulario);
     }
 
     if (botaoCadastrar) {
-        const newButton = botaoCadastrar.cloneNode(true);
-        botaoCadastrar.parentNode.replaceChild(newButton, botaoCadastrar);
+        const novoBotao = botaoCadastrar.cloneNode(true);
+        botaoCadastrar.parentNode.replaceChild(novoBotao, botaoCadastrar);
     }
 
     // CONFIGURAR NOVOS EVENT LISTENERS
-    const newForm = document.querySelector('form');
-    const newButton = document.getElementById("cadastro_bt");
+    const novoFormulario = document.querySelector('form');
+    const novoBotao = document.getElementById("cadastro_bt");
 
-    if (newForm) {
-        newForm.addEventListener('submit', function(e) {
-            console.log('Form submit prevenido');
+    if (novoFormulario) {
+        novoFormulario.addEventListener('submit', function(e) {
+            console.log('Submit do formulário prevenido');
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            handleCadastro();
+            manipularCadastro();
             return false;
         });
     }
 
-    if (newButton) {
-        newButton.addEventListener("click", function(e) {
-            console.log('Botão click prevenido');
+    if (novoBotao) {
+        novoBotao.addEventListener("click", function(e) {
+            console.log('Clique no botão prevenido');
             e.preventDefault();
             e.stopPropagation();
             e.stopImmediatePropagation();
-            handleCadastro();
+            manipularCadastro();
             return false;
         });
 
         // Também prevenir qualquer outro comportamento
-        newButton.addEventListener('mousedown', function(e) {
+        novoBotao.addEventListener('mousedown', function(e) {
             e.preventDefault();
         });
     }
 
     // Configurar os botões de mostrar/ocultar senha
-    setupPasswordButtons();
+    configurarBotoesSenha();
 }
 
-function setupPasswordButtons() {
-    const senhaInput = document.getElementById('senha');
-    const confSenhaInput = document.getElementById('confsenha');
+function configurarBotoesSenha() {
+    const inputSenha = document.getElementById('senha');
+    const inputConfSenha = document.getElementById('confsenha');
 
     // Configurar toggles de senha de forma mais robusta
     const toggleSenha = document.querySelector('button[onclick*="senha"]');
@@ -111,7 +111,7 @@ function setupPasswordButtons() {
         toggleSenha.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            togglePasswordVisibility(senhaInput, toggleSenha);
+            alternarVisibilidadeSenha(inputSenha, toggleSenha);
         });
     }
 
@@ -120,21 +120,21 @@ function setupPasswordButtons() {
         toggleConfSenha.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            togglePasswordVisibility(confSenhaInput, toggleConfSenha);
+            alternarVisibilidadeSenha(inputConfSenha, toggleConfSenha);
         });
     }
 }
 
-function togglePasswordVisibility(input, toggleEl) {
+function alternarVisibilidadeSenha(input, elementoToggle) {
     if (!input) return;
-    const isNowText = input.type === 'password';
-    input.type = isNowText ? 'text' : 'password';
+    const agoraTexto = input.type === 'password';
+    input.type = agoraTexto ? 'text' : 'password';
 
-    if (toggleEl) {
-        const icon = toggleEl.querySelector('i');
-        if (icon) {
-            icon.classList.toggle('fa-eye', !isNowText);
-            icon.classList.toggle('fa-eye-slash', isNowText);
+    if (elementoToggle) {
+        const icone = elementoToggle.querySelector('i');
+        if (icone) {
+            icone.classList.toggle('fa-eye', !agoraTexto);
+            icone.classList.toggle('fa-eye-slash', agoraTexto);
         }
     }
 }
@@ -142,30 +142,30 @@ function togglePasswordVisibility(input, toggleEl) {
 // Função antiga mantida para compatibilidade com HTML
 function togglePassword(inputId, iconId) {
     const input = document.getElementById(inputId);
-    const icon = document.getElementById(iconId);
-    if (input && icon) {
-        const isNowText = input.type === 'password';
-        input.type = isNowText ? 'text' : 'password';
-        icon.classList.toggle('fa-eye', !isNowText);
-        icon.classList.toggle('fa-eye-slash', isNowText);
+    const icone = document.getElementById(iconId);
+    if (input && icone) {
+        const agoraTexto = input.type === 'password';
+        input.type = agoraTexto ? 'text' : 'password';
+        icone.classList.toggle('fa-eye', !agoraTexto);
+        icone.classList.toggle('fa-eye-slash', agoraTexto);
     }
 }
 
-async function handleCadastro() {
+async function manipularCadastro() {
     console.log('Iniciando processo de cadastro...');
 
     // Pega os valores dos campos
     const nome = document.getElementById("usuario").value.trim();
     const email = document.getElementById("email").value.trim();
     const senha = document.getElementById("senha").value;
-    const confsenha = document.getElementById("confsenha").value;
+    const confSenha = document.getElementById("confsenha").value;
 
     // Validação
-    if (!validateCadastroInputs(nome, email, senha, confsenha)) {
+    if (!validarInputsCadastro(nome, email, senha, confSenha)) {
         return;
     }
 
-    showLoading(true);
+    mostrarCarregamento(true);
 
     try {
         const novoUsuario = {
@@ -181,8 +181,8 @@ async function handleCadastro() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 segundos
 
-        const baseUrl = ApiConfig.getBaseUrl();
-        const response = await fetch(`${baseUrl}/usuarios`, {
+        const urlBase = ApiConfig.obterUrlBase();
+        const resposta = await fetch(`${urlBase}/usuarios`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -193,56 +193,56 @@ async function handleCadastro() {
 
         clearTimeout(timeoutId);
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        if (!resposta.ok) {
+            const textoErro = await resposta.text();
+            throw new Error(`HTTP ${resposta.status}: ${textoErro}`);
         }
 
-        const dados = await response.json();
+        const dados = await resposta.json();
         
         if (dados) {
-            await handleCadastroSucesso(dados, nome);
+            await manipularCadastroSucesso(dados, nome);
         } else {
-            handleCadastroErro(dados?.message || 'Erro ao criar usuário');
+            manipularCadastroErro(dados?.message || 'Erro ao criar usuário');
         }
     } catch (erro) {
         console.error("Erro ao enviar requisição:", erro);
         if (erro.name === 'AbortError') {
-            showError("⏰ Tempo de conexão esgotado. Tente novamente.");
+            mostrarErro("⏰ Tempo de conexão esgotado. Tente novamente.");
         } else {
-            showError("❌ Erro ao conectar com o servidor.");
+            mostrarErro("❌ Erro ao conectar com o servidor.");
         }
     } finally {
-        showLoading(false);
+        mostrarCarregamento(false);
     }
 }
 
-function validateCadastroInputs(nome, email, senha, confsenha) {
+function validarInputsCadastro(nome, email, senha, confSenha) {
     if (!nome || !senha) {
-        showError("⚠️ Nome e senha são obrigatórios.");
+        mostrarErro("⚠️ Nome e senha são obrigatórios.");
         return false;
     }
 
     if (nome.length < 3) {
-        showError("❌ O nome de usuário deve ter pelo menos 3 caracteres.");
+        mostrarErro("❌ O nome de usuário deve ter pelo menos 3 caracteres.");
         document.getElementById("usuario").focus();
         return false;
     }
 
     if (senha.length < 6) {
-        showError("❌ A senha deve ter pelo menos 6 caracteres.");
+        mostrarErro("❌ A senha deve ter pelo menos 6 caracteres.");
         document.getElementById("senha").focus();
         return false;
     }
 
-    if (senha !== confsenha) {
-        showError("❌ As senhas não coincidem.");
+    if (senha !== confSenha) {
+        mostrarErro("❌ As senhas não coincidem.");
         document.getElementById("confsenha").focus();
         return false;
     }
 
-    if (email && !isValidEmail(email)) {
-        showError("❌ Por favor, insira um email válido.");
+    if (email && !validarEmail(email)) {
+        mostrarErro("❌ Por favor, insira um email válido.");
         document.getElementById("email").focus();
         return false;
     }
@@ -250,17 +250,17 @@ function validateCadastroInputs(nome, email, senha, confsenha) {
     return true;
 }
 
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+function validarEmail(email) {
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regexEmail.test(email);
 }
 
-async function handleCadastroSucesso(dados, nome) {
+async function manipularCadastroSucesso(dados, nome) {
     console.log('Cadastro bem-sucedido:', dados);
     
-    showSuccess("✅ Cadastro realizado com sucesso!");
+    mostrarSucesso("✅ Cadastro realizado com sucesso!");
     
-    const userInfo = {
+    const infoUsuario = {
         id: dados.id || dados.lastID || Date.now(),
         nome: nome,
         email: document.getElementById("email").value.trim() || null,
@@ -271,7 +271,7 @@ async function handleCadastroSucesso(dados, nome) {
     };
     
     // Salvar imediatamente sem delay desnecessário
-    sessionStorage.setItem('arandua_current_user', JSON.stringify(userInfo));
+    sessionStorage.setItem('arandua_current_user', JSON.stringify(infoUsuario));
     
     // Redirecionar mais rápido
     setTimeout(() => {
@@ -279,34 +279,34 @@ async function handleCadastroSucesso(dados, nome) {
     }, 800); // Reduzido de 1500 para 800ms
 }
 
-function handleCadastroErro(mensagem) {
+function manipularCadastroErro(mensagem) {
     console.error('Erro no cadastro:', mensagem);
-    showError(`❌ ${mensagem}`);
+    mostrarErro(`❌ ${mensagem}`);
     
     document.getElementById("senha").value = '';
     document.getElementById("confsenha").value = '';
     document.getElementById("senha").focus();
 }
 
-function showLoading(show) {
-    const cadastroButton = document.getElementById("cadastro_bt");
-    if (cadastroButton) {
-        if (show) {
-            cadastroButton.innerHTML = '<div class="loading-spinner"></div> Cadastrando...';
-            cadastroButton.disabled = true;
+function mostrarCarregamento(mostrar) {
+    const botaoCadastro = document.getElementById("cadastro_bt");
+    if (botaoCadastro) {
+        if (mostrar) {
+            botaoCadastro.innerHTML = '<div class="loading-spinner"></div> Cadastrando...';
+            botaoCadastro.disabled = true;
         } else {
-            cadastroButton.innerHTML = 'Cadastrar';
-            cadastroButton.disabled = false;
+            botaoCadastro.innerHTML = 'Cadastrar';
+            botaoCadastro.disabled = false;
         }
     }
 }
 
-function showError(message) {
-    removeExistingMessages();
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message error-message';
-    errorDiv.textContent = message;
-    errorDiv.style.cssText = `
+function mostrarErro(mensagem) {
+    removerMensagensExistentes();
+    const divErro = document.createElement('div');
+    divErro.className = 'message error-message';
+    divErro.textContent = mensagem;
+    divErro.style.cssText = `
         background: #ff6b6b;
         color: white;
         padding: 10px;
@@ -316,24 +316,24 @@ function showError(message) {
         font-weight: bold;
     `;
     
-    const cadastroButton = document.getElementById("cadastro_bt");
-    if (cadastroButton && cadastroButton.parentNode) {
-        cadastroButton.parentNode.insertBefore(errorDiv, cadastroButton);
+    const botaoCadastro = document.getElementById("cadastro_bt");
+    if (botaoCadastro && botaoCadastro.parentNode) {
+        botaoCadastro.parentNode.insertBefore(divErro, botaoCadastro);
     }
     
     setTimeout(() => {
-        if (errorDiv.parentNode) {
-            errorDiv.parentNode.removeChild(errorDiv);
+        if (divErro.parentNode) {
+            divErro.parentNode.removeChild(divErro);
         }
     }, 5000);
 }
 
-function showSuccess(message) {
-    removeExistingMessages();
-    const successDiv = document.createElement('div');
-    successDiv.className = 'message success-message';
-    successDiv.textContent = message;
-    successDiv.style.cssText = `
+function mostrarSucesso(mensagem) {
+    removerMensagensExistentes();
+    const divSucesso = document.createElement('div');
+    divSucesso.className = 'message success-message';
+    divSucesso.textContent = mensagem;
+    divSucesso.style.cssText = `
         background: #51cf66;
         color: white;
         padding: 10px;
@@ -343,24 +343,24 @@ function showSuccess(message) {
         font-weight: bold;
     `;
     
-    const cadastroButton = document.getElementById("cadastro_bt");
-    if (cadastroButton && cadastroButton.parentNode) {
-        cadastroButton.parentNode.insertBefore(successDiv, cadastroButton);
+    const botaoCadastro = document.getElementById("cadastro_bt");
+    if (botaoCadastro && botaoCadastro.parentNode) {
+        botaoCadastro.parentNode.insertBefore(divSucesso, botaoCadastro);
     }
 }
 
-function removeExistingMessages() {
-    const existingMessages = document.querySelectorAll('.message');
-    existingMessages.forEach(msg => {
-        if (msg.parentNode) {
-            msg.parentNode.removeChild(msg);
+function removerMensagensExistentes() {
+    const mensagensExistentes = document.querySelectorAll('.message');
+    mensagensExistentes.forEach(mensagem => {
+        if (mensagem.parentNode) {
+            mensagem.parentNode.removeChild(mensagem);
         }
     });
 }
 
 // Adicionar CSS para o loading spinner
-const style = document.createElement('style');
-style.textContent = `
+const estilo = document.createElement('style');
+estilo.textContent = `
     .loading-spinner {
         display: inline-block;
         width: 16px;
@@ -389,12 +389,12 @@ style.textContent = `
         outline: none;
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(estilo);
 
 // Prevenir qualquer comportamento padrão globalmente
 document.addEventListener('submit', function(e) {
-    const form = e.target;
-    if (form && form.contains(document.getElementById('cadastro_bt'))) {
+    const formulario = e.target;
+    if (formulario && formulario.contains(document.getElementById('cadastro_bt'))) {
         e.preventDefault();
         e.stopPropagation();
         console.log('Submit global prevenido');

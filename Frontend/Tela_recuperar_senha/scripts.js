@@ -1,6 +1,6 @@
-// scripts.js - ATUALIZADO com funcionalidade de recuperação de senha
+// scripts.js - ATUALIZADO com funcionalidade de recuperação de senha - PORTUGUÊS
 class ApiConfig {
-    static getBaseUrl() {
+    static obterUrlBase() {
         if (window.location.hostname.includes('railway') || 
             window.location.hostname !== 'localhost') {
             return 'https://arandua1-production.up.railway.app';
@@ -9,21 +9,21 @@ class ApiConfig {
         }
     }
     
-    static async fetch(endpoint, options = {}) {
-        const baseUrl = this.getBaseUrl();
-        const url = `${baseUrl}${endpoint}`;
+    static async fazerRequisicao(endpoint, opcoes = {}) {
+        const urlBase = this.obterUrlBase();
+        const url = `${urlBase}${endpoint}`;
         
-        console.log(`🌐 API Request: ${options.method || 'GET'} ${url}`);
+        console.log(`🌐 Requisição API: ${opcoes.method || 'GET'} ${url}`);
         
-        const response = await fetch(url, {
+        const resposta = await fetch(url, {
             headers: {
                 'Content-Type': 'application/json',
-                ...options.headers
+                ...opcoes.headers
             },
-            ...options
+            ...opcoes
         });
         
-        return response;
+        return resposta;
     }
 }
 
@@ -33,24 +33,24 @@ document.addEventListener("DOMContentLoaded", () => {
     // Verificar qual página estamos e configurar accordingly
     if (document.getElementById('cadastro_bt')) {
         console.log('Configurando página de cadastro...');
-        setupCadastroFunctionality();
+        configurarFuncionalidadeCadastro();
     } else if (document.getElementById('loginButton')) {
         console.log('Configurando página de login...');
-        setupLoginFunctionality();
+        configurarFuncionalidadeLogin();
     } else if (document.getElementById('confirmarButton')) {
         console.log('Configurando página de recuperação de senha...');
-        setupRecuperacaoFunctionality();
+        configurarFuncionalidadeRecuperacao();
     }
     
-    checkExistingLogin();
+    verificarLoginExistente();
 });
 
 // ===== FUNCIONALIDADE DE RECUPERAÇÃO DE SENHA =====
-function setupRecuperacaoFunctionality() {
-    const confirmarButton = document.getElementById("confirmarButton");
+function configurarFuncionalidadeRecuperacao() {
+    const botaoConfirmar = document.getElementById("confirmarButton");
     
-    if (confirmarButton) {
-        confirmarButton.addEventListener("click", handleRecuperacaoSenha);
+    if (botaoConfirmar) {
+        botaoConfirmar.addEventListener("click", manipularRecuperacaoSenha);
     }
 
     // Permitir confirmação com Enter
@@ -58,40 +58,40 @@ function setupRecuperacaoFunctionality() {
     inputs.forEach(input => {
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                handleRecuperacaoSenha();
+                manipularRecuperacaoSenha();
             }
         });
     });
 
     // Configurar os botões de mostrar/ocultar senha
-    setupPasswordButtonsRecuperacao();
+    configurarBotoesSenhaRecuperacao();
 }
 
-function setupPasswordButtonsRecuperacao() {
+function configurarBotoesSenhaRecuperacao() {
     // Configurar para nova senha
     const toggleNovaSenha = document.querySelectorAll('.recuperar-box .submit-eye')[0];
-    const novaSenhaInput = document.getElementById('novaSenha');
+    const inputNovaSenha = document.getElementById('novaSenha');
     
-    if (toggleNovaSenha && novaSenhaInput) {
+    if (toggleNovaSenha && inputNovaSenha) {
         toggleNovaSenha.addEventListener('click', (e) => {
             e.preventDefault();
-            togglePasswordVisibility(novaSenhaInput, toggleNovaSenha.querySelector('i'));
+            alternarVisibilidadeSenha(inputNovaSenha, toggleNovaSenha.querySelector('i'));
         });
     }
 
     // Configurar para confirmar senha
     const toggleConfirmarSenha = document.querySelectorAll('.recuperar-box .submit-eye')[1];
-    const confirmarSenhaInput = document.getElementById('confirmarSenha');
+    const inputConfirmarSenha = document.getElementById('confirmarSenha');
     
-    if (toggleConfirmarSenha && confirmarSenhaInput) {
+    if (toggleConfirmarSenha && inputConfirmarSenha) {
         toggleConfirmarSenha.addEventListener('click', (e) => {
             e.preventDefault();
-            togglePasswordVisibility(confirmarSenhaInput, toggleConfirmarSenha.querySelector('i'));
+            alternarVisibilidadeSenha(inputConfirmarSenha, toggleConfirmarSenha.querySelector('i'));
         });
     }
 }
 
-async function handleRecuperacaoSenha() {
+async function manipularRecuperacaoSenha() {
     console.log('Iniciando processo de recuperação de senha...');
 
     // Pega os valores dos campos
@@ -100,21 +100,21 @@ async function handleRecuperacaoSenha() {
     const confirmarSenha = document.getElementById("confirmarSenha").value;
 
     // Validação
-    if (!validateRecuperacaoInputs(email, novaSenha, confirmarSenha)) {
+    if (!validarInputsRecuperacao(email, novaSenha, confirmarSenha)) {
         return;
     }
 
-    showLoadingRecuperacao(true);
+    mostrarCarregamentoRecuperacao(true);
 
     try {
         // Primeiro, buscar o usuário pelo email
-        const usuariosResponse = await ApiConfig.fetch('/usuarios');
-        const usuarios = await usuariosResponse.json();
+        const respostaUsuarios = await ApiConfig.fazerRequisicao('/usuarios');
+        const usuarios = await respostaUsuarios.json();
         
         const usuario = usuarios.find(user => user.email === email);
         
         if (!usuario) {
-            showErrorRecuperacao("❌ Email não encontrado. Verifique o email informado.");
+            mostrarErroRecuperacao("❌ Email não encontrado. Verifique o email informado.");
             return;
         }
 
@@ -126,51 +126,51 @@ async function handleRecuperacaoSenha() {
 
         console.log('Atualizando senha do usuário:', usuarioAtualizado);
 
-        const resposta = await ApiConfig.fetch(`/usuarios/${usuario.id_usuario}`, {
+        const resposta = await ApiConfig.fazerRequisicao(`/usuarios/${usuario.id_usuario}`, {
             method: "PUT",
             body: JSON.stringify(usuarioAtualizado),
         });
         if (resposta.ok) {
-            await handleRecuperacaoSucesso();
+            await manipularRecuperacaoSucesso();
         } else {
             const dados = await resposta.json();
-            handleRecuperacaoErro(dados.message || 'Erro ao atualizar senha');
+            manipularRecuperacaoErro(dados.message || 'Erro ao atualizar senha');
         }
     } catch (erro) {
         console.error("Erro ao enviar requisição:", erro);
-        showErrorRecuperacao("❌ Erro ao conectar com o servidor. Verifique se o servidor está rodando.");
+        mostrarErroRecuperacao("❌ Erro ao conectar com o servidor. Verifique se o servidor está rodando.");
     } finally {
-        showLoadingRecuperacao(false);
+        mostrarCarregamentoRecuperacao(false);
     }
 }
 
-function validateRecuperacaoInputs(email, novaSenha, confirmarSenha) {
+function validarInputsRecuperacao(email, novaSenha, confirmarSenha) {
     if (!email) {
-        showErrorRecuperacao("⚠️ Email é obrigatório.");
+        mostrarErroRecuperacao("⚠️ Email é obrigatório.");
         document.getElementById("email").focus();
         return false;
     }
 
-    if (!isValidEmail(email)) {
-        showErrorRecuperacao("❌ Por favor, insira um email válido.");
+    if (!validarEmail(email)) {
+        mostrarErroRecuperacao("❌ Por favor, insira um email válido.");
         document.getElementById("email").focus();
         return false;
     }
 
     if (!novaSenha) {
-        showErrorRecuperacao("⚠️ Nova senha é obrigatória.");
+        mostrarErroRecuperacao("⚠️ Nova senha é obrigatória.");
         document.getElementById("novaSenha").focus();
         return false;
     }
 
     if (novaSenha.length < 6) {
-        showErrorRecuperacao("❌ A senha deve ter pelo menos 6 caracteres.");
+        mostrarErroRecuperacao("❌ A senha deve ter pelo menos 6 caracteres.");
         document.getElementById("novaSenha").focus();
         return false;
     }
 
     if (novaSenha !== confirmarSenha) {
-        showErrorRecuperacao("❌ As senhas não coincidem.");
+        mostrarErroRecuperacao("❌ As senhas não coincidem.");
         document.getElementById("confirmarSenha").focus();
         return false;
     }
@@ -178,19 +178,19 @@ function validateRecuperacaoInputs(email, novaSenha, confirmarSenha) {
     return true;
 }
 
-async function handleRecuperacaoSucesso() {
+async function manipularRecuperacaoSucesso() {
     console.log('Senha atualizada com sucesso!');
     
-    showSuccessRecuperacao("✅ Senha atualizada com sucesso! Redirecionando para o login...");
+    mostrarSucessoRecuperacao("✅ Senha atualizada com sucesso! Redirecionando para o login...");
     
     setTimeout(() => {
         window.location.href = '../Tela_login/login.html';
     }, 3000);
 }
 
-function handleRecuperacaoErro(mensagem) {
+function manipularRecuperacaoErro(mensagem) {
     console.error('Erro na recuperação:', mensagem);
-    showErrorRecuperacao(`❌ ${mensagem}`);
+    mostrarErroRecuperacao(`❌ ${mensagem}`);
     
     // Limpar campos de senha em caso de erro
     document.getElementById("novaSenha").value = '';
@@ -198,25 +198,25 @@ function handleRecuperacaoErro(mensagem) {
     document.getElementById("novaSenha").focus();
 }
 
-function showLoadingRecuperacao(show) {
-    const confirmarButton = document.getElementById("confirmarButton");
-    if (confirmarButton) {
-        if (show) {
-            confirmarButton.innerHTML = '<div class="loading-spinner"></div> Atualizando...';
-            confirmarButton.disabled = true;
+function mostrarCarregamentoRecuperacao(mostrar) {
+    const botaoConfirmar = document.getElementById("confirmarButton");
+    if (botaoConfirmar) {
+        if (mostrar) {
+            botaoConfirmar.innerHTML = '<div class="loading-spinner"></div> Atualizando...';
+            botaoConfirmar.disabled = true;
         } else {
-            confirmarButton.innerHTML = 'CONFIRMAR';
-            confirmarButton.disabled = false;
+            botaoConfirmar.innerHTML = 'CONFIRMAR';
+            botaoConfirmar.disabled = false;
         }
     }
 }
 
-function showErrorRecuperacao(message) {
-    removeExistingMessagesRecuperacao();
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message error-message';
-    errorDiv.textContent = message;
-    errorDiv.style.cssText = `
+function mostrarErroRecuperacao(mensagem) {
+    removerMensagensExistentesRecuperacao();
+    const divErro = document.createElement('div');
+    divErro.className = 'message error-message';
+    divErro.textContent = mensagem;
+    divErro.style.cssText = `
         background: #ff6b6b;
         color: white;
         padding: 10px;
@@ -226,24 +226,24 @@ function showErrorRecuperacao(message) {
         font-weight: bold;
     `;
     
-    const confirmarButton = document.getElementById("confirmarButton");
-    if (confirmarButton && confirmarButton.parentNode) {
-        confirmarButton.parentNode.insertBefore(errorDiv, confirmarButton);
+    const botaoConfirmar = document.getElementById("confirmarButton");
+    if (botaoConfirmar && botaoConfirmar.parentNode) {
+        botaoConfirmar.parentNode.insertBefore(divErro, botaoConfirmar);
     }
     
     setTimeout(() => {
-        if (errorDiv.parentNode) {
-            errorDiv.parentNode.removeChild(errorDiv);
+        if (divErro.parentNode) {
+            divErro.parentNode.removeChild(divErro);
         }
     }, 5000);
 }
 
-function showSuccessRecuperacao(message) {
-    removeExistingMessagesRecuperacao();
-    const successDiv = document.createElement('div');
-    successDiv.className = 'message success-message';
-    successDiv.textContent = message;
-    successDiv.style.cssText = `
+function mostrarSucessoRecuperacao(mensagem) {
+    removerMensagensExistentesRecuperacao();
+    const divSucesso = document.createElement('div');
+    divSucesso.className = 'message success-message';
+    divSucesso.textContent = mensagem;
+    divSucesso.style.cssText = `
         background: #51cf66;
         color: white;
         padding: 10px;
@@ -253,37 +253,37 @@ function showSuccessRecuperacao(message) {
         font-weight: bold;
     `;
     
-    const confirmarButton = document.getElementById("confirmarButton");
-    if (confirmarButton && confirmarButton.parentNode) {
-        confirmarButton.parentNode.insertBefore(successDiv, confirmarButton);
+    const botaoConfirmar = document.getElementById("confirmarButton");
+    if (botaoConfirmar && botaoConfirmar.parentNode) {
+        botaoConfirmar.parentNode.insertBefore(divSucesso, botaoConfirmar);
     }
 }
 
-function removeExistingMessagesRecuperacao() {
-    const existingMessages = document.querySelectorAll('.recuperar-box .message');
-    existingMessages.forEach(msg => {
-        if (msg.parentNode) {
-            msg.parentNode.removeChild(msg);
+function removerMensagensExistentesRecuperacao() {
+    const mensagensExistentes = document.querySelectorAll('.recuperar-box .message');
+    mensagensExistentes.forEach(mensagem => {
+        if (mensagem.parentNode) {
+            mensagem.parentNode.removeChild(mensagem);
         }
     });
 }
 
-// ===== FUNCIONALIDADE DE LOGIN (se ainda não existir) =====
-function setupLoginFunctionality() {
-    const loginButton = document.getElementById("loginButton");
+// ===== FUNCIONALIDADE DE LOGIN =====
+function configurarFuncionalidadeLogin() {
+    const botaoLogin = document.getElementById("loginButton");
     
-    if (loginButton) {
-        loginButton.addEventListener("click", handleLogin);
+    if (botaoLogin) {
+        botaoLogin.addEventListener("click", manipularLogin);
     }
 
     // Configurar toggle de senha para login
-    const togglePassword = document.getElementById('togglePassword');
-    const senhaInput = document.getElementById('senha');
+    const toggleSenha = document.getElementById('togglePassword');
+    const inputSenha = document.getElementById('senha');
     
-    if (togglePassword && senhaInput) {
-        togglePassword.addEventListener('click', (e) => {
+    if (toggleSenha && inputSenha) {
+        toggleSenha.addEventListener('click', (e) => {
             e.preventDefault();
-            togglePasswordVisibility(senhaInput, togglePassword.querySelector('i'));
+            alternarVisibilidadeSenha(inputSenha, toggleSenha.querySelector('i'));
         });
     }
 
@@ -292,49 +292,49 @@ function setupLoginFunctionality() {
     inputs.forEach(input => {
         input.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                handleLogin();
+                manipularLogin();
             }
         });
     });
 }
 
-async function handleLogin() {
+async function manipularLogin() {
     console.log('Iniciando processo de login...');
 
     const nome = document.getElementById("usuario").value.trim();
     const senha = document.getElementById("senha").value;
 
     if (!nome || !senha) {
-        showErrorLogin("⚠️ Usuário e senha são obrigatórios.");
+        mostrarErroLogin("⚠️ Usuário e senha são obrigatórios.");
         return;
     }
 
-    showLoadingLogin(true);
+    mostrarCarregamentoLogin(true);
 
     try {
-        const resposta = await ApiConfig.fetch('/usuarios');
+        const resposta = await ApiConfig.fazerRequisicao('/usuarios');
         const usuarios = await resposta.json();
         
         const usuario = usuarios.find(user => user.nome === nome && user.senha === senha);
         
         if (usuario) {
-            await handleLoginSucesso(usuario);
+            await manipularLoginSucesso(usuario);
         } else {
-            handleLoginErro("❌ Usuário ou senha incorretos.");
+            manipularLoginErro("❌ Usuário ou senha incorretos.");
         }
     } catch (erro) {
         console.error("Erro ao fazer login:", erro);
-        showErrorLogin("❌ Erro ao conectar com o servidor.");
+        mostrarErroLogin("❌ Erro ao conectar com o servidor.");
     } finally {
-        showLoadingLogin(false);
+        mostrarCarregamentoLogin(false);
     }
 }
 
-async function handleLoginSucesso(usuario) {
+async function manipularLoginSucesso(usuario) {
     console.log('Login bem-sucedido:', usuario);
     
     // Salvar informações do usuário no sessionStorage
-    const userInfo = {
+    const infoUsuario = {
         id: usuario.id_usuario,
         nome: usuario.nome,
         email: usuario.email,
@@ -343,40 +343,40 @@ async function handleLoginSucesso(usuario) {
         loginTime: new Date().toISOString()
     };
     
-    sessionStorage.setItem('arandua_current_user', JSON.stringify(userInfo));
+    sessionStorage.setItem('arandua_current_user', JSON.stringify(infoUsuario));
     
-    showSuccessLogin("✅ Login realizado com sucesso! Redirecionando...");
+    mostrarSucessoLogin("✅ Login realizado com sucesso! Redirecionando...");
     
     setTimeout(() => {
         window.location.href = '../Tela_inicial/inicio.html';
     }, 2000);
 }
 
-function handleLoginErro(mensagem) {
-    showErrorLogin(mensagem);
+function manipularLoginErro(mensagem) {
+    mostrarErroLogin(mensagem);
     document.getElementById("senha").value = '';
     document.getElementById("senha").focus();
 }
 
-function showLoadingLogin(show) {
-    const loginButton = document.getElementById("loginButton");
-    if (loginButton) {
-        if (show) {
-            loginButton.innerHTML = '<div class="loading-spinner"></div> Entrando...';
-            loginButton.disabled = true;
+function mostrarCarregamentoLogin(mostrar) {
+    const botaoLogin = document.getElementById("loginButton");
+    if (botaoLogin) {
+        if (mostrar) {
+            botaoLogin.innerHTML = '<div class="loading-spinner"></div> Entrando...';
+            botaoLogin.disabled = true;
         } else {
-            loginButton.innerHTML = 'ENTRAR';
-            loginButton.disabled = false;
+            botaoLogin.innerHTML = 'ENTRAR';
+            botaoLogin.disabled = false;
         }
     }
 }
 
-function showErrorLogin(message) {
-    removeExistingMessagesLogin();
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'message error-message';
-    errorDiv.textContent = message;
-    errorDiv.style.cssText = `
+function mostrarErroLogin(mensagem) {
+    removerMensagensExistentesLogin();
+    const divErro = document.createElement('div');
+    divErro.className = 'message error-message';
+    divErro.textContent = mensagem;
+    divErro.style.cssText = `
         background: #ff6b6b;
         color: white;
         padding: 10px;
@@ -386,24 +386,24 @@ function showErrorLogin(message) {
         font-weight: bold;
     `;
     
-    const loginButton = document.getElementById("loginButton");
-    if (loginButton && loginButton.parentNode) {
-        loginButton.parentNode.insertBefore(errorDiv, loginButton);
+    const botaoLogin = document.getElementById("loginButton");
+    if (botaoLogin && botaoLogin.parentNode) {
+        botaoLogin.parentNode.insertBefore(divErro, botaoLogin);
     }
     
     setTimeout(() => {
-        if (errorDiv.parentNode) {
-            errorDiv.parentNode.removeChild(errorDiv);
+        if (divErro.parentNode) {
+            divErro.parentNode.removeChild(divErro);
         }
     }, 5000);
 }
 
-function showSuccessLogin(message) {
-    removeExistingMessagesLogin();
-    const successDiv = document.createElement('div');
-    successDiv.className = 'message success-message';
-    successDiv.textContent = message;
-    successDiv.style.cssText = `
+function mostrarSucessoLogin(mensagem) {
+    removerMensagensExistentesLogin();
+    const divSucesso = document.createElement('div');
+    divSucesso.className = 'message success-message';
+    divSucesso.textContent = mensagem;
+    divSucesso.style.cssText = `
         background: #51cf66;
         color: white;
         padding: 10px;
@@ -413,42 +413,42 @@ function showSuccessLogin(message) {
         font-weight: bold;
     `;
     
-    const loginButton = document.getElementById("loginButton");
-    if (loginButton && loginButton.parentNode) {
-        loginButton.parentNode.insertBefore(successDiv, loginButton);
+    const botaoLogin = document.getElementById("loginButton");
+    if (botaoLogin && botaoLogin.parentNode) {
+        botaoLogin.parentNode.insertBefore(divSucesso, botaoLogin);
     }
 }
 
-function removeExistingMessagesLogin() {
-    const existingMessages = document.querySelectorAll('.login-box .message');
-    existingMessages.forEach(msg => {
-        if (msg.parentNode) {
-            msg.parentNode.removeChild(msg);
+function removerMensagensExistentesLogin() {
+    const mensagensExistentes = document.querySelectorAll('.login-box .message');
+    mensagensExistentes.forEach(mensagem => {
+        if (mensagem.parentNode) {
+            mensagem.parentNode.removeChild(mensagem);
         }
     });
 }
 
 // ===== FUNÇÕES GLOBAIS =====
-function togglePasswordVisibility(input, icon) {
+function alternarVisibilidadeSenha(input, icone) {
     if (input.type === 'password') {
         input.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
+        icone.classList.remove('fa-eye');
+        icone.classList.add('fa-eye-slash');
     } else {
         input.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
+        icone.classList.remove('fa-eye-slash');
+        icone.classList.add('fa-eye');
     }
 }
 
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+function validarEmail(email) {
+    const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return regexEmail.test(email);
 }
 
-function checkExistingLogin() {
-    const currentUser = sessionStorage.getItem('arandua_current_user');
-    if (currentUser && !window.location.href.includes('login.html') && !window.location.href.includes('cadastro.html') && !window.location.href.includes('recuperar.html')) {
+function verificarLoginExistente() {
+    const usuarioAtual = sessionStorage.getItem('arandua_current_user');
+    if (usuarioAtual && !window.location.href.includes('login.html') && !window.location.href.includes('cadastro.html') && !window.location.href.includes('recuperar.html')) {
         console.log('Usuário já está logado, redirecionando...');
         window.location.href = '../Tela_inicial/inicio.html';
     }
@@ -456,9 +456,9 @@ function checkExistingLogin() {
 
 // Adicionar CSS para o loading spinner (se ainda não existir)
 if (!document.querySelector('style[data-loading-spinner]')) {
-    const style = document.createElement('style');
-    style.setAttribute('data-loading-spinner', 'true');
-    style.textContent = `
+    const estilo = document.createElement('style');
+    estilo.setAttribute('data-loading-spinner', 'true');
+    estilo.textContent = `
         .loading-spinner {
             display: inline-block;
             width: 16px;
@@ -478,5 +478,5 @@ if (!document.querySelector('style[data-loading-spinner]')) {
             transition: all 0.3s ease;
         }
     `;
-    document.head.appendChild(style);
+    document.head.appendChild(estilo);
 }

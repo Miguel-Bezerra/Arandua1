@@ -1,79 +1,79 @@
-// about.js - Funcionalidades para a página Sobre
+// about.js - Funcionalidades para a página Sobre - PORTUGUÊS
 
-const API_BASE_URL = 'http://localhost:3000';
+const URL_BASE_API = 'http://localhost:3000';
 
 document.addEventListener('DOMContentLoaded', function() {
     // Verificar se o usuário está logado
-    const loggedInUser = getLoggedInUser();
+    const usuarioLogado = obterUsuarioLogado();
     
-    if (!loggedInUser) {
+    if (!usuarioLogado) {
         window.location.href = '../Tela_Login/tela_login.html';
         return;
     }
 
-    setupUserInterface(loggedInUser);
-    setupBackButton();
-    setupUserDropdown();
+    configurarInterfaceUsuario(usuarioLogado);
+    configurarBotaoVoltar();
+    configurarDropdownUsuario();
 });
 
 // Função para obter o usuário logado do sessionStorage
-function getLoggedInUser() {
-    const userInfo = sessionStorage.getItem('arandua_current_user');
-    if (userInfo) {
+function obterUsuarioLogado() {
+    const infoUsuario = sessionStorage.getItem('arandua_current_user');
+    if (infoUsuario) {
         try {
-            const user = JSON.parse(userInfo);
+            const usuario = JSON.parse(infoUsuario);
             // Verificar se tem a flag isLoggedIn OU se tem dados básicos do usuário
-            if (user.isLoggedIn || (user.id && user.nome)) {
-                return user;
+            if (usuario.isLoggedIn || (usuario.id && usuario.nome)) {
+                return usuario;
             }
-        } catch (error) {
-            console.error('Erro ao parsear usuário:', error);
+        } catch (erro) {
+            console.error('Erro ao analisar usuário:', erro);
         }
     }
     return null;
 }
 
 // Configurar a interface do usuário
-function setupUserInterface(user) {
-    const userButton = document.getElementById('userButton');
-    if (userButton) {
-        userButton.textContent = user.nome || user.username;
+function configurarInterfaceUsuario(usuario) {
+    const botaoUsuario = document.getElementById('userButton');
+    if (botaoUsuario) {
+        botaoUsuario.textContent = usuario.nome || usuario.username;
     }
 }
 
 // Configurar botão de voltar
-function setupBackButton() {
-    const backButton = document.getElementById('backButton');
-    if (backButton) {
-        backButton.addEventListener('click', function() {
+function configurarBotaoVoltar() {
+    const botaoVoltar = document.getElementById('backButton');
+    if (botaoVoltar) {
+        botaoVoltar.addEventListener('click', function() {
             window.location.href = '../Tela_inicial/inicio.html';
         });
     }
 }
 
 // Configurar dropdown do usuário
-function setupUserDropdown() {
-    const userButton = document.getElementById('userButton');
+function configurarDropdownUsuario() {
+    const botaoUsuario = document.getElementById('userButton');
     const dropdown = document.getElementById('userDropdown');
     
     console.log('Configurando dropdown:', { 
-        userButton: !!userButton, 
+        botaoUsuario: !!botaoUsuario, 
         dropdown: !!dropdown 
     });
     
-    if (userButton && dropdown) {
-        userButton.addEventListener('click', function(e) {
+    if (botaoUsuario && dropdown) {
+        botaoUsuario.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
             console.log('Botão de usuário clicado');
-            // Use toggle na classe hidden
+            // Usar toggle na classe hidden
             dropdown.classList.toggle('hidden');
         });
         
         
         // Fechar dropdown ao clicar fora
         document.addEventListener('click', function(e) {
-            if (!userButton.contains(e.target) && !dropdown.contains(e.target)) {
+            if (!botaoUsuario.contains(e.target) && !dropdown.contains(e.target)) {
                 console.log('Fechando dropdown (clique fora)');
                 dropdown.classList.add('hidden');
             }
@@ -85,35 +85,35 @@ function setupUserDropdown() {
         });
 
         // Configurar ações do dropdown
-        setupDropdownActions();
+        configurarAcoesDropdown();
     } else {
         console.error('Elementos do dropdown não encontrados');
     }
 }
 
 // Configurar ações do dropdown
-function setupDropdownActions() {
-    const dropdownLinks = document.querySelectorAll('#userDropdown a');
-    console.log('Links do dropdown encontrados:', dropdownLinks.length);
+function configurarAcoesDropdown() {
+    const linksDropdown = document.querySelectorAll('#userDropdown a');
+    console.log('Links do dropdown encontrados:', linksDropdown.length);
     
-    dropdownLinks.forEach(link => {
+    linksDropdown.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
             
             // Obter ação do data-action ou do href
-            let action = this.getAttribute('data-action');
+            let acao = this.getAttribute('data-action');
             const href = this.getAttribute('href');
             
-            console.log('Ação do dropdown:', { action, href });
+            console.log('Ação do dropdown:', { acao, href });
             
             // Se não tem data-action, determinar pela URL
-            if (!action) {
+            if (!acao) {
                 if (href.includes('perfil.html')) {
-                    action = 'edit-profile';
+                    acao = 'edit-profile';
                 } else if (href.includes('sobre.html')) {
-                    action = 'about';
+                    acao = 'about';
                 } else if (href === '#' || href.includes('logout')) {
-                    action = 'logout';
+                    acao = 'logout';
                 }
             }
             
@@ -121,15 +121,15 @@ function setupDropdownActions() {
             document.getElementById('userDropdown').classList.add('hidden');
             
             // Executar ação baseada no tipo
-            if (action === 'edit-profile') {
+            if (acao === 'edit-profile') {
                 console.log('🔄 Indo para editar perfil...');
                 window.location.href = '../Tela_perfil/perfil.html';
-            } else if (action === 'about') {
+            } else if (acao === 'about') {
                 console.log('ℹ️ Já na página sobre');
                 // Já estamos na página sobre, não fazer nada
-            } else if (action === 'logout') {
+            } else if (acao === 'logout') {
                 console.log('🚪 Fazendo logout...');
-                logoutUser();
+                fazerLogout();
             } else {
                 // Fallback: seguir o link normalmente
                 console.log('🔗 Seguindo link normalmente:', href);
@@ -142,30 +142,30 @@ function setupDropdownActions() {
 }
 
 // Fazer logout
-function logoutUser() {
+function fazerLogout() {
     sessionStorage.removeItem('arandua_current_user');
     window.location.href = '../Tela_Login/tela_login.html';
 }
 
 // Mostrar notificação
-function showNotification(message, type = 'success') {
+function mostrarNotificacao(mensagem, tipo = 'sucesso') {
     // Remover notificações existentes
-    const existingNotifications = document.querySelectorAll('.notification');
-    existingNotifications.forEach(notification => {
-        if (notification.parentNode) {
-            notification.parentNode.removeChild(notification);
+    const notificacoesExistentes = document.querySelectorAll('.notification');
+    notificacoesExistentes.forEach(notificacao => {
+        if (notificacao.parentNode) {
+            notificacao.parentNode.removeChild(notificacao);
         }
     });
 
     // Criar elemento de notificação
-    const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
-    notification.textContent = message;
-    notification.style.cssText = `
+    const notificacao = document.createElement('div');
+    notificacao.className = `notification ${tipo}`;
+    notificacao.textContent = mensagem;
+    notificacao.style.cssText = `
         position: fixed;
         top: 20px;
         right: 20px;
-        background: ${type === 'success' ? '#4CAF50' : '#f44336'};
+        background: ${tipo === 'sucesso' ? '#4CAF50' : '#f44336'};
         color: white;
         padding: 12px 20px;
         border-radius: 4px;
@@ -176,28 +176,28 @@ function showNotification(message, type = 'success') {
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     `;
     
-    document.body.appendChild(notification);
+    document.body.appendChild(notificacao);
     
     // Animação de entrada
     setTimeout(() => {
-        notification.style.opacity = '1';
-        notification.style.transform = 'translateY(0)';
+        notificacao.style.opacity = '1';
+        notificacao.style.transform = 'translateY(0)';
     }, 100);
     
     // Remover após 3 segundos
     setTimeout(() => {
-        notification.style.opacity = '0';
-        notification.style.transform = 'translateY(-20px)';
+        notificacao.style.opacity = '0';
+        notificacao.style.transform = 'translateY(-20px)';
         setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
+            if (notificacao.parentNode) {
+                notificacao.parentNode.removeChild(notificacao);
             }
         }, 300);
     }, 3000);
 }
 
 // Adicionar estilos dinâmicos para a página about
-const dynamicStyles = `
+const estilosDinamicos = `
     .back-button {
         position: absolute;
         top: 20px;
@@ -300,6 +300,6 @@ const dynamicStyles = `
 `;
 
 // Adicionar estilos ao documento
-const styleSheet = document.createElement('style');
-styleSheet.textContent = dynamicStyles;
-document.head.appendChild(styleSheet);
+const folhaEstilo = document.createElement('style');
+folhaEstilo.textContent = estilosDinamicos;
+document.head.appendChild(folhaEstilo);

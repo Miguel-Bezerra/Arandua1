@@ -33,17 +33,35 @@ app.use((req, res, next) => {
     next();
 });
 
+const allowedOrigins = [
+    'https://arandua1.netlify.app',
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
+    'http://localhost:5500',
+    'http://127.0.0.1:5500',
+    'https://localhost:5500',
+    'https://127.0.0.1:5500'
+];
+
 // Configurar CORS
 app.use(cors({
-    origin: [
-        'https://arandua1.netlify.app',
-        'http://localhost:3000',
-        'http://127.0.0.1:3000'
-    ],
+    origin: function (origin, callback) {
+        // Permite requisições sem origin (como mobile apps ou curl)
+        if (!origin) return callback(null, true);
+        
+        if (allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            console.log(`⚠️  Origem bloqueada pelo CORS: ${origin}`);
+            callback(null, true); // Para desenvolvimento, permita todas
+            // Para produção: callback(new Error('Not allowed by CORS'));
+        }
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
+
 
 // 🔥 MIDDLEWARE DE LOG APÓS CORS
 app.use((req, res, next) => {
