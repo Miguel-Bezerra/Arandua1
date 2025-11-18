@@ -69,7 +69,7 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use("/", rotas);
+app.use("/api", rotas);
 
 // 🔥 ROTA DE TESTE SIMPLES (antes das outras)
 app.get("/test", (req, res) => {

@@ -1,10 +1,10 @@
 // inicio.js - VERSÃO EM PORTUGUÊS
 console.log('🔧 inicio.js está carregando...');
 
-class ConfiguracaoAPI {
+class ApiConfig {
     static obterUrlBase() {
         if (window.location.hostname.includes('netlify.app')) {
-            return '/api';
+            return 'https://arandua1-production.up.railway.app';
         } else if (window.location.hostname === 'localhost' || 
                   window.location.hostname === '127.0.0.1') {
             return 'http://localhost:3000';
@@ -490,7 +490,7 @@ async function criarHistoria() {
     });
 
     try {
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         const resposta = await fetch(`${urlBase}/historias`, {
             method: 'POST',
             headers: {
@@ -543,8 +543,11 @@ async function carregarPostagens() {
             throw new Error('API não está respondendo. Verifique sua conexão.');
         }
 
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         console.log('🌐 URL base:', urlBase);
+
+        const teste = await fetch(urlCompleta);
+        console.log('🧪 Teste de conexão:', teste.status, teste.statusText);
         
         console.log('🔄 Fazendo requisição para /historias...');
         const resposta = await fetch(`${urlBase}/historias`, {
@@ -597,7 +600,7 @@ async function carregarPostagens() {
             message: erro.message,
             name: erro.name,
             stack: erro.stack,
-            url: `${ConfiguracaoAPI.obterUrlBase()}/historias`
+            url: `${ApiConfig.obterUrlBase()}/historias`
         });
         
         mostrarErroCarregamento(erro.message);
@@ -1662,7 +1665,7 @@ async function manipularEnviarResposta(evento, idComentario) {
             idUsuario: usuarioAtual.id
         });
         
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         const resposta = await fetch(`${urlBase}/comentarios`, {
             method: 'POST',
             headers: {
@@ -2206,7 +2209,7 @@ async function manipularExcluirPost(evento) {
     }
     
     try {
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         const resposta = await fetch(`${urlBase}/historias/${idPost}`, {
             method: 'DELETE'
         });
@@ -2269,7 +2272,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
     }
     
     try {
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         
         // 1. Verificar estado atual
         const respostaVerificacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
@@ -2439,7 +2442,7 @@ async function manipularEnviarComentario(idPost) {
     try {
         console.log('📤 Enviando comentário:', textoComentario);
         
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         const resposta = await fetch(`${urlBase}/comentarios`, {
             method: 'POST',
             headers: {
@@ -2481,7 +2484,7 @@ async function carregarComentariosComRespostas(idPost) {
     console.log('💬 Carregando comentários hierárquicos para post:', idPost);
     
     try {
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         console.log('🌐 URL base:', urlBase);
         
         const resposta = await fetch(`${urlBase}/historias/${idPost}/comentarios-com-respostas`);
@@ -2516,7 +2519,7 @@ async function carregarComentariosComRespostasFallback(idPost) {
     }
     
     try {
-        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        const urlBase = ApiConfig.obterUrlBase();
         const resposta = await fetch(`${urlBase}/historias/${idPost}/comentarios`);
         
         if (!resposta.ok) {
@@ -2761,7 +2764,7 @@ async function manipularExcluirComentario(evento) {
         console.log(`🔄 Deletando ${tipoComentario}...`);
         
         try {
-            const urlBase = ConfiguracaoAPI.obterUrlBase();
+            const urlBase = ApiConfig.obterUrlBase();
             const resposta = await fetch(`${urlBase}/comentarios/${idComentario}`, {
                 method: 'DELETE'
             });

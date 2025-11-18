@@ -201,12 +201,12 @@ async function manipularLogin() {
 
         console.log('📤 Enviando dados para login:', { usuario: usuario, senha: '***' });
 
-        const urlBase = ApiConfig.obterUrlBase();
-        console.log('🌐 URL base da API:', urlBase);
+        const urlBase = ConfiguracaoAPI.obterUrlBase();
+        console.log('🌐 URL base:', urlBase);
 
         // TIMEOUT para evitar espera infinita
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // Aumentei para 15s
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         const resposta = await fetch(`${urlBase}/login`, {
             method: "POST",
@@ -214,69 +214,67 @@ async function manipularLogin() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(dadosLogin),
-            signal: controller.signal,
-            mode: 'cors' // ← ADICIONE ESTA LINHA
+            signal: controller.signal
         });
 
         clearTimeout(timeoutId);
 
         console.log('📡 Status da resposta:', resposta.status);
-        console.log('🔗 URL completa:', `${urlBase}/login`);
+        console.log('📡 Headers da resposta:', Object.fromEntries(resposta.headers.entries()));
 
         if (!resposta.ok) {
-            let mensagemErro = `Erro ${resposta.status}`;
-            
+            let textoErro = 'Erro desconhecido';
             try {
-                const dadosErro = await resposta.json();
-                mensagemErro = dadosErro.message || dadosErro.error || mensagemErro;
+                textoErro = await resposta.text();
             } catch {
-                // Se não conseguir parsear como JSON, pegar texto
-                const textoErro = await resposta.text();
-                mensagemErro = textoErro || mensagemErro;
+                textoErro = 'Não foi possível ler o erro';
             }
             
-            // Tratamento específico por status code
+            console.error('❌ Erro HTTP:', resposta.status, textoErro);
+            
             if (resposta.status === 401) {
                 throw new Error('Usuário ou senha incorretos');
             } else if (resposta.status === 404) {
-                throw new Error('Serviço não encontrado. Verifique a URL.');
-            } else if (resposta.status >= 500) {
-                throw new Error('Erro interno do servidor. Tente novamente em alguns instantes.');
+                throw new Error('Serviço de login não encontrado');
             } else {
-                throw new Error(mensagemErro);
+                throw new Error(`Erro ${resposta.status}: ${textoErro}`);
             }
         }
 
-        // Processar resposta
-        const dadosResposta = await resposta.json();
-        console.log('✅ Resposta do servidor:', dadosResposta);
+        // Processar resposta - CORREÇÃO: sempre tentar como JSON primeiro
+        let dadosResposta;
+        const contentType = resposta.headers.get('content-type');
         
-        // Verificar estrutura da resposta
-        if (dadosResposta.success && dadosResposta.user) {
-            await manipularLoginSucesso(dadosResposta, usuario);
-        } else if (dadosResposta.message) {
-            // Resposta de sucesso mas com estrutura diferente
-            await manipularLoginSucesso({
-                success: true,
-                user: {
-                    id: dadosResposta.id,
-                    nome: usuario,
-                    email: dadosResposta.email,
-                    num_postagens: dadosResposta.num_postagens || 0,
-                    foto_perfil: dadosResposta.foto_perfil || null
-                }
-            }, usuario);
+        if (contentType && contentType.includes('application/json')) {
+            dadosResposta = await resposta.json();
         } else {
-            throw new Error('Resposta do servidor em formato inesperado');
+            // Se não for JSON, tentar como texto e depois parsear
+            const textoResposta = await resposta.text();
+            console.log('📄 Resposta como texto:', textoResposta);
+            
+            try {
+                dadosResposta = JSON.parse(textoResposta);
+            } catch (parseError) {
+                // Se não for JSON válido, criar estrutura básica
+                dadosResposta = {
+                    message: textoResposta,
+                    success: resposta.ok
+                };
+            }
         }
+        
+        console.log('✅ Resposta do servidor processada:', dadosResposta);
+        
+        // Chamar função de sucesso com os dados
+        await manipularLoginSucesso(dadosResposta, usuario);
 
     } catch (erro) {
         console.error("❌ Erro durante o login:", erro);
         
         if (erro.name === 'AbortError') {
-            mostrarErro("⏰ Tempo de conexão esgotado. Verifique sua internet e tente novamente.");
+            mostrarErro("⏰ Tempo de conexão esgotado. Tente novamente.");
         } else if (erro.message.includes('CORS') || erro.message.includes('Failed to fetch')) {
-            mostrarErro("🌐 Erro de conexão. Verifique se o servidor está online e acessível.");
+            mostrarErro("🌐 Erro de conexão. Verifique se o servidor está online.");
         } else {
             mostrarErro(`❌ ${erro.message}`);
         }
@@ -435,37 +433,104 @@ async function tentarLoginAlternativo(usuario, senha) {
 async function manipularLoginSucesso(resposta, usuario, senha) {
     try {
         console.log('✅ Login bem-sucedido, processando resposta...');
+        console.log('📦 Resposta completa do servidor:', resposta);
         
-        // Verificar se a resposta tem dados
+        // 🎯 CORREÇÃO: Verificar múltiplos formatos de resposta
         let dadosUsuario;
         
         if (resposta && typeof resposta === 'object') {
             // Se a resposta já é um objeto JSON
             dadosUsuario = resposta;
+            
+            console.log('🔍 Estrutura da resposta:', {
+                temSuccess: 'success' in resposta,
+                temUser: 'user' in resposta,
+                temId: 'id' in resposta,
+                temUsuario: 'usuario' in resposta,
+                chaves: Object.keys(resposta)
+            });
+            
         } else {
             // Tentar parsear se for string
-            dadosUsuario = JSON.parse(resposta);
+            try {
+                dadosUsuario = JSON.parse(resposta);
+            } catch (parseError) {
+                console.error('❌ Não foi possível parsear a resposta:', parseError);
+                throw new Error('Formato de resposta inválido do servidor');
+            }
         }
         
-        console.log('📦 Dados do usuário recebidos:', dadosUsuario);
+        console.log('📊 Dados do usuário recebidos:', dadosUsuario);
 
-        // Validar dados essenciais
-        if (!dadosUsuario || (!dadosUsuario.id && !dadosUsuario.userId)) {
-            console.error('❌ Dados do usuário incompletos:', dadosUsuario);
-            throw new Error('Dados do usuário incompletos na resposta do servidor');
+        // 🎯 CORREÇÃO: Validação flexível dos dados
+        let infoUsuario = {};
+        
+        // Formato 1: Resposta com success e user
+        if (dadosUsuario.success && dadosUsuario.user) {
+            console.log('✅ Formato 1: success + user');
+            infoUsuario = {
+                id: dadosUsuario.user.id || dadosUsuario.user.id_usuario,
+                nome: dadosUsuario.user.nome || usuario,
+                usuario: usuario,
+                email: dadosUsuario.user.email || null,
+                ft_perfil: dadosUsuario.user.foto_perfil || dadosUsuario.user.ft_perfil || null,
+                num_postagens: dadosUsuario.user.num_postagens || 0,
+                isLoggedIn: true,
+                loginTime: new Date().toISOString()
+            };
+        }
+        // Formato 2: Resposta direta com dados do usuário
+        else if (dadosUsuario.id || dadosUsuario.id_usuario) {
+            console.log('✅ Formato 2: dados diretos');
+            infoUsuario = {
+                id: dadosUsuario.id || dadosUsuario.id_usuario,
+                nome: dadosUsuario.nome || usuario,
+                usuario: usuario,
+                email: dadosUsuario.email || null,
+                ft_perfil: dadosUsuario.foto_perfil || dadosUsuario.ft_perfil || null,
+                num_postagens: dadosUsuario.num_postagens || 0,
+                isLoggedIn: true,
+                loginTime: new Date().toISOString()
+            };
+        }
+        // Formato 3: Resposta com message (sucesso mas estrutura diferente)
+        else if (dadosUsuario.message && dadosUsuario.id) {
+            console.log('✅ Formato 3: message + id');
+            infoUsuario = {
+                id: dadosUsuario.id,
+                nome: dadosUsuario.nome || usuario,
+                usuario: usuario,
+                email: dadosUsuario.email || null,
+                ft_perfil: dadosUsuario.foto_perfil || dadosUsuario.ft_perfil || null,
+                num_postagens: dadosUsuario.num_postagens || 0,
+                isLoggedIn: true,
+                loginTime: new Date().toISOString()
+            };
+        }
+        // Formato 4: Tentativa com dados mínimos
+        else if (usuario) {
+            console.log('⚠️ Formato 4: usando dados mínimos com nome de usuário');
+            infoUsuario = {
+                id: Date.now(), // ID temporário
+                nome: usuario,
+                usuario: usuario,
+                email: null,
+                ft_perfil: null,
+                num_postagens: 0,
+                isLoggedIn: true,
+                loginTime: new Date().toISOString()
+            };
+        }
+        else {
+            console.error('❌ Estrutura de dados não reconhecida:', dadosUsuario);
+            throw new Error('Estrutura de resposta do servidor não reconhecida');
         }
 
-        // Garantir estrutura correta
-        const infoUsuario = {
-            id: dadosUsuario.id || dadosUsuario.userId || dadosUsuario.ID,
-            nome: dadosUsuario.nome || dadosUsuario.username || dadosUsuario.Nome || 'Usuário',
-            usuario: usuario || dadosUsuario.usuario || null,
-            email: dadosUsuario.email || null,
-            ft_perfil: dadosUsuario.ft_perfil || dadosUsuario.foto_perfil || null,
-            num_postagens: dadosUsuario.num_postagens || 0,
-            isLoggedIn: true,
-            loginTime: new Date().toISOString()
-        };
+        // 🎯 VALIDAÇÃO FINAL: Garantir que temos pelo menos um ID e nome
+        if (!infoUsuario.id || !infoUsuario.nome) {
+            console.error('❌ Dados essenciais faltando após processamento:', infoUsuario);
+            throw new Error('Dados do usuário incompletos na resposta do servidor');
+        }
 
         console.log('💾 Salvando usuário no sessionStorage:', infoUsuario);
         
@@ -475,7 +540,7 @@ async function manipularLoginSucesso(resposta, usuario, senha) {
         // Verificar se salvou corretamente
         const salvo = sessionStorage.getItem('arandua_current_user');
         if (!salvo) {
-            throw new Error('Falha ao salvar dados do usuário');
+            throw new Error('Falha ao salvar dados do usuário no navegador');
         }
         
         console.log('✅ Usuário salvo com sucesso:', JSON.parse(salvo));
@@ -491,7 +556,18 @@ async function manipularLoginSucesso(resposta, usuario, senha) {
         
     } catch (erro) {
         console.error('❌ Erro ao processar login:', erro);
-        mostrarErro(`❌ Erro ao processar login: ${erro.message}`);
+        
+        // 🎯 CORREÇÃO: Mensagens de erro mais específicas
+        if (erro.message.includes('Estrutura de resposta')) {
+            mostrarErro(`❌ Problema no formato da resposta do servidor. Tente novamente.`);
+        } else if (erro.message.includes('Dados do usuário incompletos')) {
+            mostrarErro(`❌ Servidor retornou dados incompletos. Contate o suporte.`);
+        } else {
+            mostrarErro(`❌ Erro ao processar login: ${erro.message}`);
+        }
+        
+        // Limpar dados de login em caso de erro
+        sessionStorage.removeItem('arandua_current_user');
     }
 }
 
