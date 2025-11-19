@@ -427,20 +427,21 @@ body:not(.about-page) .user-area {
   white-space: nowrap; 
   height: 60px;
   box-sizing: border-box;
-  background: rgba(0,0,0,0.1);
-  border-bottom: 1px solid rgba(255,255,255,0.1);
 }
 
 .logo-circle {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  border-radius: 0;
   background-image: url(../img/logo_Arandua.png);
-  border: 2px solid var(--text-light);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: transparent;
+  border: none; 
 }
 
 .nav-links {

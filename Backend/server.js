@@ -54,8 +54,7 @@ app.use(cors({
             callback(null, true);
         } else {
             console.log(`⚠️  Origem bloqueada pelo CORS: ${origin}`);
-            callback(null, true); // Para desenvolvimento, permita todas
-            // Para produção: callback(new Error('Not allowed by CORS'));
+            callback(null, true);
         }
     },
     credentials: true,
