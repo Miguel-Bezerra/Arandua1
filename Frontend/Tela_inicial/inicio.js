@@ -7,11 +7,11 @@ class ApiConfig {
         
         console.log('🔍 Hostname detectado:', hostname);
         if (hostname.includes('netlify.app')) {
-            // Se estiver no arandua2.netlify.app, usar a API do Railway
+            // Se estiver no aranduaa.netlify.app, usar a API do Railway
             return 'https://arandua1-production.up.railway.app/api';
         } 
         //Verificar se estamos no domínio de produção
-        else if (hostname === 'arandua2.netlify.app' || hostname === 'arandua1.netlify.app') {
+        else if (hostname === 'aranduaa.netlify.app' || hostname === 'arandua1.netlify.app') {
             return 'https://arandua1-production.up.railway.app/api';
         }
         else if (hostname === 'localhost' || hostname === '127.0.0.1') {

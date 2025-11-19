@@ -34,8 +34,8 @@ app.use((req, res, next) => {
 });
 
 const allowedOrigins = [
-    'https://arandua2.netlify.app',
-    'http://arandua2.netlify.app',
+    'https://aranduaa.netlify.app',
+    'http://aranduaa.netlify.app',
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://localhost:5500',

@@ -434,13 +434,12 @@ body:not(.about-page) .user-area {
   height: 40px;
   border-radius: 0;
   background-image: url(../img/logo_Arandua.png);
-  background-size: contain;
+  background-size: 160px 75px;
   background-position: center;
   background-repeat: no-repeat;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
   border: none; 
 }
 
