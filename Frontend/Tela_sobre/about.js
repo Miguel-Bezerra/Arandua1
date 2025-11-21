@@ -1,5 +1,3 @@
-// about.js - Funcionalidades para a página Sobre - PORTUGUÊS
-
 const URL_BASE_API = 'http://localhost:3000';
 
 document.addEventListener('DOMContentLoaded', function() {

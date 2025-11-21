@@ -1,4 +1,3 @@
-// scripts.js - ATUALIZADO com funcionalidade de recuperação de senha - PORTUGUÊS
 class ApiConfig {
     static obterUrlBase() {
         if (window.location.hostname.includes('railway') || 

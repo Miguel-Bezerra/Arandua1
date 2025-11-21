@@ -1,4 +1,3 @@
-// scripts.js - CORRIGIDO para cadastro - VERSÃO FINAL - PORTUGUÊS
 class ApiConfig {
     static obterUrlBase() {
         // Se estiver no Railway (produção)
@@ -51,7 +50,7 @@ function configurarFuncionalidadeCadastro() {
     const botaoCadastrar = document.getElementById("cadastro_bt");
     const formulario = document.querySelector('form');
 
-    // REMOVER TODOS OS EVENT LISTENERS EXISTENTES PRIMEIRO
+    // Remover todos os event listeners antigos clonando os elementos
     if (formulario) {
         const novoFormulario = formulario.cloneNode(true);
         formulario.parentNode.replaceChild(novoFormulario, formulario);
@@ -62,7 +61,7 @@ function configurarFuncionalidadeCadastro() {
         botaoCadastrar.parentNode.replaceChild(novoBotao, botaoCadastrar);
     }
 
-    // CONFIGURAR NOVOS EVENT LISTENERS
+    // Configurar novos event listeners
     const novoFormulario = document.querySelector('form');
     const novoBotao = document.getElementById("cadastro_bt");
 
@@ -139,7 +138,7 @@ function alternarVisibilidadeSenha(input, elementoToggle) {
     }
 }
 
-// Função antiga mantida para compatibilidade com HTML
+// Função genérica para alternar senha
 function togglePassword(inputId, iconId) {
     const input = document.getElementById(inputId);
     const icone = document.getElementById(iconId);
@@ -250,11 +249,13 @@ function validarInputsCadastro(nome, email, senha, confSenha) {
     return true;
 }
 
+//Função para validar email
 function validarEmail(email) {
     const regexEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return regexEmail.test(email);
 }
 
+//Função para manipular sucesso no cadastro
 async function manipularCadastroSucesso(dados, nome) {
     console.log('Cadastro bem-sucedido:', dados);
     
@@ -358,7 +359,7 @@ function removerMensagensExistentes() {
     });
 }
 
-// Adicionar CSS para o loading spinner
+//CSS para o loading spinner
 const estilo = document.createElement('style');
 estilo.textContent = `
     .loading-spinner {

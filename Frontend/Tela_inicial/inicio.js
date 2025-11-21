@@ -1,6 +1,3 @@
-// inicio.js - VERSÃO EM PORTUGUÊS
-console.log('🔧 inicio.js está carregando...');
-
 class ApiConfig {
     static obterUrlBase() {
         const hostname = window.location.hostname;
@@ -28,7 +25,7 @@ class ApiConfig {
         
         console.log(`🌐 Requisição API: ${opcoes.method || 'GET'} ${url}`);
         
-        // ✅ OTIMIZAÇÃO: Configurações de performance
+        //Configurações de performance
         const configsOtimizadas = {
             // Prioridade baixa para requisições não críticas
             priority: 'low',
@@ -102,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
     usuarioAtual = obterUsuarioLogado();
     
     if (usuarioAtual) {
-        console.log('✅ Usuário logado:', usuarioAtual);
+        console.log('Usuário logado:', usuarioAtual);
         inicializarAplicacao();
     } else {
         console.log('❌ Usuário não logado - redirecionando...');
@@ -139,10 +136,10 @@ async function inicializarAplicacao() {
             });
         }
         
-        console.log('✅ DOM completamente carregado');
+        console.log('DOM completamente carregado');
         
-        // DEBUG: Verificar elementos críticos
-        depurarDOM();
+        //Verificar elementos críticos
+        debugDOM();
         
         // Configuração básica primeiro
         configurarInterfaceBasica();
@@ -163,11 +160,11 @@ async function inicializarAplicacao() {
         // Aguardar mais um pouco
         await new Promise(resolver => setTimeout(resolver, 100));
         
-        // CARREGAR POSTS POR ÚLTIMO
+        // Carregar postagens
         console.log('📚 Iniciando carregamento de posts...');
         await carregarPostagens();
         
-        console.log('✅ Aplicação inicializada com sucesso');
+        console.log('Aplicação inicializada com sucesso');
         
     } catch (erro) {
         console.error('❌ Erro na inicialização:', erro);
@@ -206,7 +203,7 @@ function configurarInterfaceBasica() {
             console.warn('⚠️ userName não encontrado');
         }
         
-        console.log('✅ Usuário configurado:', usuarioAtual.nome);
+        console.log('Usuário configurado:', usuarioAtual.nome);
     } else {
         console.error('❌ usuarioAtual não definido');
     }
@@ -224,7 +221,7 @@ async function preCarregarRecursos() {
             .then(res => res.json())
             .then(dados => {
                 ApiCache.set(url, dados);
-                console.log(`✅ Pré-carregado: ${url}`);
+                console.log(`Pré-carregado: ${url}`);
             })
             .catch(erro => console.log(`⚠️ Falha no pré-carregamento: ${url}`));
     });
@@ -249,7 +246,7 @@ function configurarDropdown() {
             if (estaOculto) {
                 menuDropdown.classList.remove('hidden');
                 areaUsuario.classList.add('active');
-                console.log('✅ Dropdown aberto');
+                console.log('Dropdown aberto');
             } else {
                 menuDropdown.classList.add('hidden');
                 areaUsuario.classList.remove('active');
@@ -461,7 +458,7 @@ function comprimirImagem(arquivo, opcoes = {}) {
                 };
 
                 const base64Final = comprimirComQualidade(qualidadeAtual);
-                console.log(`✅ Compressão final: ${(base64Final.length / 1024 / 1024).toFixed(2)} MB`);
+                console.log(`Compressão final: ${(base64Final.length / 1024 / 1024).toFixed(2)} MB`);
                 resolver(base64Final);
             };
 
@@ -524,11 +521,11 @@ async function criarHistoria() {
             const arquivo = inputImagem.files[0];
             console.log(`🖼️ Processando imagem: ${arquivo.name}, ${(arquivo.size / 1024 / 1024).toFixed(2)} MB`);
             
-            // 🔥 USAR COMPRESSÃO AQUI
+            // Comprimir imagem antes de enviar
             if (arquivo.type.startsWith('image/')) {
                 mostrarNotificacao('📦 Comprimindo imagem...', 'info');
                 imagemBase64 = await comprimirImagem(arquivo);
-                console.log(`✅ Imagem comprimida: ${imagemBase64 ? (imagemBase64.length / 1024 / 1024).toFixed(2) + ' MB' : 'null'}`);
+                console.log(`Imagem comprimida: ${imagemBase64 ? (imagemBase64.length / 1024 / 1024).toFixed(2) + ' MB' : 'null'}`);
             } else {
                 mostrarNotificacao('❌ Arquivo não é uma imagem válida', 'error');
                 estaCriandoPost = false;
@@ -572,8 +569,8 @@ async function criarHistoria() {
 
         if (resposta.ok) {
             const novaHistoria = await resposta.json();
-            console.log('✅ História criada com sucesso:', novaHistoria);
-            mostrarNotificacao('✅ História publicada com sucesso!', 'success');
+            console.log('História criada com sucesso:', novaHistoria);
+            mostrarNotificacao('História publicada com sucesso!', 'success');
             adicionarNovaHistoriaAoFeed(novaHistoria);
             fecharModal();
         } else {
@@ -591,7 +588,7 @@ async function criarHistoria() {
 
 // ===== CARREGAMENTO DE POSTAGENS/HISTÓRIAS =====
 
-function depurarDOM() {
+function debugDOM() {
     console.log('🔍 DEBUG DOM:');
     console.log('📍 Elemento .content:', document.querySelector('.content'));
     console.log('📍 Elemento #userButton:', document.getElementById('userButton'));
@@ -639,9 +636,9 @@ async function carregarPostagens() {
             throw new Error(`Erro ${resposta.status}: ${resposta.statusText || 'Servidor não respondeu corretamente'}`);
         }
 
-        console.log('✅ Resposta OK, processando JSON...');
+        console.log('Resposta OK, processando JSON...');
         const historias = await resposta.json();
-        console.log(`✅ ${historias.length} histórias carregadas com sucesso`);
+        console.log(`${historias.length} histórias carregadas com sucesso`);
         
         // Validar estrutura dos dados
         if (!Array.isArray(historias)) {
@@ -690,7 +687,7 @@ function mostrarErroCarregamento(mensagem) {
 
 // ===== RENDERIZAÇÃO =====
 
-function depurarAtributosDados() {
+function debugAtributosDados() {
     console.log('🔍 DEBUG: Verificando data attributes...');
     
     const posts = document.querySelectorAll('.post, .story-item');
@@ -726,7 +723,7 @@ function renderizarPostagens(postagens) {
         return;
     }
 
-    console.log('✅ Área de conteúdo encontrada, limpando...');
+    console.log('Área de conteúdo encontrada, limpando...');
     limparConteudoPosts();
 
     if (!postagens || postagens.length === 0) {
@@ -748,7 +745,7 @@ function renderizarPostagens(postagens) {
     
     // DEBUG: Verificar resultado
     setTimeout(() => {
-        depurarAtributosDados();
+        debugAtributosDados();
     }, 500);
 }
 
@@ -757,7 +754,7 @@ function renderizarHistorias(historias) {
     if (!areaConteudo) return;
 
     // DEBUG: Verificar as histórias antes de renderizar
-    depurarHistorias(historias);
+    debugHistorias(historias);
 
     historias.forEach(historia => {
         const elementoHistoria = criarElementoHistoria(historia);
@@ -985,7 +982,7 @@ function criarElementoPost(post) {
 }
 
 // Função de debug para verificar as histórias
-function depurarHistorias(historias) {
+function debugHistorias(historias) {
     console.log('🔍 DEBUG: Analisando estruturas das histórias:');
     historias.forEach((historia, index) => {
         console.log(`📖 História ${index + 1}:`, {
@@ -1142,7 +1139,7 @@ function carregarCategorias() {
     ];
     
     renderizarCaixasCategoria();
-    console.log(`✅ ${todasCategorias.length} categorias carregadas`);
+    console.log(`${todasCategorias.length} categorias carregadas`);
 }
 
 function renderizarCaixasCategoria() {
@@ -1314,7 +1311,7 @@ function atualizarExibicaoCategoriasAtivas() {
         textoFiltro.textContent = `Filtrando (${categoriasSelecionadas.length})`;
     }
     
-    console.log('✅ Display de categorias atualizado:', categoriasSelecionadas);
+    console.log('Display de categorias atualizado:', categoriasSelecionadas);
 }
 
 // ===== PESQUISA =====
@@ -1393,7 +1390,7 @@ function configurarPesquisaFallback() {
     const botaoAcaoPesquisa = document.querySelector('.search-action-btn, .search-btn');
     
     if (inputPesquisa) {
-        console.log('✅ Input de pesquisa encontrado via seletor alternativo');
+        console.log('Input de pesquisa encontrado via seletor alternativo');
         
         let timeoutPesquisa;
         
@@ -1471,7 +1468,7 @@ async function realizarPesquisa(termoPesquisa) {
             return temTitulo || temConteudo || temAutor || temCategoria;
         });
         
-        console.log(`✅ ${resultados.length} resultado(s) encontrado(s)`);
+        console.log(`${resultados.length} resultado(s) encontrado(s)`);
         
         exibirResultadosPesquisa(resultados, termoPesquisa);
         
@@ -1534,7 +1531,7 @@ function exibirResultadosPesquisa(resultados, termoPesquisa) {
             }
         });
         
-        mostrarNotificacao(`✅ ${resultados.length} história(s) encontrada(s) para "${termoPesquisa}"`, 'success');
+        mostrarNotificacao(`${resultados.length} história(s) encontrada(s) para "${termoPesquisa}"`, 'success');
     }
     
     console.log('📊 Resultados exibidos com sucesso');
@@ -1618,7 +1615,7 @@ async function manipularAlternarResposta(evento) {
                 }
                 
                 secaoResposta = novaSecaoResposta;
-                console.log('✅ Seção de resposta criada dinamicamente');
+                console.log('Seção de resposta criada dinamicamente');
             }
         }
     }
@@ -1637,7 +1634,7 @@ async function manipularAlternarResposta(evento) {
             inputResposta.style.height = 'auto';
             inputResposta.style.height = (inputResposta.scrollHeight) + 'px';
         }
-        console.log('✅ Seção de resposta aberta');
+        console.log('Seção de resposta aberta');
     } else {
         secaoResposta.style.display = 'none';
         console.log('❌ Seção de resposta fechada');
@@ -1739,7 +1736,7 @@ async function manipularEnviarResposta(evento, idComentario) {
 
         if (resposta.ok) {
             const novaResposta = await resposta.json();
-            console.log('✅ Resposta criada pelo servidor:', novaResposta);
+            console.log('Resposta criada pelo servidor:', novaResposta);
             
             const dadosResposta = {
                 id_comentario: novaResposta.id,
@@ -2123,7 +2120,7 @@ function configurarOuvintesEventosGlobais() {
                 secaoResposta.style.display = 'none';
                 const inputResposta = secaoResposta.querySelector('.reply-input');
                 if (inputResposta) inputResposta.value = '';
-                console.log('✅ Resposta cancelada');
+                console.log('Resposta cancelada');
             }
             return;
         }
@@ -2273,7 +2270,7 @@ async function manipularExcluirPost(evento) {
         console.log('📡 Status da resposta:', resposta.status);
 
         if (resposta.ok) {
-            mostrarNotificacao('✅ História deletada com sucesso!', 'success');
+            mostrarNotificacao('História deletada com sucesso!', 'success');
             
             // Remover da UI imediatamente
             elementoPost.style.opacity = '0';
@@ -2325,7 +2322,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
         return;
     }
     
-    // ✅ VERIFICAR ESTADO ATUAL ANTES DE QUALQUER AÇÃO
+    // VERIFICAR ESTADO ATUAL ANTES DE QUALQUER AÇÃO
     const iconeCurtir = botaoCurtir.querySelector('.like-icon');
     const contadorCurtidas = botaoCurtir.querySelector('.like-count');
     let contagemAtual = parseInt(contadorCurtidas.textContent) || 0;
@@ -2333,7 +2330,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
     const estavaCurtido = iconeCurtir.textContent === '❤️';
     const novaContagem = estavaCurtido ? Math.max(0, contagemAtual - 1) : contagemAtual + 1;
     
-    // ✅ ATUALIZAÇÃO OTIMISTA CORRIGIDA
+    // ATUALIZAÇÃO OTIMISTA CORRIGIDA
     iconeCurtir.textContent = estavaCurtido ? '🤍' : '❤️';
     contadorCurtidas.textContent = novaContagem;
     
@@ -2346,7 +2343,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
     try {
         const urlBase = ApiConfig.obterUrlBase();
         
-        // ✅ VERIFICAR ESTADO REAL NO SERVIDOR ANTES DE TENTAR CURTIR
+        // VERIFICAR ESTADO REAL NO SERVIDOR ANTES DE TENTAR CURTIR
         console.log('🔍 Verificando estado atual da curtida...');
         const respostaVerificacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
         
@@ -2355,9 +2352,9 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
         }
         
         const estadoReal = await respostaVerificacao.json();
-        console.log('✅ Estado real da curtida:', estadoReal);
+        console.log('Estado real da curtida:', estadoReal);
         
-        // ✅ DETERMINAR A AÇÃO CORRETA BASEADA NO ESTADO REAL
+        // DETERMINAR A AÇÃO CORRETA BASEADA NO ESTADO REAL
         let acao;
         if (estavaCurtido && estadoReal.curtiu) {
             // Usuário quer remover curtida (já está curtido)
@@ -2366,7 +2363,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
             // Usuário quer adicionar curtida (não está curtido)
             acao = 'POST';
         } else {
-            // ✅ ESTADO INCONSISTENTE - SINCRONIZAR COM SERVIDOR
+            // Estado inconsistente, sincronizar UI
             console.warn('⚠️ Estado inconsistente, sincronizando com servidor...');
             iconeCurtir.textContent = estadoReal.curtiu ? '❤️' : '🤍';
             contadorCurtidas.textContent = estadoReal.curtiu ? contagemAtual + 1 : Math.max(0, contagemAtual - 1);
@@ -2375,7 +2372,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
         
         console.log(`🎯 Ação determinada: ${acao} para post ${idPost}`);
         
-        // ✅ FAZER A REQUISIÇÃO
+        // Fazer a requisição de curtida/descurtida
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);
         
@@ -2399,7 +2396,7 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
             console.error(`❌ Erro ${resposta.status}:`, erroTexto);
             
             if (resposta.status === 400) {
-                // ✅ LIDAR ESPECIFICAMENTE COM ERRO 400 (já curtiu/não curtiu)
+                // Lidar com o erro 400 (já curtiu/não curtiu)
                 const respostaVerificacaoPosErro = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
                 if (respostaVerificacaoPosErro.ok) {
                     const estadoPosErro = await respostaVerificacaoPosErro.json();
@@ -2420,19 +2417,19 @@ async function manipularCurtirPost(botaoCurtir, idPost) {
             throw new Error(`HTTP ${resposta.status}: ${erroTexto}`);
         }
         
-        console.log('✅ Curtida processada com sucesso');
+        console.log('Curtida processada com sucesso');
         
     } catch (erro) {
         console.error('❌ Erro ao curtir:', erro);
         
-        // ✅ REVERSÃO MAIS INTELIGENTE
+        // Reversão da atualização otimista
         if (erro.name === 'AbortError') {
             mostrarNotificacao('⏰ Tempo esgotado ao curtir', 'error');
         } else {
             mostrarNotificacao('❌ Erro ao curtir: ' + erro.message, 'error');
         }
         
-        // ✅ SINCRONIZAR COM SERVIDOR APÓS ERRO
+        // Sincronizar estado com o servidor
         try {
             const urlBase = ApiConfig.obterUrlBase();
             const respostaSincronizacao = await fetch(`${urlBase}/curtidas/${idPost}/${usuarioAtual.id}`);
@@ -2484,14 +2481,14 @@ async function manipularAlternarComentario(evento) {
         const elementoPost = botaoComentar.closest('.post, .story-item');
         if (elementoPost) {
             idPost = elementoPost.dataset.postId;
-            console.log('✅ PostId encontrado no elemento pai:', idPost);
+            console.log('PostId encontrado no elemento pai:', idPost);
         }
         
         if (!idPost && botaoComentar.id) {
             const idDoBotao = botaoComentar.id.replace('comment-btn-', '');
             if (idDoBotao) {
                 idPost = idDoBotao;
-                console.log('✅ PostId encontrado no ID do botão:', idPost);
+                console.log('PostId encontrado no ID do botão:', idPost);
             }
         }
     }
@@ -2530,14 +2527,14 @@ async function manipularEnviarComentario(idPost) {
         const secaoComentarioAtiva = document.querySelector('.comments-section[style*="display: block"]');
         if (secaoComentarioAtiva) {
             idPost = secaoComentarioAtiva.id.replace('comments-', '');
-            console.log('✅ PostId encontrado da seção ativa:', idPost);
+            console.log('PostId encontrado da seção ativa:', idPost);
         }
         
         if (!idPost) {
             const botaoEnviar = document.querySelector('.submit-comment[data-post-id]');
             if (botaoEnviar) {
                 idPost = botaoEnviar.dataset.postId;
-                console.log('✅ PostId encontrado do botão submit:', idPost);
+                console.log('PostId encontrado do botão submit:', idPost);
             }
         }
     }
@@ -2601,7 +2598,7 @@ async function manipularEnviarComentario(idPost) {
 
         if (resposta.ok) {
             const novoComentario = await resposta.json();
-            console.log('✅ Comentário criado:', novoComentario);
+            console.log('Comentário criado:', novoComentario);
             adicionarNovoComentarioNaUI(idPost, novoComentario);
             inputComentario.value = '';
             mostrarNotificacao('💬 Comentário adicionado!', 'success');
@@ -2914,8 +2911,8 @@ async function manipularExcluirComentario(evento) {
             console.log('📡 Status da resposta:', resposta.status);
 
             if (resposta.ok) {
-                console.log(`✅ ${tipoComentario === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso`);
-                mostrarNotificacao(`✅ ${tipoComentario === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso!`, 'success');
+                console.log(`${tipoComentario === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso`);
+                mostrarNotificacao(`${tipoComentario === 'reply' ? 'Resposta' : 'Comentário'} deletado com sucesso!`, 'success');
                 
                 elementoComentario.style.opacity = '0';
                 elementoComentario.style.transform = 'translateX(-100%)';
@@ -2981,7 +2978,7 @@ async function manipularCurtirComentario(evento) {
         return;
     }
     
-    // ✅ VERIFICAÇÃO DE SEGURANÇA
+    // VERIFICAÇÃO DE SEGURANÇA
     const iconeCurtir = botaoCurtir.querySelector('.comment-like-icon');
     const contadorCurtidas = botaoCurtir.querySelector('.comment-like-count');
     
@@ -3002,18 +2999,18 @@ async function manipularCurtirComentario(evento) {
         contagemAtual: contagemAtual
     });
     
-    // ✅ ATUALIZAÇÃO OTIMISTA SEGURA
+    // ATUALIZAÇÃO OTIMISTA SEGURA
     if (iconeCurtir.textContent === '🤍') {
         iconeCurtir.textContent = '❤️';
         contadorCurtidas.textContent = contagemAtual + 1;
-        console.log('✅ Comentário curtido (otimista)');
+        console.log('Comentário curtido (otimista)');
     } else {
         iconeCurtir.textContent = '🤍';
         contadorCurtidas.textContent = Math.max(0, contagemAtual - 1);
-        console.log('✅ Curtida removida (otimista)');
+        console.log('Curtida removida (otimista)');
     }
     
-    // ✅ IMPLEMENTAÇÃO DA CURTIDA NO SERVIDOR (quando tiver a rota)
+    // IMPLEMENTAÇÃO DA CURTIDA NO SERVIDOR (quando tiver a rota)
     try {
         const urlBase = ApiConfig.obterUrlBase();
         
@@ -3022,7 +3019,7 @@ async function manipularCurtirComentario(evento) {
         
         if (respostaVerificacao.ok) {
             const estadoReal = await respostaVerificacao.json();
-            console.log('✅ Estado real da curtida do comentário:', estadoReal);
+            console.log('Estado real da curtida do comentário:', estadoReal);
             
             // Determinar ação
             const acao = estadoReal.curtiu ? 'DELETE' : 'POST';
@@ -3045,7 +3042,7 @@ async function manipularCurtirComentario(evento) {
                 throw new Error(`Erro ${resposta.status} ao curtir comentário`);
             }
             
-            console.log('✅ Curtida de comentário processada com sucesso');
+            console.log('Curtida de comentário processada com sucesso');
             
         } else {
             console.warn('⚠️ Rota de curtida de comentários não disponível');
@@ -3087,7 +3084,7 @@ function adicionarNovaHistoriaAoFeed(novaHistoria) {
     // 2. Recarregar todo o feed
     carregarPostagens();
     
-    mostrarNotificacao('✅ História publicada com sucesso!', 'success');
+    mostrarNotificacao('História publicada com sucesso!', 'success');
     
     fecharModal();
 }
@@ -3161,7 +3158,7 @@ function adicionarNovaRespostaNaUI(idComentario, resposta) {
     
     fecharSecaoResposta(idComentario);
     
-    console.log('✅ Resposta adicionada com sucesso à UI');
+    console.log('Resposta adicionada com sucesso à UI');
 }
 
 function fecharSecaoResposta(idComentario) {
@@ -3175,7 +3172,7 @@ function fecharSecaoResposta(idComentario) {
             inputResposta.value = '';
             inputResposta.style.height = 'auto';
         }
-        console.log('✅ Seção de resposta fechada');
+        console.log('Seção de resposta fechada');
     } else {
         console.log('ℹ️ Seção de resposta não encontrada para fechar');
     }

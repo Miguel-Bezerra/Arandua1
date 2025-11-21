@@ -1,5 +1,3 @@
-// profile.js - CORRIGIDO para carregamento de imagem - PORTUGUÊS
-
 class ApiConfig {
     static obterUrlBase() {
         // Verificar se estamos em produção (Netlify)

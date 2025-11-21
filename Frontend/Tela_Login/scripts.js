@@ -1,6 +1,4 @@
-// scripts.js
-
-// URL base da API - ajuste conforme sua configuração
+// URL base da API e funções de requisição
 class ApiConfig {
     static obterUrlBase() {
         // Para desenvolvimento local (Live Server na porta 5500)
@@ -241,7 +239,7 @@ async function manipularLogin() {
             }
         }
 
-        // Processar resposta - CORREÇÃO: sempre tentar como JSON primeiro
+        // Processar resposta
         let dadosResposta;
         const contentType = resposta.headers.get('content-type');
         
@@ -287,7 +285,7 @@ async function manipularLogin() {
     }
 }
 
-// Função de validação corrigida
+// Função de validação
 function validarInputsLogin(usuario, senha) {
     if (!usuario || !senha) {
         mostrarErro("⚠️ Usuário e senha são obrigatórios.");
@@ -435,7 +433,7 @@ async function manipularLoginSucesso(resposta, usuario, senha) {
         console.log('✅ Login bem-sucedido, processando resposta...');
         console.log('📦 Resposta completa do servidor:', resposta);
         
-        // 🎯 CORREÇÃO: Verificar múltiplos formatos de resposta
+        //  Verificar múltiplos formatos de resposta
         let dadosUsuario;
         
         if (resposta && typeof resposta === 'object') {
@@ -462,7 +460,7 @@ async function manipularLoginSucesso(resposta, usuario, senha) {
         
         console.log('📊 Dados do usuário recebidos:', dadosUsuario);
 
-        // 🎯 CORREÇÃO: Validação flexível dos dados
+        //  Validação flexível dos dados
         let infoUsuario = {};
         
         // Formato 1: Resposta com success e user
@@ -526,7 +524,7 @@ async function manipularLoginSucesso(resposta, usuario, senha) {
             throw new Error('Estrutura de resposta do servidor não reconhecida');
         }
 
-        // 🎯 VALIDAÇÃO FINAL: Garantir que temos pelo menos um ID e nome
+        //  VALIDAÇÃO FINAL: Garantir que temos pelo menos um ID e nome
         if (!infoUsuario.id || !infoUsuario.nome) {
             console.error('❌ Dados essenciais faltando após processamento:', infoUsuario);
             throw new Error('Dados do usuário incompletos na resposta do servidor');
@@ -557,7 +555,7 @@ async function manipularLoginSucesso(resposta, usuario, senha) {
     } catch (erro) {
         console.error('❌ Erro ao processar login:', erro);
         
-        // 🎯 CORREÇÃO: Mensagens de erro mais específicas
+        //  Mensagens de erro mais específicas
         if (erro.message.includes('Estrutura de resposta')) {
             mostrarErro(`❌ Problema no formato da resposta do servidor. Tente novamente.`);
         } else if (erro.message.includes('Dados do usuário incompletos')) {
