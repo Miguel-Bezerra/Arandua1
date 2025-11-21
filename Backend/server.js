@@ -18,7 +18,7 @@ const app = express();
 app.use(express.json()); // ← PARA JSON
 app.use(express.urlencoded({ extended: true }));
 
-// 🔥 MIDDLEWARE DE LOG MELHORADO
+//  MIDDLEWARE DE LOG 
 app.use((req, res, next) => {
     const timestamp = new Date().toISOString();
     console.log(`🕒 ${timestamp} | 📨 ${req.method} ${req.url}`);
@@ -63,7 +63,7 @@ app.use(cors({
 }));
 
 
-// 🔥 MIDDLEWARE DE LOG APÓS CORS
+//  MIDDLEWARE DE LOG APÓS CORS
 app.use((req, res, next) => {
     console.log(`✅ Requisição passou pelo CORS: ${req.method} ${req.url}`);
     next();
@@ -71,7 +71,7 @@ app.use((req, res, next) => {
 
 app.use("/api", rotas);
 
-// 🔥 ROTA DE TESTE SIMPLES (antes das outras)
+//  ROTA DE TESTE SIMPLES (antes das outras)
 app.get("/test", (req, res) => {
     console.log("🎯 ROTA /test ACESSADA!");
     res.json({ 
@@ -95,7 +95,7 @@ app.get("/", (req, res) => {
     res.send("🚀 Servidor rodando com sucesso! CORS configurado.");
 });
 
-// 🔥 MIDDLEWARE DE ERRO MELHORADO
+//  MIDDLEWARE DE ERRO 
 app.use((err, req, res, next) => {
     console.error("💥 ERRO NO SERVIDOR:", err);
     console.error("💥 Stack:", err.stack);

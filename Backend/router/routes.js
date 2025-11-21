@@ -4,7 +4,6 @@ import db from "../config/bd.js"
 const rotas = Router()
 
 // ===== ROTAS DE USUÁRIO =====
-// (Mantidas iguais - não precisam de alteração)
 rotas.post("/usuarios", (req, res) => {
     const { nome, senha, email, ft_perfil } = req.body
 
@@ -132,7 +131,7 @@ rotas.post("/login", (req, res) => {
         });
     }
 
-    const { usuario, senha } = req.body; // ✅ CORRIGIDO: adicionar senha aqui
+    const { usuario, senha } = req.body;
 
     if (!usuario || !senha) {
         return res.status(400).json({ 
@@ -201,7 +200,7 @@ rotas.post("/historias", (req, res) => {
         titulo, 
         conteudo, 
         categoria, 
-        imagem_capa,  // ← Use apenas imagem_capa
+        imagem_capa,
         tags
     } = req.body;
 
@@ -234,7 +233,7 @@ rotas.post("/historias", (req, res) => {
         });
     }
 
-    // Usar apenas imagem_capa (remover referência a imagem_postagem)
+    // Verificar dados da imagem
     const imagemFinal = imagem_capa;
     console.log("🖼️ Dados da imagem:", {
         temImagem: !!imagemFinal,
@@ -1014,7 +1013,6 @@ rotas.get('/historias/filtro', async (req, res) => {
         const categoriasArray = Array.isArray(categorias) ? categorias : [categorias];
         const placeholders = categoriasArray.map(() => '?').join(',');
         
-        // QUERY CORRIGIDA - removendo colunas que não existem
         const query = `
             SELECT 
                 h.id_historia,
@@ -1085,7 +1083,7 @@ rotas.post("/curtidas", (req, res) => {
         })
     }
 
-    // CORRIGIR: Mudar Curtida_Historia para Curtida
+    // Mudar Curtida_Historia para Curtida
     const sqlCheck = "SELECT id_curtida FROM Curtida WHERE id_historia = ? AND id_usuario = ?"
     const sqlInsert = `INSERT INTO Curtida (id_historia, id_usuario) 
                        VALUES (?, ?)`
@@ -1145,7 +1143,7 @@ rotas.delete("/curtidas", (req, res) => {
         })
     }
 
-    // CORRIGIR: Mudar Curtida_Historia para Curtida
+    // Mudar Curtida_Historia para Curtida
     const sqlDelete = "DELETE FROM Curtida WHERE id_historia = ? AND id_usuario = ?"
     const sqlUpdatePost = `UPDATE Historia 
                           SET num_curtidas = num_curtidas - 1 
@@ -1180,7 +1178,7 @@ rotas.delete("/curtidas", (req, res) => {
 // Verificar se usuário curtiu uma história
 rotas.get("/curtidas/:historiaId/:usuarioId", (req, res) => {
     const { historiaId, usuarioId } = req.params;
-    // CORRIGIR: Mudar Curtida_Historia para Curtida
+    // Mudar Curtida_Historia para Curtida
     const sql = "SELECT id_curtida FROM Curtida WHERE id_historia = ? AND id_usuario = ?";
     
     db.get(sql, [historiaId, usuarioId], (err, row) => {
@@ -1214,7 +1212,6 @@ rotas.get("/historias/:id/curtidas", (req, res) => {
 // ===== ROTAS DE CURTIDA EM COMENTÁRIOS =====
 
 // Curtir comentário
-// Na rota de curtir comentário, adicione validações:
 rotas.post("/curtidas-comentarios", (req, res) => {
     const { id_comentario, id_usuario } = req.body
 
